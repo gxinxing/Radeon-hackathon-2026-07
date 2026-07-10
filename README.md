@@ -1,2 +1,7 @@
 # Radeon-hackathon-2026-07
-Radeon hackathon on 2026 July
+
+## how to apply and use AMD Radeon GPU
+see [README](https://github.com/AMD-DEV-CONTEST/Radeon-hackathon-2026-07/blob/main/README.md)
+
+## when you submit
+**pls fork this repo and open a pull request including the stuff that is mentioned in Rules&conditions of luma page. the title of pull request should be like "Track x, Team name, your application name"**
