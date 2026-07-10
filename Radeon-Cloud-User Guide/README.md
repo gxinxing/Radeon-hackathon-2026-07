@@ -32,13 +32,11 @@ In the **My Templates** section of the Profile page, click **Add Template** in t
 
 Give the template a name (Title, required).
 
-![Add Title](./assets/add-title.png)
-
 ### ② Choose Container Image
 
 Choose a Container Image (required).
 
-![Choose Container Image](./assets/container-image.png)
+![Add Title & Container Image](./assets/add-template-form.png)
 
 Click **Add Template** at the bottom to finish.
 
