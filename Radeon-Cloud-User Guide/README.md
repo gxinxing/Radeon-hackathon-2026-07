@@ -6,7 +6,7 @@ This guide walks you through the full flow on [Radeon Cloud](https://radeon-glob
 
 ## ⭐ Step 0 · Login
 
-Open the Radeon Cloud website and click **Login with Email** in the top-right corner.
+Open the Radeon Cloud website, click **Login** in the top-right corner, and choose **Login with Email**.
 
 https://radeon-global.anruicloud.com/
 
@@ -106,7 +106,51 @@ When creating a template (Step 2), turn on the **SSH Access (advanced)** toggle 
 
 ---
 
-## ⭐ Step 5 · Destroy the instance when done
+## ⭐ Using Model APIs (OpenAI-compatible)
+
+Besides opening a notebook, Radeon Cloud can serve models behind an **OpenAI-compatible HTTP API**, so any OpenAI-compatible client (curl, the `openai` SDK, Cherry Studio, LangChain, …) can call them. There are two options.
+
+### Option 1 · Free Model APIs (shared, no instance needed)
+
+Ready-to-use shared endpoints — no GPU instance to launch, no credits spent. Currently **Qwen** and **DeepSeek** are available.
+
+1. Open the **Token Factory** page and log in with your account:
+   https://developer.amd.com.cn/radeon/modelapis
+
+![Token Factory](./assets/modelapi-tokenfactory.png)
+
+2. Under **Public Free Model APIs**, pick a model (Qwen or DeepSeek). The detail dialog shows the **Base URL**, the **Model** name, your **API Key**, and a ready-to-run **Quickstart (curl)**. Copy your API key.
+
+![Free Model API detail](./assets/modelapi-free-detail.png)
+
+3. Call it from any terminal (replace `<API_KEY>` with your key):
+
+   ```bash
+   curl https://developer.amd.com.cn/radeon/api/v1/chat/completions \
+     -H "Authorization: Bearer <API_KEY>" \
+     -H "Content-Type: application/json" \
+     -d '{"model":"Qwen3.6-35B-A3B","messages":[{"role":"user","content":"Hello"}]}'
+   ```
+
+   The same key works for all shared models — just change the `model` field (e.g. `DeepSeek-V4-Flash`).
+
+### Option 2 · Dedicated Model APIs (your own instance)
+
+Deploy your own model as a dedicated OpenAI-compatible endpoint (uses your credits).
+
+1. Go to https://radeon-global.anruicloud.com/ → **Profile** → **Add Template**.
+2. Set **Deploy Type = vLLM Model API** (Radeon only supports vLLM), then fill in the required **Serve Command** yourself:
+
+![Dedicated Model API template](./assets/modelapi-dedicated-template.png)
+
+   - Write your own serve command following the format shown in the form (`vllm serve <model> --host 0.0.0.0 --port 8000`).
+   - **Keep `--host 0.0.0.0 --port 8000`** — the platform routes the endpoint to port 8000.
+
+3. Click **Add Template**, then **Launch** it from **My Templates**. When ready, the dialog shows a dedicated **Base URL** (`.../spaces/<id>/8000/v1`), **Model**, and **API Key** — call it exactly like Option 1, using this Base URL.
+
+---
+
+## ⭐ Destroy the instance when done
 
 A running instance keeps consuming credits. When you're done, go to the **Active Instance** section in Profile and click the red **Destroy Instance** button to destroy it.
 
