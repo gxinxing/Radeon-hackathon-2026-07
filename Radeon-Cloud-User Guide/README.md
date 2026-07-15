@@ -6,7 +6,7 @@ This guide walks you through the full flow on [Radeon Cloud](https://radeon-glob
 
 ## ⭐ Step 0 · Login
 
-Open the Radeon Cloud website and click **Login** in the top-right corner.
+Open the Radeon Cloud website and click **Login with Email** in the top-right corner.
 
 https://radeon-global.anruicloud.com/
 
