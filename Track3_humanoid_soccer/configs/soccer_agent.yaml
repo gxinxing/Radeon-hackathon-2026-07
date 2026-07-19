@@ -65,7 +65,7 @@ train:
     class_name: MLPModel
     distribution_cfg:
       class_name: GaussianDistribution
-      init_std: 1.0
+      init_std: 2.0
       std_type: scalar
     hidden_dims:
     - 512
@@ -75,7 +75,7 @@ train:
     class_name: PPO
     clip_param: 0.2
     desired_kl: 0.01
-    entropy_coef: 0.005
+    entropy_coef: 0.01
     gamma: 0.99
     lam: 0.95
     learning_rate: 0.0003
