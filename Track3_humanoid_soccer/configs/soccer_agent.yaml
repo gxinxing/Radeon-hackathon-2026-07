@@ -8,7 +8,7 @@
 
 seed: 42
 exp_name: booster_soccer
-num_envs: 2048          # RX 7900 (24GB): start at 2048, raise to 4096 after VRAM check
+num_envs: 4096          # RX 7900 (24GB): start at 2048, raise to 4096 after VRAM check
 show_viewer: false
 task: chase             # one of: balance | chase | dribble | shoot | coop
 
@@ -51,9 +51,9 @@ obs:
 
 # Reward weights consumed by rewards/reward.py (Booster sub-task curriculum).
 reward:
-  upright: 1.0
-  alive: 0.1
-  approach_ball: 2.0      # chase
+  upright: 0.5
+  alive: 0.01
+  approach_ball: 5.0      # chase
   ball_control: 1.5       # dribble (keep ball close)
   ball_to_goal: 3.0       # shoot (ball velocity toward goal)
   goal_scored: 50.0
