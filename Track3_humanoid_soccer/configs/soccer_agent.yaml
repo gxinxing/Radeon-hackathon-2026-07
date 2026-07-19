@@ -24,10 +24,10 @@ env:
   # ---- robot (CONFIG-DRIVEN; verify the path exists in your genesis-amd image) ----
   # Unitree Go2 (quadruped) confirmed in genesis assets; use for W1 baseline.
   # Swap to humanoid URDF (H1/G1) when available for final demo.
-  robot_urdf: "urdf/go2/urdf/go2.urdf"
+  robot_urdf: "assets/t1/t1.xml"
   kp: 35.0
   kd: 0.7
-  base_init_pos: [0.0, 0.0, 0.35]   # Go2 standing height ~0.35m
+  base_init_pos: [0.0, 0.0, 0.8]   # Go2 standing height ~0.35m
   base_init_quat: [1.0, 0.0, 0.0, 0.0]
 
   # ---- soccer pitch (aligned to Booster ADULT_FIELD_DIMENSIONS: 14x9, goal 2.6, circle 1.5) ----
@@ -37,7 +37,7 @@ env:
   circle_radius: 1.5     # center circle (kickoff / set-play spacing)
   penalty_area_length: 3.0
   penalty_area_width: 6.0
-  fall_height: 0.15      # Go2 base below 0.15m => fallen (lowered from 0.5 for humanoid)
+  fall_height: 0.4      # Go2 base below 0.15m => fallen (lowered from 0.5 for humanoid)
   termination_pitch_deg: 30
   termination_roll_deg: 30
 

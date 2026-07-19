@@ -101,6 +101,7 @@ class SoccerEnv:
         self.base_dof_start = int(self.motors_dof_idx[0].item())
         self.num_actions = len(self.motor_joints)
         # default standing pose = the URDF's default joint angles
+        # get_dofs_position returns (num_envs, num_actions); take [0] for init template
         self.default_dof_pos = self.robot.get_dofs_position(self.motors_dof_idx)[0].clone()
         self.actions_dof_idx = torch.argsort(self.motors_dof_idx)
 
@@ -173,13 +174,20 @@ class SoccerEnv:
             gs.morphs.URDF(file=_genesis_asset("urdf", "plane", "plane.urdf"), fixed=True)
         )
 
-        # humanoid robot (CONFIG-DRIVEN path; VERIFY it exists in your genesis-amd image)
+        # humanoid robot (CONFIG-DRIVEN path; auto-detect URDF vs MJCF)
         robot_path = self.cfg["robot_urdf"]
         if not os.path.isabs(robot_path):
-            robot_path = _genesis_asset(robot_path)
-        self.robot = self.scene.add_entity(
-            gs.morphs.URDF(file=robot_path, pos=self.cfg["base_init_pos"], quat=self.cfg["base_init_quat"])
-        )
+            # try genesis assets dir first, then project-relative
+            ga = _genesis_asset(robot_path)
+            robot_path = ga if os.path.exists(ga) else os.path.abspath(robot_path)
+        if robot_path.endswith(".xml") or robot_path.endswith(".mjcf"):
+            self.robot = self.scene.add_entity(
+                gs.morphs.MJCF(file=robot_path, pos=self.cfg["base_init_pos"], quat=self.cfg["base_init_quat"])
+            )
+        else:
+            self.robot = self.scene.add_entity(
+                gs.morphs.URDF(file=robot_path, pos=self.cfg["base_init_pos"], quat=self.cfg["base_init_quat"])
+            )
 
         # ball (sphere URDF shipped in this repo: assets/ball.urdf)
         ball_path = os.path.join(os.path.dirname(__file__), "..", "assets", "ball.urdf")
