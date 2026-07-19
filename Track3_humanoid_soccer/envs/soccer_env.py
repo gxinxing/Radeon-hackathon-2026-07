@@ -150,6 +150,11 @@ class SoccerEnv:
         self.prev_dist_to_ball = torch.empty((self.num_envs,), dtype=gs.tc_float, device=self.device)
         self.fallen_prev = torch.zeros((self.num_envs,), dtype=gs.tc_bool, device=self.device)
         self.scored_buf = torch.zeros((self.num_envs,), dtype=gs.tc_float, device=self.device)
+        # 射门统计：射正率 / 进球率
+        self.shots_taken = 0
+        self.shots_on_target = 0
+        self.goals_scored = 0
+        self.shot_prev_vel = torch.zeros((self.num_envs,), dtype=gs.tc_float, device=self.device)
         self.obs_buf = torch.empty((self.num_envs, self._obs_dim()), dtype=gs.tc_float, device=self.device)
         self.extras = dict()
 
@@ -213,6 +218,18 @@ class SoccerEnv:
     def _obs_dim(self):
         n = self.num_actions
         return 3 + 3 + 3 + n + n + 3 + 3 + n  # ang_vel, grav, cmd, dof_pos, dof_vel, ball_rel, ball_relvel, act
+
+    def get_stats(self):
+        """返回射门统计：射正率、进球率、总射门数。"""
+        on_target_rate = self.shots_on_target / max(self.shots_taken, 1)
+        goal_rate = self.goals_scored / max(self.shots_taken, 1)
+        return {
+            "shots_taken": self.shots_taken,
+            "shots_on_target": self.shots_on_target,
+            "goals_scored": self.goals_scored,
+            "on_target_rate": on_target_rate,
+            "goal_rate": goal_rate,
+        }
 
     # ---------------------------------------------------------------- RL API
     def reset(self):
@@ -295,6 +312,22 @@ class SoccerEnv:
         ball_vel_to_goal = torch.sum(self.ball_vel[:, :2] * goal_dir[:, :2], dim=1)
         scored = (self.ball_pos[:, 0] > self.goal_x) & (torch.abs(self.ball_pos[:, 1]) < self.goal_half)
         just_recovered = self.fallen_prev & (~fallen)
+
+        # 射门统计：检测射门瞬间（球速突然增大且朝向球门）
+        # 射门触发：上一帧没在射门，这帧球速 > 1.0 m/s 且朝向球门
+        shooting_now = (ball_vel_to_goal > 1.0) & (self.shot_prev_vel < 1.0)
+        for i in range(self.num_envs):
+            if shooting_now[i]:
+                self.shots_taken += 1
+                # 射正：球 y 坐标在门宽内
+                if abs(self.ball_pos[i, 1].item()) < self.goal_half:
+                    self.shots_on_target += 1
+        # 进球
+        for i in range(self.num_envs):
+            if scored[i] and self.shot_prev_vel[i] > 0.5:
+                self.goals_scored += 1
+        self.shot_prev_vel.copy_(ball_vel_to_goal)
+
         return {
             "torso_up": torso_up,
             "fallen": fallen,
@@ -353,8 +386,8 @@ class SoccerEnv:
         self._resample_commands(envs_idx)
 
     def _sample_ball_qpos(self):
-        lo = torch.tensor([0.5, -self.goal_half, self.ball_radius], device=self.device)
-        hi = torch.tensor([1.5, self.goal_half, self.ball_radius], device=self.device)
+        lo = torch.tensor([-self.field_x / 2 + 0.5, -self.goal_half, self.ball_radius], device=self.device)
+        hi = torch.tensor([self.goal_x - 1.0, self.goal_half, self.ball_radius], device=self.device)
         pos = gs_rand(lo, hi, (self.num_envs,))
         quat = torch.zeros((self.num_envs, 4), device=self.device)
         quat[:, 0] = 1.0
