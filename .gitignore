@@ -1,0 +1,14 @@
+# Model weights (too large for git, use git-lfs or cloud storage)
+*.pt
+*.pth
+*.ckpt
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+._*
+
+# Training logs (keep tail snapshots only)
+Track3_humanoid_soccer/runs/

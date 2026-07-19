@@ -1,0 +1,8 @@
+=== AMD Radeon / ROCm benchmark ===
+device        : AMD Radeon Graphics
+torch         : 2.9.1+gitff65f5b
+torch.version.hip : 7.2.53211-e1a6bc5663
+matmul TFLOPS : 14.0
+env steps/sec : skipped (Genesis hasn't been initialized. Did you call `gs.init()`?)
+peak mem (GB) : 0.30
+tip: run `rocm-smi --showuse` in another shell to capture utilization.
