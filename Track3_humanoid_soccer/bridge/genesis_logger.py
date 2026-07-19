@@ -104,7 +104,7 @@ def record_step(logger, env, soccer):
         dist_opp = math.hypot(rx - opp_gx, ry - 0.0)
         behind = rx < bx  # robot on own-goal side of ball -> can strike toward +x goal
         ball_to_goal = bvx  # opp goal is +x, so x-velocity component = toward goal
-        kicked = (ball_to_goal > 1.0) and behind
+        kicked = (ball_to_goal > 0.3) and behind
         logger.log_step(
             t=_f(env.episode_length_buf[i]) * env.dt,
             robot_x=rx, robot_y=ry, robot_yaw=0.0,
