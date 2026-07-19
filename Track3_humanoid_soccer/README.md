@@ -1,27 +1,16 @@
-# AMD Physical AI — Humanoid Soccer (Booster T1)
+# AMD Physical AI — Humanoid Soccer (Booster-inspired)
 
 Track 3 (Physical AI) submission for the **2026 AMD AI DevMaster Hackathon**.
-A **Booster T1 humanoid robot** (23-DOF) trained to play soccer using PPO RL
-entirely on **AMD Radeon RX 7900 XT + ROCm** via Genesis simulation.
+A humanoid soccer policy trained entirely in simulation (Genesis) on **AMD Radeon GPU + ROCm**.
+Task design is anchored on real Booster T1 RoBoLeague 3v3 gameplay: chase → dribble → shoot,
+with recovery-from-fall and attacker/defender role coordination.
 
 ## Why this project
 
-Booster's official RL training stack (`booster_gym`, `booster_train`) requires
-NVIDIA Isaac Gym / Isaac Lab. We demonstrate the **first-known AMD ROCm alternative**
-for humanoid robot learning — same T1 robot, same PPO algorithm, different GPU ecosystem.
-
-## Results (2026-07-19)
-
-| Metric | Value |
-|---|---|
-| GPU | AMD Radeon RX 7900 XT (gfx1100, 48GB) |
-| Peak TFLOPS | 19.5 (4096² matmul) |
-| Sustained TFLOPS | 18.5 (60s 8192²) |
-| Training throughput | 44,000+ steps/sec (2048 envs) |
-| Max parallel envs | 10,240 (3 tasks × 4096 envs) |
-| Peak VRAM | 63% (32GB/51GB) |
-| Robot | Booster T1 23-DOF (official booster_assets) |
-| Training tasks | balance, chase, shoot (1000 iters each) |
+Robot soccer is the most visible embodied-AI benchmark right now (Booster T1 / RoboCup /
+RoBoLeague). We decompose real soccer skills observed in Booster 3v3 matches into RL sub-tasks
+and train them on a single AMD Radeon GPU, demonstrating GPU-accelerated training + inference
+via the ROCm software stack.
 
 ## Judging-criteria mapping (Track 3, 100 pts)
 
@@ -40,33 +29,32 @@ for humanoid robot learning — same T1 robot, same PPO algorithm, different GPU
 - Register the event on Luma (https://luma.com/amd-4dhi) and pick **Physical AI** track.
 - Final submission = PR to `AMD-DEV-CONTEST/Radeon-hackathon-2026-07` by **2026-08-06 23:59 UTC+8**.
 
-## Quick start (on AMD Radeon Linux cloud)
+## Quick start (on the AMD Radeon Linux cloud instance)
 
 ```bash
-# 1. Install Genesis + rsl-rl (don't let pip swap ROCm torch)
-source /opt/venv/bin/activate
-pip install genesis-world rsl-rl-lib
-python -c "import torch; print(torch.__version__, torch.cuda.is_available())"
-#   -> 2.9.1+gitff65f5b True
+# 0. verify GPU is visible
+rocm-smi
 
-# 2. Verify GPU + Genesis
-python -c "import genesis as gs; gs.init(backend=gs.gpu); print('Genesis GPU OK')"
+# 1. PyTorch on ROCm (match the ROCm version of the instance, e.g. rocm6.2)
+pip install torch --index-url https://download.pytorch.org/whl/rocm6.2
+python -c "import torch; print(torch.cuda.is_available(), torch.cuda.get_device_name(0))"
+#   -> expect: True  <your Radeon name>   (under ROCm, torch.cuda maps to the AMD GPU)
 
-# 3. Train T1 humanoid
-cd /workspace/amd-physical-ai-soccer
-PYTHONPATH=. python scripts/train.py --task chase --num_envs 2048 --max_iterations 1000
+# 2. sim + RL deps
+pip install -r requirements.txt
 
-# 4. Multi-task parallel training (maximizes GPU utilization)
-python scripts/train.py --task balance --num_envs 4096 &
-python scripts/train.py --task chase --num_envs 4096 &
-python scripts/train.py --task shoot --num_envs 2048 &
+# 3. sanity check the sim + confirm the robot URDF path the env will load
+python -c "import genesis as gs; gs.init(backend=gs.gpu); print('genesis ok')"
+#    VERIFY robot asset exists; the env loads configs/soccer_agent.yaml -> env.robot_urdf
+#    (default urdf/h1/urdf/h1.urdf). Find the asset dir and confirm:
+python -c "import genesis,os; print(os.path.join(os.path.dirname(genesis.__file__),'assets'))"
+#    If H1 is elsewhere, edit env.robot_urdf in configs/soccer_agent.yaml accordingly.
 
-# 5. GPU throughput report
-python scripts/gpu_stress_test.py --duration 60
+# 4. train week-1 baseline (balance + chase-ball). Config is read from configs/soccer_agent.yaml.
+python scripts/train.py --task chase
 
-# 6. Eval + distill
-python scripts/eval.py -e t1_chase --task chase --num_envs 1 --steps 600
-python bridge/distill.py --log bridge/rollout.jsonl --out bridge/booster_distilled.py
+# 5. GPU throughput report (earns the 20 ROCm pts)
+python scripts/benchmark_gpu.py
 ```
 
 ## 3-week plan
@@ -81,23 +69,16 @@ python bridge/distill.py --log bridge/rollout.jsonl --out bridge/booster_distill
 
 ```
 amd-physical-ai-soccer/
-  configs/soccer_agent.yaml   # rsl-rl PPO + T1 robot + field + reward config
-  envs/soccer_env.py          # Genesis soccer env (MJCF/URDF, 10-frame obs history)
+  configs/soccer_agent.yaml   # rsl-rl PPO + task + robot + field hyperparams
+  envs/soccer_env.py          # Genesis humanoid soccer env (headless, GPU-batched)
   rewards/reward.py           # Booster-derived reward curriculum
-  assets/t1/                  # Booster T1 23-DOF (URDF+MJCF+63 STL meshes)
-  assets/ball.urdf            # soccer ball
-  assets/goal.urdf            # goal-line marker
+  assets/ball.urdf            # soccer ball (sphere, no mesh needed)
+  assets/goal.urdf            # goal-line marker (visual)
   scripts/train.py            # training entry (rsl-rl OnPolicyRunner)
-  scripts/eval.py             # rollout + distill logging
-  scripts/benchmark_gpu.py    # ROCm throughput report
-  scripts/gpu_stress_test.py  # sustained GPU stress + max TFLOPS
-  scripts/export_policy.py   # export TorchScript .pt for booster_deploy
-  bridge/                     # RL→behavioral rules distillation pipeline
-    genesis_logger.py         # rollout recorder
-    distill.py                # threshold extractor
-    SPEC.md                   # Genesis→Booster mapping
-    booster_distilled.py      # auto-generated constants
-  docs/TECHNICAL_REPORT.md    # hackathon submission report
+  scripts/eval.py             # rollout + record demo video
+  scripts/benchmark_gpu.py    # ROCm throughput / utilization report
+  policies/ppo_runner.py      # (legacy skrl wiring, kept for reference)
+  docs/ARCHITECTURE.md        # design notes + Booster mapping
   demo/                       # exported mp4 demos
 ```
 
