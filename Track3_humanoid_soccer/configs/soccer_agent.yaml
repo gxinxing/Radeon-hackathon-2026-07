@@ -23,13 +23,13 @@ env:
 
   # ---- robot: Booster T1 humanoid (23-DOF, official booster_assets) ----
   # Deployable to real T1 via booster_deploy (TorchScript .pt)
-  robot_urdf: "assets/t1/T1_23dof.xml"
+  robot_urdf: "urdf/go2/urdf/go2.urdf"
   kp: 35.0
   kd: 0.7
-  base_init_pos: [0.0, 0.0, 0.72]   # T1 standing height (from booster_gym T1.yaml)
+  base_init_pos: [0.0, 0.0, 0.35]
   base_init_quat: [1.0, 0.0, 0.0, 0.0]
   obs_history_length: 10            # booster_deploy uses 10-frame history stacking
-  fall_height: 0.4                  # T1 base below 0.4m => fallen
+  fall_height: 0.15
 
   # ---- soccer pitch (aligned to Booster ADULT_FIELD_DIMENSIONS: 14x9, goal 2.6, circle 1.5) ----
   ball_radius: 0.11
@@ -38,7 +38,7 @@ env:
   circle_radius: 1.5     # center circle (kickoff / set-play spacing)
   penalty_area_length: 3.0
   penalty_area_width: 6.0
-  fall_height: 0.4                  # T1 base below 0.4m => fallen
+  fall_height: 0.15
   termination_pitch_deg: 30
   termination_roll_deg: 30
 
