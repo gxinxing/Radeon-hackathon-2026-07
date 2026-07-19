@@ -123,7 +123,10 @@ class SoccerEnv:
         self.init_base_quat = torch.tensor(env_cfg["base_init_quat"], dtype=gs.tc_float, device=self.device)
         self.inv_base_init_quat = inv_quat(self.init_base_quat)
         base_dof = torch.cat([self.init_base_pos, self.init_base_quat])
-        self.init_qpos = torch.cat([base_dof, self.default_dof_pos])
+        # build init_qpos from robot's actual qpos (handles different base DOF)
+        qpos_template = self.robot.get_qpos()[0].clone()
+        qpos_template[self.base_dof_start:self.base_dof_start + self.num_actions] = self.default_dof_pos
+        self.init_qpos = qpos_template.unsqueeze(0).expand(self.num_envs, -1).clone()
         self.init_projected_gravity = transform_by_quat(self.global_gravity, self.inv_base_init_quat)
 
         self.base_lin_vel = torch.empty((self.num_envs, 3), dtype=gs.tc_float, device=self.device)
