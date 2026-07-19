@@ -353,8 +353,8 @@ class SoccerEnv:
         self._resample_commands(envs_idx)
 
     def _sample_ball_qpos(self):
-        lo = torch.tensor([-self.field_x / 2 + 0.3, -self.goal_half, self.ball_radius], device=self.device)
-        hi = torch.tensor([self.goal_x - 1.0, self.goal_half, self.ball_radius], device=self.device)
+        lo = torch.tensor([0.5, -self.goal_half, self.ball_radius], device=self.device)
+        hi = torch.tensor([1.5, self.goal_half, self.ball_radius], device=self.device)
         pos = gs_rand(lo, hi, (self.num_envs,))
         quat = torch.zeros((self.num_envs, 4), device=self.device)
         quat[:, 0] = 1.0

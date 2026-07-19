@@ -51,13 +51,13 @@ obs:
 
 # Reward weights consumed by rewards/reward.py (Booster sub-task curriculum).
 reward:
-  upright: 0.3
-  alive: 0.05
-  approach_ball: 10.0      # chase
-  ball_control: 1.5       # dribble (keep ball close)
-  ball_to_goal: 3.0       # shoot (ball velocity toward goal)
-  goal_scored: 50.0
-  fall_penalty: -5.0
+  upright: 0.2
+  alive: 0.01
+  approach_ball: 20.0
+  ball_control: 5.0
+  ball_to_goal: 10.0
+  goal_scored: 100.0
+  fall_penalty: -10.0
   recovery_bonus: 2.0     # get up after falling
   energy_penalty: -0.001
   tracking_sigma: 0.25
