@@ -10,6 +10,10 @@ import argparse
 import os
 import pickle
 import shutil
+import sys
+
+# allow running `python scripts/train.py` from project root
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import yaml
 

@@ -85,6 +85,7 @@ class SoccerEnv:
         self.term_pitch = math.radians(env_cfg["termination_pitch_deg"])
         self.term_roll = math.radians(env_cfg["termination_roll_deg"])
 
+        self.obs_history_length = env_cfg.get("obs_history_length", 10)
         self.obs_scales = obs_cfg["obs_scales"]
         self.reward_scales = reward_cfg  # weights consumed by rewards/reward.py
 
@@ -136,6 +137,10 @@ class SoccerEnv:
         self.dof_pos = torch.empty_like(self.actions)
         self.dof_vel = torch.empty_like(self.actions)
         self.last_dof_vel = torch.zeros_like(self.actions)
+
+        # obs history buffer for booster_deploy compatibility (10-frame stacking)
+        self.obs_dim = 3 + 3 + 3 + self.num_actions + self.num_actions + self.num_actions  # base obs without ball
+        self.obs_history = torch.zeros((self.num_envs, self.obs_history_length, self.obs_dim), dtype=gs.tc_float, device=self.device)
         self.base_pos = torch.empty((self.num_envs, 3), dtype=gs.tc_float, device=self.device)
         self.base_quat = torch.empty((self.num_envs, 4), dtype=gs.tc_float, device=self.device)
         self.base_euler = torch.empty((self.num_envs, 3), dtype=gs.tc_float, device=self.device)
@@ -322,6 +327,7 @@ class SoccerEnv:
             self.actions.zero_()
             self.last_actions.zero_()
             self.last_dof_vel.zero_()
+            self.obs_history.zero_()
             self.episode_length_buf.zero_()
             self.reset_buf.fill_(True)
             self.fallen_prev.zero_()
@@ -361,16 +367,28 @@ class SoccerEnv:
             torch.where(envs_idx[:, None], self.command, self.commands, out=self.commands)
 
     def _update_observation(self):
-        self.obs_buf = torch.cat(
+        # Base observation matching booster_deploy T1 walk contract:
+        # [ang_vel(3), projected_gravity(3), commands(3), dof_pos-default(N), dof_vel*scale(N), last_action(N)]
+        base_obs = torch.cat(
             (
                 self.base_ang_vel * self.obs_scales["ang_vel"],       # 3
                 self.projected_gravity,                                # 3
-                self.commands * 1.0,                                   # 3
+                self.commands,                                        # 3
                 (self.dof_pos - self.default_dof_pos) * self.obs_scales["dof_pos"],  # N
                 self.dof_vel * self.obs_scales["dof_vel"],             # N
+                self.last_actions,                                    # N
+            ),
+            dim=-1,
+        )
+        # Update history: shift left, append new obs
+        self.obs_history = torch.cat([self.obs_history[:, 1:], base_obs.unsqueeze(1)], dim=1)
+
+        # Policy obs = flattened history + ball info (ball info is soccer-specific, not in booster_deploy)
+        self.obs_buf = torch.cat(
+            (
+                self.obs_history.reshape(self.num_envs, -1),           # base_obs × history_length
                 (self.ball_pos - self.base_pos) * 2.0,                 # 3 (ball rel pos)
-                self.ball_vel * 2.0,                                   # 3 (ball rel vel)
-                self.actions,                                          # N
+                self.ball_vel * 2.0,                                   # 3 (ball vel)
             ),
             dim=-1,
         )
