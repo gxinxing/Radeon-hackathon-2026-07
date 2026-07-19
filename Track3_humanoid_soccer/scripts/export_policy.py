@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 """Export trained actor network to TorchScript .pt for booster_deploy.
 
-booster_deploy expects a torch.jit.ScriptModule that takes the observation
-tensor and returns action tensor. This script loads the latest checkpoint,
-extracts the actor, scripts it, and saves as .pt.
+booster_deploy expects a torch.jit module that takes a plain observation tensor
+and returns an action tensor. This script wraps the rsl-rl actor (which expects
+a TensorDict) in a simple module that accepts plain tensors.
 
 Usage:
     python scripts/export_policy.py -e t1_chase
@@ -17,10 +17,25 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import torch
+import torch.nn as nn
 import yaml
 from rsl_rl.runners import OnPolicyRunner
 
 import genesis as gs
+
+
+class PolicyWrapper(nn.Module):
+    """Wraps rsl-rl actor to accept plain tensor input/output for deployment."""
+
+    def __init__(self, actor, obs_key="policy"):
+        super().__init__()
+        self.actor = actor
+        self.obs_key = obs_key
+
+    def forward(self, obs: torch.Tensor) -> torch.Tensor:
+        # rsl-rl expects TensorDict; we simulate it with a plain dict
+        obs_dict = {self.obs_key: obs}
+        return self.actor(obs_dict)
 
 
 def main():
@@ -36,7 +51,6 @@ def main():
     train_cfg = cfg["train"]
     log_dir = f"runs/{args.exp_name}"
 
-    # find latest checkpoint
     model_files = sorted(glob.glob(f"{log_dir}/model_*.pt"), key=os.path.getmtime)
     if not model_files:
         raise FileNotFoundError(f"No model_*.pt found in {log_dir}")
@@ -45,8 +59,6 @@ def main():
 
     gs.init(backend=gs.gpu, precision="32", logging_level="warning", seed=42)
 
-    # We only need the policy network, not the full env
-    # Reconstruct runner with minimal env to load checkpoint
     from envs.soccer_env import SoccerEnv
 
     env_cfg = dict(cfg["env"])
@@ -61,24 +73,28 @@ def main():
     )
     runner = OnPolicyRunner(env, train_cfg, log_dir, device=gs.device)
     runner.load(latest)
-    policy = runner.get_inference_policy(device=gs.device)
 
-    # Get the actual actor network
-    actor = runner.alg.actor_critic.actor
+    actor = runner.alg.actor
     actor.eval()
 
-    # Export to TorchScript
-    scripted = torch.jit.script(actor)
+    # Wrap for plain-tensor deployment
+    wrapper = PolicyWrapper(actor)
+    wrapper.eval()
 
     out_path = args.output or f"models/{args.exp_name}_policy.pt"
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
-    scripted.save(out_path)
+
+    # Trace on the same device as the model, save directly
+    example_obs = torch.zeros(1, env.obs_buf.shape[1], device=gs.device)
+    with torch.no_grad():
+        traced = torch.jit.trace(wrapper, example_obs)
+    traced.save(out_path)
     print(f"Exported TorchScript policy: {out_path}")
     print(f"  obs_dim: {env.obs_buf.shape[1]}")
     print(f"  action_dim: {env.num_actions}")
     print(f"  history_length: {env.obs_history_length}")
 
-    # Verify: load and test
+    # Verify
     loaded = torch.jit.load(out_path, map_location="cpu")
     loaded.eval()
     test_obs = torch.zeros(1, env.obs_buf.shape[1])
