@@ -5,7 +5,7 @@ command:
   - 0.0
   num_commands: 3
 env:
-  action_scale: 0.5
+  action_scale: 1.0
   ball_radius: 0.11
   base_init_pos:
   - 0.0
@@ -25,8 +25,8 @@ env:
   - 14.0
   - 9.0
   goal_width: 2.6
-  kd: 5.0
-  kp: 200.0
+  kd: 2.0
+  kp: 50.0
   obs_history_length: 1
   penalty_area_length: 3.0
   penalty_area_width: 6.0
