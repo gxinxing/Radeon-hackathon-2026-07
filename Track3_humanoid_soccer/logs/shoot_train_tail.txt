@@ -1,0 +1,50 @@
+                          Learning time: 0.349s 
+                        Mean value loss: 0.0295
+                    Mean surrogate loss: -0.0021
+                      Mean entropy loss: 8.3388
+                            Mean reward: 1.14
+                    Mean episode length: 1.00
+                        Mean action std: 0.48
+--------------------------------------------------------------------------------
+                         Iteration time: 1.20s
+                           Time elapsed: 0:22:31
+                                    ETA: 0:00:02
+
+################################################################################
+[1m                          Learning iteration 998/1000                           [0m 
+
+                               Run name: booster_soccer_shoot
+                            Total steps: 49102848 
+                       Steps per second: 40334 
+                        Collection time: 0.866s 
+                          Learning time: 0.352s 
+                        Mean value loss: 0.0295
+                    Mean surrogate loss: -0.0017
+                      Mean entropy loss: 8.3432
+                            Mean reward: 1.15
+                    Mean episode length: 1.00
+                        Mean action std: 0.48
+--------------------------------------------------------------------------------
+                         Iteration time: 1.22s
+                           Time elapsed: 0:22:32
+                                    ETA: 0:00:01
+
+################################################################################
+[1m                          Learning iteration 999/1000                           [0m 
+
+                               Run name: booster_soccer_shoot
+                            Total steps: 49152000 
+                       Steps per second: 40432 
+                        Collection time: 0.869s 
+                          Learning time: 0.347s 
+                        Mean value loss: 0.0325
+                    Mean surrogate loss: 0.0002
+                      Mean entropy loss: 8.3389
+                            Mean reward: 1.18
+                    Mean episode length: 1.00
+                        Mean action std: 0.49
+--------------------------------------------------------------------------------
+                         Iteration time: 1.22s
+                           Time elapsed: 0:22:34
+                                    ETA: 0:00:00
+
