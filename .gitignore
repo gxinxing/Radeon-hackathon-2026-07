@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+*.egg-info/
+
+# Logs
+*.log
+wandb/
+
+# Models (large files)
+*.pth
+*.pt
+*.onnx
+*.npz
+
+# IDE
+.vscode/
+.idea/
+
+# Booster repos (cloned, not authored)
+booster/
+
+# System
+lost+found/
+.oneclick/
+
+# Auto-generated
+logs/
+tmp/
