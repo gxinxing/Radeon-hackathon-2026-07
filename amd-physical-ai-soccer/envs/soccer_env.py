@@ -216,6 +216,14 @@ class SoccerEnv:
             )
         )
 
+        # Add recording camera (before scene.build)
+        self.scene.add_camera(
+            res=(960, 540),
+            pos=(4.0, -6.0, 3.0),
+            lookat=(0.0, 0.0, 0.5),
+            fov=60,
+            GUI=False,
+        )
         self.scene.build(n_envs=self.num_envs)
 
     def _obs_dim(self):
