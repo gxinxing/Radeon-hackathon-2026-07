@@ -1,0 +1,41 @@
+============================================================
+AMD Radeon GPU Stress Test
+============================================================
+Device: AMD Radeon Graphics
+torch: 2.9.1+gitff65f5b
+HIP: 7.2.53211-e1a6bc5663
+Duration: 60s
+
+--- Matmul TFLOPS by matrix size ---
+  1024x1024: 0.7 TFLOPS
+  2048x2048: 11.2 TFLOPS
+  4096x4096: 19.5 TFLOPS
+  8192x8192: 18.9 TFLOPS
+
+--- Sustained load (60s) ---
+  1010 iterations in 60.0s
+  Sustained: 18.5 TFLOPS
+  Peak VRAM: 1.11 GB
+
+--- ROCm-SMI Snapshot ---
+====================================== Temperature =======================================
+GPU[0]		: Temperature (Sensor edge) (C): 54.0
+GPU[0]		: Temperature (Sensor junction) (C): 64.0
+GPU[0]		: Temperature (Sensor memory) (C): 57.0
+GPU[0]		: sclk clock level: 1: (2199Mhz)
+GPU[0]		: get_overdrive_level_sclk, Not supported on the given system
+GPU[0]		: Supported sclk frequencies on GPU0
+GPU[0]		: GPU Memory Allocated (VRAM%): 63
+
+============================================================
+SUMMARY (for technical report)
+============================================================
+GPU: AMD Radeon Graphics (gfx1100)
+torch: 2.9.1+gitff65f5b | HIP: 7.2.53211-e1a6bc5663
+  matmul 1024x1024: 0.7 TFLOPS
+  matmul 2048x2048: 11.2 TFLOPS
+  matmul 4096x4096: 19.5 TFLOPS
+  matmul 8192x8192: 18.9 TFLOPS
+  sustained 8192x8192: 18.5 TFLOPS
+  peak VRAM: 1.11 GB
+============================================================
