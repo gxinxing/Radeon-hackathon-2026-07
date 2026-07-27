@@ -43,7 +43,21 @@ def r_feet_slip(feet_pos, last_feet_pos, feet_contact, dt, episode_length_buf):
 
 
 def r_approach_ball(dist_to_ball, prev_dist):
-    return (prev_dist - dist_to_ball)
+    # Clamp to >= 0: never punish the robot for knocking the ball away.
+    # Without this clamp, ball contact yields NEGATIVE reward (dist jumps up),
+    # so the policy learns to camp at ~0.25 m instead of playing the ball.
+    return torch.clamp(prev_dist - dist_to_ball, min=0.0)
+
+
+def r_ball_progress(ball_goal_dist, prev_ball_goal_dist):
+    """Potential-based shaping: reward ANY reduction in ball-to-goal distance,
+    including kicks. This is the main 'play the ball forward' signal."""
+    return prev_ball_goal_dist - ball_goal_dist
+
+
+def r_ball_contact(min_foot_dist, contact_radius=0.15):
+    """Bonus while either foot is within contact radius of the ball."""
+    return (min_foot_dist < contact_radius).float()
 
 
 def r_ball_control(dist_to_ball, radius):
@@ -117,7 +131,8 @@ TASK_TERMS = {
                 "fall", "recovery", "energy", "action_rate", "dof_acc"},
     # Hierarchical: frozen low-level handles gait; high-level outputs velocity commands.
     # Drops tracking/feet terms (low-level concern), keeps ball-focused + safety terms.
-    "chase_hl": {"upright", "alive", "approach_ball", "ball_control", "ball_to_goal", "goal_scored",
+    "chase_hl": {"upright", "alive", "approach_ball", "ball_control", "ball_progress", "ball_contact",
+                 "ball_to_goal", "goal_scored",
                  "lin_vel_z", "ang_vel_xy", "orientation",
                  "fall", "recovery", "action_rate"},
     "balance_hl": {"upright", "alive", "lin_vel_z", "ang_vel_xy", "orientation",
@@ -155,6 +170,10 @@ def compute_reward(obs: dict, action: torch.Tensor, w: dict, task: str) -> torch
         total += w["approach_ball"] * r_approach_ball(obs["dist_to_ball"], obs["prev_dist_to_ball"])
     if "ball_control" in terms:
         total += w["ball_control"] * r_ball_control(obs["dist_to_ball"], w.get("_ball_radius", 0.11))
+    if "ball_progress" in terms:
+        total += w["ball_progress"] * r_ball_progress(obs["ball_goal_dist"], obs["prev_ball_goal_dist"])
+    if "ball_contact" in terms:
+        total += w["ball_contact"] * r_ball_contact(obs["min_foot_dist"])
     if "ball_to_goal" in terms:
         total += w["ball_to_goal"] * r_ball_to_goal(obs["ball_vel_to_goal"])
     if "goal_scored" in terms:

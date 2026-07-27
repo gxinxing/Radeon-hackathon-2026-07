@@ -178,6 +178,7 @@ class SoccerEnv:
         self.ball_pos = torch.empty((self.num_envs, 3), dtype=gs.tc_float, device=self.device)
         self.ball_vel = torch.empty((self.num_envs, 3), dtype=gs.tc_float, device=self.device)
         self.prev_dist_to_ball = torch.empty((self.num_envs,), dtype=gs.tc_float, device=self.device)
+        self.prev_ball_goal_dist = torch.empty((self.num_envs,), dtype=gs.tc_float, device=self.device)
 
         # Init pos/quat (use booster_deploy values)
         self.init_base_pos = torch.tensor([0.0, 0.0, 0.7], dtype=gs.tc_float, device=self.device)  # Trunk link height
@@ -379,6 +380,9 @@ class SoccerEnv:
         goal_dir = torch.stack([self.goal_x - self.ball_pos[:, 0], -self.ball_pos[:, 1], torch.zeros_like(self.ball_pos[:, 0])], dim=1)
         goal_dir = goal_dir / (torch.norm(goal_dir, dim=1, keepdim=True) + 1e-6)
         ball_vel_to_goal = torch.sum(self.ball_vel[:, :2] * goal_dir[:, :2], dim=1)
+        ball_goal_dist = torch.hypot(self.goal_x - self.ball_pos[:, 0], self.ball_pos[:, 1])
+        feet_ball_xy = self.feet_pos[:, :, :2] - self.ball_pos.unsqueeze(1)[:, :, :2]
+        min_foot_dist = torch.norm(feet_ball_xy, dim=2).min(dim=1).values
         scored = (self.ball_pos[:, 0] > self.goal_x) & (torch.abs(self.ball_pos[:, 1]) < self.goal_half)
         just_recovered = self.fallen_prev & (~fallen)
 
@@ -404,6 +408,9 @@ class SoccerEnv:
             "ball_x": self.ball_pos[:, 0],
             "dist_to_ball": dist_to_ball,
             "prev_dist_to_ball": self.prev_dist_to_ball,
+            "ball_goal_dist": ball_goal_dist,
+            "prev_ball_goal_dist": self.prev_ball_goal_dist,
+            "min_foot_dist": min_foot_dist,
             "ball_vel_to_goal": ball_vel_to_goal,
             "scored": scored, "just_recovered": just_recovered,
             "commands": self.commands,
@@ -419,6 +426,7 @@ class SoccerEnv:
 
     def _resample_ball_if_needed(self):
         self.prev_dist_to_ball = torch.norm(self.base_pos[:, :2] - self.ball_pos[:, :2], dim=1).clone()
+        self.prev_ball_goal_dist = torch.hypot(self.goal_x - self.ball_pos[:, 0], self.ball_pos[:, 1]).clone()
 
     def _reset_idx(self, envs_idx=None):
         self.robot.set_qpos(self.init_qpos, envs_idx=envs_idx, zero_velocity=True, skip_forward=True)
@@ -451,6 +459,7 @@ class SoccerEnv:
 
         self._read_state()
         self.prev_dist_to_ball = torch.norm(self.base_pos[:, :2] - self.ball_pos[:, :2], dim=1).clone()
+        self.prev_ball_goal_dist = torch.hypot(self.goal_x - self.ball_pos[:, 0], self.ball_pos[:, 1]).clone()
         self._resample_commands(envs_idx)
 
     def _sample_ball_qpos(self):
