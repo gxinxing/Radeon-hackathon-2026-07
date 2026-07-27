@@ -1,0 +1,42 @@
+# Track 2 — ignore patterns
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual env
+.venv/
+venv/
+
+# Models and data
+models/*.bin
+models/*.safetensors
+models/*.gguf
+training/data/raw/
+training/data/processed/
+
+# Freqtrade
+user_data/backtest_results/
+user_data/logs/
+user_data/hyperopt_results/
+*.ftr
+
+# Dify
+dify/volumes/
+
+# Docker
+docker/volumes/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo

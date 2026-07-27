@@ -1,0 +1,44 @@
+version: "3.9"
+
+services:
+  # --- Trading API (FastAPI) ---
+  trading-api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.backtest
+    ports:
+      - "8080:8080"
+    environment:
+      - BINANCE_TESTNET_API_KEY=${BINANCE_TESTNET_API_KEY:-}
+      - BINANCE_TESTNET_API_SECRET=${BINANCE_TESTNET_API_SECRET:-}
+    volumes:
+      - ../src:/app/src
+      - ../training:/app/training
+    restart: unless-stopped
+
+  # --- vLLM (ROCm) ---
+  # Note: vLLM needs direct GPU access, so it should run on the host
+  # or in a container with --device /dev/kfd --device /dev/dri
+  # vllm:
+  #   image: rocm/vllm:latest
+  #   ports:
+  #     - "8000:8000"
+  #   devices:
+  #     - /dev/kfd
+  #     - /dev/dri
+  #   environment:
+  #     - ROCBLAS_USE_HIPBLASLT=1
+  #     - HIP_VISIBLE_DEVICES=0
+  #   volumes:
+  #     - ../models:/models
+  #   command: >
+  #     vllm serve /models/qwen-trader-merged
+  #     --port 8000 --max-model-len 4096
+  #     --gpu-memory-utilization 0.60 --dtype float16
+  #   restart: unless-stopped
+
+  # --- Dify (simplified — see dify/docker for full config) ---
+  # Dify runs via its own docker-compose in the dify/ directory.
+  # To start Dify:
+  #   cd dify && git clone https://github.com/langgenius/dify.git
+  #   cd dify/docker && cp .env.example .env && docker compose up -d
