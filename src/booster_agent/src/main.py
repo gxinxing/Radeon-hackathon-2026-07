@@ -1,11 +1,12 @@
 # coding: utf-8
 """RL Chase Agent for Booster Studio 3v3 SoccerSim.
 
-Uses a trained ONNX policy (chase_v3_policy.onnx) to output velocity commands
+Uses a trained ONNX policy (chase_v6_2048_policy.onnx) to output velocity commands
 (vx, vy, vyaw) for the chaser role. Other roles use rule-based fallback.
 
 The ONNX model takes 19-dim observation (ball position, velocity, goal direction
-in body frame) and outputs 3-dim action (vx, vy, wz) clipped to [-0.3, 0.3]/[-0.4, 0.4].
+in body frame) and outputs 3-dim action (vx, vy, wz) clipped to [-0.8, 0.8]/[-1.0, 1.0]
+(matching training config hl_clip_lin=0.8, hl_clip_ang=1.0).
 """
 from __future__ import annotations
 
@@ -61,12 +62,14 @@ class RLChaseAgent(AgentBase):
         )
 
     def _find_onnx_model(self) -> str | None:
-        """Find chase_v3_policy.onnx in agent directory or models/."""
+        """Find the trained ONNX policy (chase_v6_2048) in agent dir or models/."""
         candidates = [
+            "models/chase_v6_2048_policy.onnx",
+            "models/chase_v6_policy.onnx",
+            "/workspace/amd-physical-ai-soccer/models/chase_v6_2048_policy.onnx",
+            os.path.join(os.path.dirname(__file__), "..", "models", "chase_v6_2048_policy.onnx"),
+            # legacy fallback (stub — do not use)
             "models/chase_v3_policy.onnx",
-            "res/chase_v3_policy.onnx",
-            os.path.join(os.path.dirname(__file__), "..", "models", "chase_v3_policy.onnx"),
-            "/workspace/amd-physical-ai-soccer/models/chase_v3_policy.onnx",
         ]
         for path in candidates:
             if os.path.exists(path):

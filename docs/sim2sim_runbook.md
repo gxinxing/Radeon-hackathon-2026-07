@@ -106,7 +106,7 @@ Expected output (a REAL policy):
 ```
 Input:  obs [1, <obs_dim>]
 Output: action [1, 3]
-Opset:  14
+Opset:  17
 Nodes:  >= 7
 TOTAL params in initializers: > 10000
 ```

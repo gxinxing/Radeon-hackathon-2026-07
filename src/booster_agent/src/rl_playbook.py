@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 class RLChasePlaybook(DefaultPlaybook):
     """Playbook that uses ONNX RL policy for the chaser role.
 
-    The ONNX model (chase_v3_policy.onnx) takes 19-dim observation:
+    The ONNX model (chase_v6_2048_policy.onnx) takes 19-dim observation:
         - filtered_lin_vel(3), filtered_ang_vel(3), projected_gravity(2)
         - ball_rel_body(2), ball_vel_body(2), dist_to_ball(1)
         - goal_dir(2), goal_dist(1), last_hl_actions(3)
@@ -29,15 +29,16 @@ class RLChasePlaybook(DefaultPlaybook):
     And outputs 3-dim action: (vx, vy, wz) velocity command.
     """
 
-    # Action clip (must match training config)
-    CLIP_LIN = 0.3   # vx, vy
-    CLIP_ANG = 0.4   # wz
+    # Action clip — MUST match training config (soccer_env_hierarchical: hl_clip_lin=0.8, hl_clip_ang=1.0)
+    CLIP_LIN = 0.8   # vx, vy
+    CLIP_ANG = 1.0   # wz
 
     def __init__(self, kit: "SoccerKit", onnx_session=None):
         super().__init__(kit)
         self.onnx_session = onnx_session
         self._last_actions = {}  # player_id -> np.array(3)
         self._prev_ball = {}     # player_id -> (x, y, timestamp)
+        self._prev_pose = {}     # player_id -> (x, y, theta, timestamp)
         self._robot_vel = {}     # player_id -> (vx, vy, vyaw) estimated
 
     def chaser_command(self, player_id: int, ctx: PlayContext) -> RobotCommand:
@@ -134,10 +135,25 @@ class RLChasePlaybook(DefaultPlaybook):
             ball_vel_body = (R @ ball_vel_world).astype(np.float32)
         self._prev_ball[player_id] = (ball.x, ball.y, now)
 
-        # Estimate robot velocity (simplified: zero if no history)
+        # Estimate robot body-frame velocity from pose deltas (finite difference).
+        # Training feeds real filtered_lin_vel / filtered_ang_vel — zeros here would
+        # be a major obs mismatch. If the framework later exposes IMU/odometry,
+        # prefer that over this estimate.
         lin_vel = np.zeros(3, dtype=np.float32)
         ang_vel = np.zeros(3, dtype=np.float32)
-        # In production, read from robot IMU/odometry instead
+        prev_p = self._prev_pose.get(player_id)
+        if prev_p and now - prev_p[3] > 0:
+            dt = now - prev_p[3]
+            # world-frame linear velocity, then rotate into body frame (same R as ball_vel)
+            lin_world = np.array([(pose.x - prev_p[0]) / dt,
+                                  (pose.y - prev_p[1]) / dt], dtype=np.float32)
+            lin_body = R @ lin_world
+            lin_vel = np.array([lin_body[0], lin_body[1], 0.0], dtype=np.float32)
+            # yaw rate as body-frame angular velocity z
+            dtheta = math.atan2(math.sin(pose.theta - prev_p[2]),
+                                math.cos(pose.theta - prev_p[2]))
+            ang_vel = np.array([0.0, 0.0, dtheta / dt], dtype=np.float32)
+        self._prev_pose[player_id] = (pose.x, pose.y, pose.theta, now)
 
         # Projected gravity (simplified from theta)
         grav = np.array([-math.sin(pose.theta), math.cos(pose.theta)], dtype=np.float32)
