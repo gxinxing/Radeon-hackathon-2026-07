@@ -90,6 +90,8 @@ def main():
             output_names=["action"],
             dynamic_axes={"obs": {0: "batch"}, "action": {0: "batch"}},
             opset_version=17,
+            export_params=True,           # embed weights in the ONNX file
+            do_constant_folding=True,
         )
 
     file_size = os.path.getsize(args.output) / 1e3
@@ -97,6 +99,13 @@ def main():
     print(f"  Input:  obs  [batch, {obs_dim}]")
     print(f"  Output: action [batch, {action_dim}]")
     print(f"  Opset: 17")
+
+    # Validation gate: file must contain real weights
+    if file_size < 10:
+        print(f"  ⚠️  WARNING: File is only {file_size:.1f} KB — likely a stub export!")
+        print(f"      Check that the model loaded correctly.")
+    else:
+        print(f"  ✓ File size {file_size:.1f} KB — weights appear embedded")
 
 
 if __name__ == "__main__":
