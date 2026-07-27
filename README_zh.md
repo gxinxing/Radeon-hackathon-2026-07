@@ -13,7 +13,7 @@
 >（平衡、追球、射门）—— 这是**首个基于 AMD GPU 的人形足球训练 pipeline**，
 > 证明无需 NVIDIA 硬件即可训练出有竞争力的机器人策略。
 
-**AMD AI DevMaster 黑客马拉松 2026 — Track 3: Physical AI**
+**AMD AI DevMaster 黑客松 2026 — Track 3: Physical AI**
 
 ---
 
@@ -544,4 +544,4 @@ bash run_3v3.sh runs/hierarchical_soccer_chase_hl/model_1894.pt 25
 
 ## 📄 License
 
-本项目为 AMD AI DevMaster 黑客马拉松提交作品。请参阅竞赛仓库了解许可条款。
+本项目为 AMD AI DevMaster 黑客松提交作品。请参阅竞赛仓库了解许可条款。
