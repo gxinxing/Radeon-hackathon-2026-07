@@ -81,7 +81,7 @@ def main():
             input_names=["obs"],
             output_names=["action"],
             dynamic_axes={"obs": {0: "batch"}, "action": {0: "batch"}},
-            opset_version=14,
+            opset_version=17,
         )
 
     file_size = os.path.getsize(args.output) / 1e6
