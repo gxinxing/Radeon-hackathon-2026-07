@@ -434,5 +434,5 @@ repository for licensing terms.
 
 ## Team
 
-- Team Name: [Your Team Name]
-- Members: [Team member details]
+- Team Name: [Your Team Name]  <!-- TODO: fill in before submission -->
+- Members: [Team member details]  <!-- TODO: fill in before submission -->
