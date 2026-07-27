@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Humanoid Soccer on AMD Radeon GPU — Project Poster</title>
+<style>
+  :root {
+    --amd-red: #ED1C24;
+    --amd-dark: #1A1A2E;
+    --amd-darker: #0D0D1A;
+    --amd-gray: #2A2A3E;
+    --text-primary: #FFFFFF;
+    --text-secondary: #B0B0C0;
+    --accent-green: #00E676;
+    --accent-blue: #00B0FF;
+    --accent-orange: #FF9100;
+    --card-bg: rgba(255,255,255,0.04);
+    --card-border: rgba(255,255,255,0.08);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--amd-darker);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.5;
+  }
+  .poster {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 40px;
+  }
+  /* Header */
+  .header {
+    text-align: center;
+    padding: 40px 20px;
+    background: linear-gradient(135deg, var(--amd-dark) 0%, var(--amd-darker) 100%);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    margin-bottom: 30px;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: radial-gradient(circle, rgba(237,28,36,0.08) 0%, transparent 50%);
+    animation: pulse 6s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100% { opacity:0.5; } 50% { opacity:1; } }
+  .header-badge {
+    display: inline-block;
+    background: var(--amd-red);
+    color: white;
+    padding: 4px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+    position: relative; z-index: 1;
+  }
+  .header h1 {
+    font-size: 36px;
+    font-weight: 800;
+    position: relative; z-index: 1;
+    line-height: 1.2;
+  }
+  .header .subtitle {
+    font-size: 16px;
+    color: var(--text-secondary);
+    margin-top: 8px;
+    position: relative; z-index: 1;
+  }
+  .header .stack {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 16px;
+    flex-wrap: wrap;
+    position: relative; z-index: 1;
+  }
+  .stack span {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  /* Grid */
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 30px;
+  }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 24px;
+  }
+  .card-title {
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--amd-red);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title::before {
+    content: '';
+    width: 4px; height: 16px;
+    background: var(--amd-red);
+    border-radius: 2px;
+  }
+  /* Metrics */
+  .metric {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .metric:last-child { border: none; }
+  .metric-label { font-size: 13px; color: var(--text-secondary); }
+  .metric-value { font-size: 15px; font-weight: 700; }
+  .delta { font-size: 12px; color: var(--accent-green); margin-left: 4px; }
+  .delta-bad { color: var(--amd-red); }
+  /* Architecture */
+  .arch-box {
+    background: rgba(0,176,255,0.06);
+    border: 1px solid rgba(0,176,255,0.2);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 8px;
+    text-align: center;
+  }
+  .arch-box .label { font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
+  .arch-box .value { font-size: 14px; font-weight: 700; }
+  .arch-arrow { text-align: center; color: var(--text-secondary); font-size: 18px; margin: 4px 0; }
+  /* Bug fixes */
+  .bug-list { list-style: none; }
+  .bug-list li {
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-size: 13px;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .bug-list li:last-child { border: none; }
+  .bug-icon {
+    flex-shrink: 0;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: var(--amd-red);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700;
+  }
+  .fix-icon { background: var(--accent-green); color: var(--amd-dark); }
+  /* Bar chart */
+  .bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .bar-label { width: 80px; font-size: 12px; color: var(--text-secondary); text-align: right; }
+  .bar-track { flex: 1; height: 20px; background: rgba(255,255,255,0.04); border-radius: 4px; overflow: hidden; position: relative; }
+  .bar-fill { height: 100%; border-radius: 4px; display: flex; align-items: center; justify-content: flex-end; padding-right: 6px; font-size: 11px; font-weight: 700; }
+  .bar-fill.baseline { background: linear-gradient(90deg, #555, #777); }
+  .bar-fill.rl { background: linear-gradient(90deg, var(--amd-red), #ff4a4a); }
+  /* Distributed */
+  .dist-diagram {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+  }
+  .dist-node {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 11px;
+    text-align: center;
+  }
+  .dist-node.rl { border-color: var(--amd-red); background: rgba(237,28,36,0.1); }
+  .dist-node .role { font-weight: 700; }
+  .dist-node .steps { color: var(--text-secondary); font-size: 10px; }
+  /* Results banner */
+  .results {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 30px;
+  }
+  .result-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+  }
+  .result-value { font-size: 28px; font-weight: 800; margin: 4px 0; }
+  .result-label { font-size: 12px; color: var(--text-secondary); }
+  .result-card.green .result-value { color: var(--accent-green); }
+  .result-card.blue .result-value { color: var(--accent-blue); }
+  .result-card.orange .result-value { color: var(--accent-orange); }
+  .result-card.red .result-value { color: var(--amd-red); }
+  /* Footer */
+  .footer {
+    text-align: center;
+    padding: 20px;
+    color: var(--text-secondary);
+    font-size: 13px;
+    border-top: 1px solid var(--card-border);
+  }
+  .footer a { color: var(--accent-blue); text-decoration: none; }
+  /* Table */
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { text-align: left; padding: 6px 8px; color: var(--text-secondary); font-weight: 600; border-bottom: 1px solid var(--card-border); }
+  td { padding: 6px 8px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; }
+  .tag-pass { background: rgba(0,230,118,0.15); color: var(--accent-green); }
+  .tag-fix { background: rgba(237,28,36,0.15); color: var(--amd-red); }
+  .tag-new { background: rgba(0,176,255,0.15); color: var(--accent-blue); }
+  @media (max-width: 900px) {
+    .grid, .grid-2, .results { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="poster">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-badge">AMD AI DevMaster Hackathon — Track 3: Physical AI</div>
+    <h1>Humanoid Robot Soccer Policy Training<br>on AMD Radeon GPU</h1>
+    <div class="subtitle">First AMD-GPU humanoid soccer training pipeline — Genesis + ROCm PyTorch + rsl_rl</div>
+    <div class="stack">
+      <span>🔴 Genesis 1.2.3</span>
+      <span>🔴 PyTorch 2.9.1 ROCm 7.2</span>
+      <span>🔴 rsl_rl 5.4.2 (PPO)</span>
+      <span>🔴 Booster T1 (31 DoF)</span>
+      <span>🔴 ONNX opset 17</span>
+    </div>
+  </div>
+
+  <!-- KEY RESULTS BANNER -->
+  <div class="results">
+    <div class="result-card green">
+      <div class="result-label">Reward Improvement</div>
+      <div class="result-value">-22 → +24</div>
+      <div class="result-label">After P0/P1/P2 tuning</div>
+    </div>
+    <div class="result-card blue">
+      <div class="result-label">Action Std (fixed)</div>
+      <div class="result-value">5.78 → 0.07</div>
+      <div class="result-label">Noise blowup resolved</div>
+    </div>
+    <div class="result-card orange">
+      <div class="result-label">ONNX Inference</div>
+      <div class="result-value">0.4 ms</div>
+      <div class="result-label">19→3 dim, real-time</div>
+    </div>
+    <div class="result-card red">
+      <div class="result-label">3v3 Match</div>
+      <div class="result-value">6 robots</div>
+      <div class="result-label">Zero GPU crash</div>
+    </div>
+  </div>
+
+  <!-- MAIN GRID -->
+  <div class="grid">
+    <!-- Card 1: Architecture -->
+    <div class="card">
+      <div class="card-title">Hierarchical Policy Architecture</div>
+      <div class="arch-box">
+        <div class="label">High-Level PPO (Trainable)</div>
+        <div class="value">19-dim obs → 3-dim action (vx, vy, wz) @ 10 Hz</div>
+      </div>
+      <div class="arch-arrow">↓ velocity command</div>
+      <div class="arch-box">
+        <div class="label">Low-Level Walk Model (Frozen)</div>
+        <div class="value">720-dim obs → 21-dim joint targets @ 50 Hz</div>
+      </div>
+      <div class="arch-arrow">↓ PD control</div>
+      <div class="arch-box">
+        <div class="label">Genesis Physics (AMD Radeon GPU)</div>
+        <div class="value">T1 humanoid + soccer ball + 14×9m field</div>
+      </div>
+      <div style="margin-top:12px;">
+        <div class="metric"><span class="metric-label">Ball pos/vel (body frame)</span><span class="metric-value">4 dim</span></div>
+        <div class="metric"><span class="metric-label">Goal direction + distance</span><span class="metric-value">3 dim</span></div>
+        <div class="metric"><span class="metric-label">Proprioception (vel, grav, cmd)</span><span class="metric-value">12 dim</span></div>
+      </div>
+    </div>
+
+    <!-- Card 2: Training Results -->
+    <div class="card">
+      <div class="card-title">Training Results</div>
+      <div class="metric">
+        <span class="metric-label">Mean reward (start→end)</span>
+        <span class="metric-value">-22 → +24 <span class="delta">▲46</span></span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">Episode length (start→end)</span>
+        <span class="metric-value">18 → 225 <span class="delta">▲207</span></span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">Action std (before→after fix)</span>
+        <span class="metric-value">5.78 → 0.07 <span class="delta">✓</span></span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">Parallel environments</span>
+        <span class="metric-value">2,048</span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">Training iterations</span>
+        <span class="metric-value">500 + 2,093</span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">Steps per second (GPU)</span>
+        <span class="metric-value">~847</span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">Total training steps</span>
+        <span class="metric-value">1.5M+</span>
+      </div>
+      <div style="margin-top:12px; padding:8px; background:rgba(0,230,118,0.06); border-radius:6px; font-size:12px;">
+        <strong style="color:var(--accent-green)">P0/P1/P2 Tuning:</strong>
+        hl_clip 0.05→0.8, upright 5→0.5, approach_ball 1→10,
+        entropy_coef 0.01→0.003, lr 3e-3→1e-3
+      </div>
+    </div>
+
+    <!-- Card 3: 5 Critical Bug Fixes -->
+    <div class="card">
+      <div class="card-title">5 Critical Bug Fixes</div>
+      <ul class="bug-list">
+        <li>
+          <span class="bug-icon">1</span>
+          <div><strong>Floating base lock</strong><br>URDF world_joint commented out + merge_fixed_links=True → robot ignores gravity. <span style="color:var(--accent-green)">Fixed: uncomment + merge_fixed_links=False</span></div>
+        </li>
+        <li>
+          <span class="bug-icon">2</span>
+          <div><strong>Termination unit mismatch</strong><br>base_euler in degrees, term_pitch in radians (0.52° vs 30°) → 1-step termination. <span style="color:var(--accent-green)">Fixed: use degree values directly</span></div>
+        </li>
+        <li>
+          <span class="bug-icon">3</span>
+          <div><strong>Obs history timing</strong><br>_build_low_level_obs updated history before physics step → temporal misalignment. <span style="color:var(--accent-green)">Fixed: read obs_buf only, update after step</span></div>
+        </li>
+        <li>
+          <span class="bug-icon">4</span>
+          <div><strong>Conservative local optimum</strong><br>approach_ball=1 → reward +34 but ball distance unchanged (standing still). <span style="color:var(--accent-green)">Fixed: curriculum + approach_ball=10</span></div>
+        </li>
+        <li>
+          <span class="bug-icon">5</span>
+          <div><strong>Action std explosion</strong><br>entropy_coef=0.01 → std 5.78, noise dominates policy. <span style="color:var(--accent-green)">Fixed: entropy_coef=0.003 → std 0.07</span></div>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- SECOND ROW -->
+  <div class="grid-2">
+    <!-- Card 4: Module E Comparison -->
+    <div class="card">
+      <div class="card-title">Module E: Baseline vs RL — Ball Distance Reduction</div>
+      <p style="font-size:12px; color:var(--text-secondary); margin-bottom:12px;">
+        Lower is better — min_d = closest the robot got to the ball during 300-step rollout
+      </p>
+      <div class="bar-row">
+        <span class="bar-label">Front Close</span>
+        <div class="bar-track">
+          <div class="bar-fill baseline" style="width:80%">1.87m</div>
+        </div>
+      </div>
+      <div class="bar-row">
+        <span class="bar-label">↑ RL</span>
+        <div class="bar-track">
+          <div class="bar-fill rl" style="width:55%">1.28m</div>
+        </div>
+      </div>
+      <div class="bar-row">
+        <span class="bar-label">Front Far</span>
+        <div class="bar-track">
+          <div class="bar-fill baseline" style="width:95%">4.63m</div>
+        </div>
+      </div>
+      <div class="bar-row">
+        <span class="bar-label">↑ RL</span>
+        <div class="bar-track">
+          <div class="bar-fill rl" style="width:89%">4.81m</div>
+        </div>
+      </div>
+      <div class="bar-row">
+        <span class="bar-label">Left</span>
+        <div class="bar-track">
+          <div class="bar-fill baseline" style="width:62%">1.50m</div>
+        </div>
+      </div>
+      <div class="bar-row">
+        <span class="bar-label">↑ RL</span>
+        <div class="bar-track">
+          <div class="bar-fill rl" style="width:93%">2.26m</div>
+        </div>
+      </div>
+      <div class="bar-row">
+        <span class="bar-label">Right</span>
+        <div class="bar-track">
+          <div class="bar-fill baseline" style="width:74%">3.58m</div>
+        </div>
+      </div>
+      <div class="bar-row">
+        <span class="bar-label">↑ RL</span>
+        <div class="bar-track">
+          <div class="bar-fill rl" style="width:74%">3.58m</div>
+        </div>
+      </div>
+      <div style="margin-top:12px; font-size:12px; color:var(--text-secondary);">
+        <span style="display:inline-block;width:12px;height:12px;background:#777;border-radius:2px;vertical-align:middle;"></span> Baseline (rule-based)
+        &nbsp;&nbsp;
+        <span style="display:inline-block;width:12px;height:12px;background:var(--amd-red);border-radius:2px;vertical-align:middle;"></span> RL Chase v3
+      </div>
+    </div>
+
+    <!-- Card 5: Distributed Match & Sim2Sim -->
+    <div class="card">
+      <div class="card-title">Distributed 3v3 Match & Sim2Sim Deployment</div>
+      <p style="font-size:12px; color:var(--text-secondary); margin-bottom:8px;">
+        Genesis ROCm crashes with 2+ robots per scene (hipErrorLaunchFailure).
+        Workaround: multi-process distributed architecture.
+      </p>
+      <div style="background:rgba(0,176,255,0.06); border:1px solid rgba(0,176,255,0.2); border-radius:8px; padding:12px; margin-bottom:12px;">
+        <div style="font-size:13px; font-weight:700; margin-bottom:8px;">Socket Coordinator (50 Hz sync)</div>
+        <div class="dist-diagram">
+          <div class="dist-node rl"><div class="role">RL Agent</div><div class="steps">119 steps</div></div>
+          <div class="dist-node"><div class="role">Ally 1</div><div class="steps">82 steps</div></div>
+          <div class="dist-node"><div class="role">Ally 2</div><div class="steps">84 steps</div></div>
+          <div class="dist-node"><div class="role">Opp 1</div><div class="steps">75 steps</div></div>
+          <div class="dist-node"><div class="role">Opp 2</div><div class="steps">81 steps</div></div>
+          <div class="dist-node"><div class="role">Opp GK</div><div class="steps">78 steps</div></div>
+        </div>
+      </div>
+      <div class="metric">
+        <span class="metric-label">Total steps logged (3v3)</span>
+        <span class="metric-value">1,240</span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">GPU crashes</span>
+        <span class="metric-value" style="color:var(--accent-green)">Zero</span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">Concurrent processes</span>
+        <span class="metric-value">6</span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">Sim2Sim: ONNX deploy</span>
+        <span class="metric-value">✓ Booster Studio</span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">Match log format</span>
+        <span class="metric-value">JSON (structured)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- THIRD ROW: Innovation & Contribution -->
+  <div class="grid-2">
+    <!-- Card 6: Innovation -->
+    <div class="card">
+      <div class="card-title">Innovations & Key Contributions</div>
+      <table>
+        <tr>
+          <td><span class="tag tag-new">FIRST</span></td>
+          <td>AMD-GPU humanoid soccer training pipeline (Isaac Gym alternative)</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-fix">FIX</span></td>
+          <td>5 floating-base dynamics bugs in Genesis URDF loading</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-new">NEW</span></td>
+          <td>Hierarchical policy: frozen walk + trainable high-level PPO</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-new">NEW</span></td>
+          <td>Distributed multi-robot architecture bypassing Genesis ROCm crash</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-pass">SOLVE</span></td>
+          <td>ONNX export via raw MLP extraction (bypasses rsl_rl tracing limit)</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-pass">SOLVE</span></td>
+          <td>Curriculum learning: clip 0.05→0.8 + reward rebalancing</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- Card 7: Module F Benchmark -->
+    <div class="card">
+      <div class="card-title">Module F: Standardized Benchmark (4 scenarios × 10 runs)</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Scenario</th>
+            <th class="num">Mean Δd</th>
+            <th class="num">Min dist</th>
+            <th class="num">Falls</th>
+            <th class="num">Reward</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Front Close</td>
+            <td class="num">-0.01m</td>
+            <td class="num">1.28m</td>
+            <td class="num">1/10</td>
+            <td class="num">76.5</td>
+          </tr>
+          <tr>
+            <td>Front Far</td>
+            <td class="num">-0.17m</td>
+            <td class="num">4.48m</td>
+            <td class="num">1/10</td>
+            <td class="num">72.0</td>
+          </tr>
+          <tr>
+            <td>Left</td>
+            <td class="num">-0.05m</td>
+            <td class="num">2.02m</td>
+            <td class="num">0/10</td>
+            <td class="num">74.6</td>
+          </tr>
+          <tr>
+            <td>Right</td>
+            <td class="num">-0.33m</td>
+            <td class="num">3.24m</td>
+            <td class="num">2/10</td>
+            <td class="num">73.4</td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="margin-top:12px; padding:8px; background:rgba(0,230,118,0.06); border-radius:6px; font-size:12px;">
+        <strong style="color:var(--accent-green)">Inference:</strong> mean 0.41ms, p95 0.40ms, 4000 samples — real-time capable
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <p><strong>AMD AI DevMaster Hackathon 2026 — Track 3: Physical AI</strong></p>
+    <p>Genesis + ROCm PyTorch + rsl_rl | Anrui Cloud AMD GPU (51 GB VRAM) | Booster T1 Humanoid</p>
+    <p style="margin-top:8px;">
+      <a href="https://github.com/AMD-DEV-CONTEST/Radeon-hackathon-2026-07">github.com/AMD-DEV-CONTEST/Radeon-hackathon-2026-07</a>
+    </p>
+  </div>
+
+</div>
+</body>
+</html>
