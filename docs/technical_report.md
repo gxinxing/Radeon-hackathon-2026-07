@@ -56,8 +56,8 @@ Booster Robotics' official RL training frameworks (Booster Gym / Booster Train) 
 │  │  Floating-base T1 humanoid + soccer ball         │     │
 │  └─────────────────────────────────────────────────┘     │
 │                                                          │
-│  Reward: approach_ball(30) + upright(5) + alive(3)       │
-│          + ball_control + ball_to_goal - fall - energy   │
+│  Reward: approach_ball(10) + upright(0.5) + alive(0)      │
+│          + ball_control(2) + ball_to_goal(3) - fall       │
 └──────────────────────────┬──────────────────────────────┘
                            │
                            ▼
@@ -186,16 +186,16 @@ def _low_level_step(self, joint_actions):
 | Max iterations | 500 (Stage 1), 250 (Chase v3) |
 | Save interval | 50 |
 
-### 4.2 Reward Function
+### 4.2 Reward Function (P0/P1/P2 Tuned)
 
 | Reward Term | Weight | Description |
 |-------------|--------|-------------|
-| upright | 5.0 | Torso upright indicator |
-| alive | 3.0 | Not fallen bonus |
-| approach_ball | 30.0 | Distance decrease to ball |
-| ball_control | 0.5 | Close to ball (exp kernel) |
-| ball_to_goal | 1.0 | Ball moving toward goal |
-| goal_scored | 10.0 | Ball crosses goal line |
+| upright | 0.5 | Torso upright indicator (reduced — frozen model handles balance) |
+| alive | 0.0 | Not fallen bonus (removed — passive reward caused local optimum) |
+| approach_ball | 10.0 | Distance decrease to ball (dominant reward signal) |
+| ball_control | 2.0 | Close to ball (exp kernel) |
+| ball_to_goal | 3.0 | Ball moving toward goal |
+| goal_scored | 30.0 | Ball crosses goal line |
 | fall_penalty | -5.0 | Fallen (not time-scaled) |
 | action_rate | -1.0 | Penalize jerky commands |
 | energy_penalty | -0.01 | Action squared sum |
@@ -236,7 +236,32 @@ Robot learned to stand indefinitely (ep_len = 241 = max episode length). Reward 
 | v2 | 50.0 | 3.0 | 2.0 | 64-106 | 161-231 | Aggressive exploration, unstable |
 | **v3** | **30.0** | **5.0** | **3.0** | **150-166** | **208-223** | **Stable chasing** ✅ |
 
-**v3 selected as final model**: Balance between v1 (too conservative) and v2 (too aggressive). Reward stable at 150-166, ep_len stable at 208-223.
+**v3 selected as intermediate model**: Balance between v1 (too conservative) and v2 (too aggressive). Reward stable at 150-166, ep_len stable at 208-223.
+
+### 4.5.1 P0/P1/P2 Parameter Overhaul
+
+After v3, a systematic parameter tuning pass (P0/P1/P2) was conducted to address remaining issues:
+
+| Parameter | Before (v3) | After (P0/P1/P2) | Rationale |
+|-----------|------------|-------------------|-----------|
+| hl_clip (lin/ang) | 0.05 / 0.05 | 0.8 / 1.0 | Unlock full walking speed |
+| upright | 5.0 | 0.5 | Frozen model already balances — stop reward saturation |
+| alive | 3.0 | 0.0 | Remove passive survival bonus causing local optimum |
+| approach_ball | 1.0→30.0 | 10.0 | Ball chase must dominate reward budget |
+| ball_control | 0.5 | 2.0 | Reward close ball proximity |
+| ball_to_goal | 1.0 | 3.0 | Encourage ball-to-goal movement |
+| goal_scored | 10.0 | 30.0 | Major objective reward |
+| entropy_coef | 0.01 | 0.003 | Fixes action_std explosion (5.78→0.07) |
+| learning_rate | 3e-3 | 1e-3 | Stabilize value loss |
+
+**P0/P1/P2 Results** (500 iterations, fresh training):
+
+| Metric | Start | End | Change |
+|--------|-------|-----|--------|
+| Mean reward | -22 | +24 | ▲46 |
+| Episode length | 18 | 225 | ▲207 |
+| Action std | 1.0 | 0.07 | ✓ Stable |
+| Ball distance (min) | 4.29m | 0.25m | ▲93% reduction |
 
 ### 4.6 Training Performance on AMD Radeon GPU
 
@@ -309,11 +334,11 @@ Two models compared on 4 standardized ball positions:
 
 | Property | Value |
 |----------|-------|
-| File | `demos/hierarchical_chase_hl.mp4` |
-| Duration | 300 steps (30s simulated, 150 frames) |
-| Robot height | 0.91-0.93m (stable) |
+| Files | `demos/hierarchical_chase_hl_v3.mp4`, `demos/hierarchical_chase_hl_v4.mp4` |
+| Duration | 300-500 steps (30-50s simulated, 150-250 frames) |
+| Robot height | 0.90-0.93m (stable) |
 | Falls | 0 |
-| Total reward | 222.3 |
+| Ball distance (v4 min) | 0.25m (closest approach to ball) |
 
 ### 6.4 GitHub Repository
 
@@ -328,34 +353,43 @@ All code, training logs, benchmark data, ONNX model, and demo video are archived
 
 When the ball is within 2m, the robot needs fine motor adjustments (lowering center of gravity, small steps) that the velocity-command interface cannot express. This is a known limitation of the hierarchical architecture — a residual joint-level policy or closer-range curriculum would be needed.
 
-### 7.2 Multi-Robot Simulation (1v1 / 3v3)
+### 7.2 Multi-Robot Simulation — Distributed Architecture Workaround
 
-Extending the Genesis environment to support multiple robots (for 1v1 and 3v3 training) encountered a GPU kernel crash (`hipErrorLaunchFailure`) when two humanoid robots with floating bases are simulated in the same scene. This appears to be a ROCm + Genesis multi-rigid-body collision interaction issue. The 1v1 environment code (`soccer_env_1v1.py`) has been written and is ready for testing once this issue is resolved.
+Genesis on AMD ROCm crashes with `hipErrorLaunchFailure` when two or more humanoid robots
+with floating bases are loaded in the same scene (VRAM usage only 0.9 GB / 51.5 GB — not a
+memory issue). This is a platform-level bug in Genesis + ROCm multi-articulated-body collision.
 
-**Potential solutions**:
-1. Reduce parallel environments (64 instead of 256) and disable robot self-collision
-2. Migrate to Booster Studio Sim2Sim using the exported ONNX model with rule-based opponents
+**Solution**: A distributed multi-process architecture was implemented:
+- Each robot runs in its own Genesis process (proven stable with 1 robot)
+- A socket-based coordinator synchronizes state at 50 Hz
+- Pairwise collision detection applies push-back forces
+- Verified with 6 concurrent processes (3v3 match) on a single AMD GPU
+
+**Results**:
+- 1v1 match: RL agent 119 steps vs rule opponent 112 steps, zero GPU crash
+- 3v3 match: All 6 workers 75-84 steps, 1240 total steps logged, zero GPU crash
+- Match logs saved as structured JSON with per-step robot/ball positions
 
 ---
 
 ## 8. Future Work
 
-### 8.1 Short-term: Multi-Robot Training
+### 8.1 Short-term: Booster Studio Sim2Sim Deployment
 
-1. **Route A**: Debug Genesis multi-robot simulation with reduced complexity (fewer envs, simplified collision)
-2. **Route B**: Deploy chase_v3 ONNX in Booster Studio's 3v3 SoccerSim with rule-based teammates and opponents for Sim2Sim validation
+1. Deploy chase_v3 ONNX in Booster Studio's 3v3 SoccerSim with rule-based teammates and opponents
+2. Requires VNC access to cloud instance for GUI-based SoccerSim launcher
 
 ### 8.2 Medium-term: Skill Extension
 
-1. **Close-range ball control**: Add residual policy for fine motor control near the ball
+1. **Close-range ball control**: Robot approaches ball to 0.25m but cannot stabilize possession — needs residual policy for fine motor control near the ball
 2. **Shooting skill**: Train separate shoot policy with ball-to-goal reward
 3. **Dribbling**: Add ball-contact detection and control reward
 
-### 8.3 Long-term: Full 3v3 Soccer
+### 8.3 Long-term: Full Autonomous 3v3 Soccer
 
-1. **1v1**: RL agent vs rule-based opponent — verify collision physics
-2. **3v0**: Three RL agents, no opponents — verify multi-agent coordination
-3. **3v3**: Three RL agents vs three rule-based opponents — full soccer match
+1. **3v3 with RL teammates**: Replace rule-based allies with trained RL agents
+2. **Collision physics refinement**: Current distributed collision is approximate push-back; improve to realistic contact response
+3. **Multi-agent coordination**: Train shared or independent policies for team play
 
 ---
 
@@ -371,6 +405,6 @@ Extending the Genesis environment to support multiple robots (for 1v1 and 3v3 tr
 
 ## 10. Conclusion
 
-This project demonstrates the first complete humanoid robot soccer training pipeline on AMD Radeon GPUs using Genesis + ROCm PyTorch. Five critical floating-base simulation bugs were identified and fixed, enabling physically accurate humanoid dynamics. The hierarchical policy architecture (frozen walk model + trainable high-level PPO) successfully learned autonomous ball-chasing behavior through curriculum training, achieving stable balance (0 falls, pitch < 15°) and monotonic ball distance reduction across multiple scenarios. All engineering deliverables — benchmark data, ONNX deployment model, demo video, and reproducible code — are archived on GitHub.
+This project demonstrates the first complete humanoid robot soccer training pipeline on AMD Radeon GPUs using Genesis + ROCm PyTorch. Five critical floating-base simulation bugs were identified and fixed, enabling physically accurate humanoid dynamics. The hierarchical policy architecture (frozen walk model + trainable high-level PPO) successfully learned autonomous ball-chasing behavior through curriculum training, achieving stable balance (0 falls, pitch < 15°) and monotonic ball distance reduction across multiple scenarios.
 
-The multi-robot 3v3 extension is identified as future work, with two viable routes (Genesis debugging or Booster Studio Sim2Sim) clearly mapped out.
+A distributed multi-process architecture was developed to bypass Genesis ROCm's multi-entity GPU crash, enabling 1v1 and 3v3 matches with 6 concurrent robots on a single AMD GPU. All engineering deliverables — benchmark data, ONNX deployment model, demo video, distributed match system, and reproducible code — are archived on GitHub.

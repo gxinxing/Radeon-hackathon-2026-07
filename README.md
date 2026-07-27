@@ -181,9 +181,9 @@ Key configurable parameters in `hierarchical_agent.yaml`:
 | `num_envs` | 2048 | Parallel simulation environments |
 | `max_iterations` | 500 | PPO training iterations |
 | `high_level.decimation` | 5 | High-level control frequency = 50Hz / 5 = 10Hz |
-| `reward.approach_ball` | 5.0 | Reward weight for decreasing ball distance |
-| `reward.goal_scored` | 20.0 | Reward for scoring a goal |
-| `train.algorithm.learning_rate` | 3e-3 | PPO learning rate (adaptive schedule) |
+| `reward.approach_ball` | 10.0 | Reward weight for decreasing ball distance |
+| `reward.goal_scored` | 30.0 | Reward for scoring a goal |
+| `train.algorithm.learning_rate` | 1e-3 | PPO learning rate (adaptive schedule) |
 | `train.policy.actor_hidden_dims` | [256, 128, 64] | Actor network architecture |
 
 ## Usage
@@ -230,7 +230,7 @@ ls runs/hierarchical_soccer_chase_hl/
     --steps 500
 ```
 
-Output: `demo/hierarchical_chase_hl.mp4`
+Output: `demos/hierarchical_chase_hl_v4.mp4`
 
 ### Exporting ONNX for Deployment
 
