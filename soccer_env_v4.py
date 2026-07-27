@@ -387,14 +387,12 @@ class SoccerEnv:
         just_recovered = self.fallen_prev & (~fallen)
 
         shooting_now = (ball_vel_to_goal > 1.0) & (self.shot_prev_vel < 1.0)
-        for i in range(self.num_envs):
-            if shooting_now[i]:
-                self.shots_taken += 1
-                if abs(self.ball_pos[i, 1].item()) < self.goal_half:
-                    self.shots_on_target += 1
-        for i in range(self.num_envs):
-            if scored[i] and self.shot_prev_vel[i] > 0.5:
-                self.goals_scored += 1
+        # Vectorized counters — 3 GPU syncs total instead of 2*num_envs syncs.
+        # (The old per-env python loops scaled linearly with num_envs and would
+        #  bottleneck training at 1024+ envs. Statistics are identical.)
+        self.shots_taken += int(shooting_now.sum())
+        self.shots_on_target += int((shooting_now & (self.ball_pos[:, 1].abs() < self.goal_half)).sum())
+        self.goals_scored += int((scored & (self.shot_prev_vel > 0.5)).sum())
         self.shot_prev_vel.copy_(ball_vel_to_goal)
 
         return {
