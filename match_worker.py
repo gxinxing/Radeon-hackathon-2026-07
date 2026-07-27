@@ -107,7 +107,7 @@ class MatchWorker:
 
         while self.running and step < N_STEPS:
             # Receive ONE set of messages (opp state + ball), then proceed
-            self.sock.settimeout(2.0)
+            self.sock.settimeout(30.0)  # long timeout: wait for coordinator to start broadcasting
             try:
                 # Read opp state
                 msg_type, data = recv_msg(self.sock)
@@ -118,6 +118,7 @@ class MatchWorker:
                 elif msg_type == MSG_STATE and data:
                     self.opp_states['opp'] = np.array(data[:3])
                 elif msg_type is None:
+                    # Connection truly lost (not timeout)
                     print(f'[{self.role}] Connection lost before step {step}')
                     self.running = False
                     break
