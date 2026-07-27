@@ -7,8 +7,55 @@ into Booster Studio's 3v3 SoccerSim for Sim2Sim validation.
 
 - Cloud instance access (Anrui Cloud AMD GPU with VNC)
 - Booster Studio 1.9.4+ installed
-- ONNX policy exported: `models/chase_v3_policy.onnx` (19→3 dim, opset 17)
 - Booster agent framework: `src/booster_agent/`
+- A **valid** ONNX policy re-exported from the 2048-envs checkpoint (see Step 0)
+  - **MANDATORY size gate**: file MUST be **> 50 KB**. A ~2 KB file is a stub/empty
+    export (no trained weights) and will make the robot stand still in Sim2Sim.
+
+> ⚠️ **Do NOT reuse the committed `models/chase_v3_policy.onnx` / `chase_v4_policy.onnx` /
+> `chase_v5_policy.onnx`** — all three are 1973-byte stubs (verified). Re-export from the
+> real checkpoint on the cloud instance before doing anything else.
+
+## Step 0: Re-export & validate the ONNX on the cloud instance (CRITICAL)
+
+The trained checkpoints live only on the cloud instance, and the committed ONNX files are
+empty stubs. Re-export from the 2048-envs checkpoint, then gate on file size + weight shape.
+
+```bash
+cd /workspace/amd-physical-ai-soccer
+git pull   # make sure export_onnx.py + latest config are present
+
+# 0a. Locate the 2048-envs checkpoint (pick the highest-iteration model_*.pt)
+ls -t runs/hierarchical_soccer_*/model_*.pt | head -5
+#    → note the path of the 2048-envs run's latest checkpoint, e.g.
+#      runs/hierarchical_soccer_chase_v5_2048/model_300.pt
+
+# 0b. Re-export with explicit checkpoint + output name
+python export_onnx.py \
+    --model runs/hierarchical_soccer_chase_v5_2048/model_300.pt \
+    --output models/chase_v6_2048_policy.onnx
+
+# 0c. SIZE GATE — must be >> 50 KB, else the export silently failed
+ls -la models/chase_v6_2048_policy.onnx
+#    ✅ good: several hundred KB
+#    ❌ bad:  ~2 KB  → re-run 0a/0b, check for errors in export output
+
+# 0d. Weight-shape check (onnxruntime is installed in /opt/venv)
+/opt/venv/bin/python -c "
+import onnx
+m = onnx.load('models/chase_v6_2048_policy.onnx')
+print('ops:', m.opset_import[0].version, '| nodes:', len(m.graph.node))
+for i in m.graph.initializer:
+    print(f'  {i.name}: {list(i.dims)}  ({i.dims and i.dims[0]*i.dims[-1] if i.dims else 0} params)')
+total = sum(i.dims[0]*i.dims[-1] for i in m.graph.initializer if i.dims)
+print(f'TOTAL params in initializers: {total}  (a real policy has >10k)')
+"
+#    ✅ good: TOTAL params > 10000 and several MatMul/Gemm nodes
+#    ❌ bad:  TOTAL params == 0  → stub, do NOT proceed to VNC
+```
+
+Only continue to Step 1 once `chase_v6_2048_policy.onnx` passes both the size gate and the
+weight-shape check.
 
 ## Step 1: Access the Cloud Instance via VNC
 
@@ -38,28 +85,34 @@ You should see the Booster Studio GUI in the VNC window.
 ## Step 3: Prepare the ONNX Policy
 
 ```bash
-# Verify the ONNX model exists and is valid
+# Use the re-exported 2048-envs policy from Step 0
 cd /workspace/amd-physical-ai-soccer
-ls -la models/chase_v3_policy.onnx
+ls -la models/chase_v6_2048_policy.onnx
 
-# Quick validation (optional):
+# Quick validation (MUST pass the size + param checks below):
 /opt/venv/bin/python -c "
 import onnx
-model = onnx.load('models/chase_v3_policy.onnx')
+model = onnx.load('models/chase_v6_2048_policy.onnx')
 print(f'Input:  {model.graph.input[0].name} {[d.dim_value for d in model.graph.input[0].type.tensor_type.shape.dim]}')
 print(f'Output: {model.graph.output[0].name} {[d.dim_value for d in model.graph.output[0].type.tensor_type.shape.dim]}')
 print(f'Opset:  {model.opset_import[0].version}')
 print(f'Nodes:  {len(model.graph.node)}')
+total = sum(i.dims[0]*i.dims[-1] for i in model.graph.initializer if i.dims)
+print(f'TOTAL params in initializers: {total}')
 "
 ```
 
-Expected output:
+Expected output (a REAL policy):
 ```
-Input:  obs [1, 19]
+Input:  obs [1, <obs_dim>]
 Output: action [1, 3]
-Opset:  17
-Nodes:  7
+Opset:  14
+Nodes:  >= 7
+TOTAL params in initializers: > 10000
 ```
+> If `TOTAL params` is 0 or the file is ~2 KB, the export failed — go back to Step 0.
+> Note: `<obs_dim>` must match the dimension the Booster agent feeds (see Step 4); a
+> mismatch causes inference errors or a frozen robot.
 
 ## Step 4: Configure the Booster Agent
 
@@ -72,9 +125,10 @@ ls -la src/booster_agent/src/main.py
 ls -la src/booster_agent/src/rl_playbook.py
 
 # The agent reads the ONNX model from:
-# src/booster_agent/models/chase_v3_policy.onnx
-# (Already copied — verify it exists)
-ls -la src/booster_agent/models/chase_v3_policy.onnx
+# src/booster_agent/models/chase_v6_2048_policy.onnx
+# Copy your re-exported (validated) ONNX there:
+cp models/chase_v6_2048_policy.onnx src/booster_agent/models/
+ls -la src/booster_agent/models/chase_v6_2048_policy.onnx
 ```
 
 ### Agent Configuration
@@ -105,7 +159,7 @@ In the VNC window:
 1. Click on **Agent Configuration** for Team A, Position 1 (Attacker)
 2. Select **Custom ONNX Agent**
 3. Browse to: `/workspace/amd-physical-ai-soccer/src/booster_agent/src/main.py`
-4. The agent will load `chase_v3_policy.onnx` automatically
+4. The agent will load `chase_v6_2048_policy.onnx` automatically
 
 ### 5.3 Configure Opponents
 
