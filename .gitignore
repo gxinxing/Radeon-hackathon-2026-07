@@ -1,9 +1,14 @@
 # Python
 __pycache__/
+*.py[cod]
 *.pyc
 *.pyo
-.venv/
+*$py.class
+*.so
 *.egg-info/
+dist/
+build/
+.venv/
 
 # Logs
 *.log
@@ -14,10 +19,16 @@ wandb/
 *.pt
 *.onnx
 *.npz
+*.mp4
+*.tar.gz
 
-# IDE
+# IDE / Agent
 .vscode/
 .idea/
+.codely/
+.codely-cli/
+.pytest_cache/
+.ipynb_checkpoints/
 
 # Booster repos (cloned, not authored)
 booster/
@@ -25,8 +36,14 @@ booster/
 # System
 lost+found/
 .oneclick/
+.DS_Store
+Thumbs.db
 
 # Auto-generated
 logs/
 tmp/
+runs/
+demo/
+
+# Large mesh files
 amd-physical-ai-soccer/assets/t1/meshes/
