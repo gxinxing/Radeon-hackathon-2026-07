@@ -193,7 +193,7 @@ def _simulate_trades(
                     fee=fee, timestamp=timestamp, trades=trades,
                     reason="stop_loss", entry_price=entry_price,
                 )
-                balance += position * (current_price - entry_price) - position * current_price * fee
+                balance += position * current_price * (1 - fee)
                 position = 0.0
                 entry_price = 0.0
             elif take_profit and pnl_pct >= take_profit:
@@ -203,7 +203,7 @@ def _simulate_trades(
                     fee=fee, timestamp=timestamp, trades=trades,
                     reason="take_profit", entry_price=entry_price,
                 )
-                balance += position * (current_price - entry_price) - position * current_price * fee
+                balance += position * current_price * (1 - fee)
                 position = 0.0
                 entry_price = 0.0
 
@@ -214,7 +214,7 @@ def _simulate_trades(
                 fee=fee, timestamp=timestamp, trades=trades,
                 reason="signal_exit", entry_price=entry_price,
             )
-            balance += position * (current_price - entry_price) - position * current_price * fee
+            balance += position * current_price * (1 - fee)
             position = 0.0
             entry_price = 0.0
 
@@ -253,7 +253,7 @@ def _simulate_trades(
             fee=fee, timestamp=df.index[-1], trades=trades,
             reason="backtest_end", entry_price=entry_price,
         )
-        balance += position * (last_price - entry_price) - position * last_price * fee
+        balance += position * last_price * (1 - fee)
         position = 0.0
 
     # --- Calculate metrics ---
