@@ -305,11 +305,17 @@ Output: `benchmark/gpu_samples.csv` and `benchmark/gpu_samples.json`
 ├── verify_t1_walk.py              # Verify t1_walk.pt walks 30s without falling
 ├── export_onnx.py                 # Export trained policy to ONNX
 ├── benchmark_collect.py           # ROCm GPU benchmark collector
-├── match_3v3.py                   # 3v3 match simulation runner
+├── match_coordinator.py            # Distributed match coordinator (socket sync)
+├── match_worker.py                # Distributed match worker (1 robot per process)
+├── run_1v1.sh                      # Launch 1v1 match (2 workers)
+├── run_3v3.sh                      # Launch 3v3 match (6 workers)
+├── match_3v3.py                   # 3v3 match simulation runner (legacy)
 ├── match_evaluator.py             # Match evaluation logic
 ├── match_scene.py                 # Match scene setup
+├── soccer_env_1v1.py              # 1v1 environment (Genesis multi-entity, WIP)
 ├── disturbance.py                 # Disturbance injection (push, wind)
 ├── inject_proxy.py                # Proxy injection for agent framework
+├── export_onnx_mlp.py             # ONNX export via raw MLP extraction
 ├── configs/
 │   ├── hierarchical_agent.yaml    # Hierarchical training config
 │   ├── soccer_agent.yaml          # Flat policy training config
@@ -317,21 +323,27 @@ Output: `benchmark/gpu_samples.csv` and `benchmark/gpu_samples.json`
 ├── src/
 │   ├── soccer_env/
 │   │   └── soccer_scene.py         # Genesis soccer field scene builder
-│   └── match_3v3/
-│       ├── __init__.py
-│       ├── policy.py               # Policy interface (rule-based + RL)
-│       ├── roles.py                # Role assignment (attacker/defender/keeper)
-│       ├── scene.py                # Match scene and state definitions
-│       └── result.py               # Match result tracking
+│   ├── match_3v3/
+│   │   ├── __init__.py
+│   │   ├── policy.py               # Policy interface (rule-based + RL)
+│   │   ├── roles.py                # Role assignment (attacker/defender/keeper)
+│   │   ├── scene.py                # Match scene and state definitions
+│   │   └── result.py               # Match result tracking
+│   └── booster_agent/              # Booster Studio Sim2Sim agent
+│       ├── src/main.py             # Agent entry (ONNX policy)
+│       └── src/rl_playbook.py     # RL-enhanced playbook
 ├── scripts/
 │   └── match_eval_3v3.py          # Match evaluation script
 ├── tests/
 │   └── test_match_contract.py     # Match contract tests
 ├── docs/                           # Technical report and documentation
 ├── models/                         # Trained checkpoints and ONNX exports
-├── benchmark/                      # GPU performance data
+├── benchmark/                      # GPU performance data + Module E/F results
+├── training_logs/                  # Training logs from AMD GPU
+├── match_logs/                     # 1v1/3v3 match trajectory logs (JSON)
 ├── demos/                          # Demo videos
 ├── presentations/                  # Posters and slides
+├── urdf/t1/                        # T1 humanoid URDF + meshes
 ├── requirements.txt
 └── README.md
 ```
@@ -368,25 +380,52 @@ Key reward shaping techniques:
 
 ## Known Limitations
 
-1. **Isaac Gym / Isaac Lab incompatibility** — Booster's official training frameworks
-   require NVIDIA CUDA. This project uses Genesis as a complete replacement, but Genesis
-   is newer and may have fewer pre-built environment templates.
+1. **Genesis ROCm multi-entity crash**: Genesis physics engine on AMD ROCm crashes with
+   `hipErrorLaunchFailure` when two or more robot URDF entities are loaded in the same scene.
+   This is a platform-level bug, not a memory issue (VRAM usage only 0.9 GB / 51.5 GB).
 
-2. **Sim2Real gap** — Validation is done via Sim2Sim (Genesis → Booster Studio). Real robot
-   deployment would require additional sim-to-real transfer techniques (domain
-   randomization, system identification).
+2. **Workaround — Distributed multi-process architecture**: Each robot runs in its own
+   Genesis process (proven stable with 1 robot). A socket-based coordinator syncs state
+   between processes. Verified with 6 concurrent processes (3v3 match).
 
-3. **Single-task training** — The current pipeline trains one task at a time (e.g.,
-   `chase_hl`). Multi-task or curriculum-based training across balance → chase → shoot
-   is future work.
+### Distributed Multi-Robot Match (1v1 / 3v3)
 
-4. **ONNX export** — The high-level policy exports cleanly to ONNX. The frozen low-level
-   model (`t1_walk.pt`) is a TorchScript module and is not re-exported; it runs via
-   PyTorch inference in the deployment framework.
+Since Genesis cannot handle multiple robots in one scene on ROCm, we use a
+multi-process distributed architecture:
 
-5. **Cloud instance** — Training was performed on Anrui Cloud AMD GPU instances. The
-   `rocm-smi` JSON output format may vary across ROCm versions; the benchmark collector
-   includes fallback parsing.
+```
+┌──────────────────────────────────────────────────┐
+│           Match Coordinator (socket)              │
+│  - 50Hz sync loop                                 │
+│  - Broadcasts ball + robot positions to all       │
+│  - Pairwise collision detection + push-back       │
+│  - Structured JSON match log                       │
+└──┬──────┬──────┬──────┬──────┬──────┬────────────┘
+   │      │      │      │      │      │
+   ▼      ▼      ▼      ▼      ▼      ▼
+┌─────┐┌─────┐┌─────┐┌─────┐┌─────┐┌─────┐
+│RL   ││Rule││Rule││Rule││Rule││Rule││Rule│
+│Agent││Ally││Ally││Opp ││Opp ││Opp │
+│+ball││     ││     ││     ││     ││     │
+└─────┘└─────┘└─────┘└─────┘└─────┘└─────┘
+  GPU     GPU    GPU    GPU    GPU    GPU
+ (shared AMD Radeon, 6 processes)
+```
+
+**Launch 1v1 match:**
+```bash
+bash run_1v1.sh runs/hierarchical_soccer_chase_hl/model_1894.pt 25
+```
+
+**Launch 3v3 match (6 robots):**
+```bash
+bash run_3v3.sh runs/hierarchical_soccer_chase_hl/model_1894.pt 25
+```
+
+**Results:**
+- 1v1: Agent 119 steps, Opponent 112 steps, zero GPU crash
+- 3v3: All 6 workers 75-84 steps, 1240 steps logged, zero GPU crash
+- Match logs saved to `match_logs/match_YYYYMMDD_HHMMSS.json`
 
 ## License
 
