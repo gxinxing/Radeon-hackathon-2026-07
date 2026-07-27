@@ -4,7 +4,7 @@
 [![vLLM](https://img.shields.io/badge/vLLM-ROCm-blue)](https://docs.vllm.ai/)
 [![Qwen2.5](https://img.shields.io/badge/Qwen2.5-7B-6E49C8?logo=huggingface&logoColor=white)](https://huggingface.co/Qwen/Qwen2.5-7B-Instruct)
 [![Freqtrade](https://img.shields.io/badge/Freqtrade-Crypto%20Trading-green)](https://www.freqtrade.io/)
-[![Dify](https://img.shields.io/badge/Dify-Agent%20Framework-1565C0)](https://dify.ai/)
+[![Gradio](https://img.shields.io/badge/Gradio-Chat%20UI-FF7300)](https://gradio.app/)
 [![License](https://img.shields.io/badge/License-Hackathon-lightgrey)](#license)
 
 > Fine-tune Qwen2.5-7B on AMD Radeon GPU to act as an experienced crypto trader.
@@ -26,7 +26,7 @@
 - [Project Structure](#-project-structure)
 - [Fine-tuning Pipeline](#-fine-tuning-pipeline)
 - [DSL Specification](#-dsl-specification)
-- [Dify Workflow](#-dify-workflow)
+- [Chat UI](#-chat-ui)
 - [Judging Criteria Alignment](#-judging-criteria-alignment)
 - [License](#-license)
 
