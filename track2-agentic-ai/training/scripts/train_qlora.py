@@ -168,7 +168,7 @@ def train(
         fp16=True,
         gradient_checkpointing=True,
         gradient_checkpointing_kwargs={"use_reentrant": False},
-        max_seq_length=max_seq_length,
+        max_length=max_seq_length,
         packing=True,
         report_to="none",
         seed=42,
