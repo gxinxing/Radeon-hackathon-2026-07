@@ -59,10 +59,12 @@ reward:
   orientation: -1.0
 
   # ── Ball-focused (main objectives — must dominate the reward budget) ──
-  approach_ball: 10.0      # reward for decreasing distance to ball
+  approach_ball: 10.0      # reward for decreasing distance to ball (clamped >= 0, never punishes contact)
   ball_control: 2.0        # reward for being close to ball
+  ball_progress: 10.0      # potential-based: any ball-to-goal distance reduction (kicks count)
+  ball_contact: 1.0        # foot within 0.15 m of ball
   ball_to_goal: 3.0        # reward for ball moving toward goal
-  goal_scored: 30.0        # big reward for scoring
+  goal_scored: 30.0        # big reward for scoring (episode resets on goal)
 
   # ── Penalties ──
   fall_penalty: -5.0

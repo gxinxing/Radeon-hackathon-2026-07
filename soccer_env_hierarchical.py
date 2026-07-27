@@ -163,6 +163,7 @@ class SoccerEnvHierarchical(SoccerEnv):
 
         # Termination (episode_length_buf counts low-level steps, max_episode_length too)
         self.reset_buf = self.episode_length_buf > self.max_episode_length
+        self.reset_buf |= soccer["scored"]  # episode ends on goal — no goal-camping, clean success stats
         self.reset_buf |= torch.abs(self.base_euler[:, 1]) > self.term_pitch
         self.reset_buf |= torch.abs(self.base_euler[:, 0]) > self.term_roll
         self.reset_buf |= self.scene.rigid_solver.get_error_envs_mask()
