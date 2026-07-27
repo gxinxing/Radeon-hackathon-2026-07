@@ -323,10 +323,10 @@ Two models compared on 4 standardized ball positions:
 
 | Property | Value |
 |----------|-------|
-| File | `models/chase_v3_policy.onnx` |
-| Input | `obs` [batch, 19] |
+| File | `models/chase_v6_2048_policy.onnx` (re-exported from 2048-envs checkpoint; **must be >50 KB**) |
+| Input | `obs` [batch, obs_dim] |
 | Output | `action` [batch, 3] (vx, vy, wz) |
-| Opset | 17 |
+| Opset | 14 |
 | Nodes | 7 |
 | Architecture | Linear(19,256)→ELU→Linear(256,128)→ELU→Linear(128,64)→ELU→Linear(64,3) |
 
@@ -376,7 +376,7 @@ memory issue). This is a platform-level bug in Genesis + ROCm multi-articulated-
 
 ### 8.1 Short-term: Booster Studio Sim2Sim Deployment
 
-1. Deploy chase_v3 ONNX in Booster Studio's 3v3 SoccerSim with rule-based teammates and opponents
+1. Re-export a valid ONNX from the 2048-envs checkpoint (`chase_v6_2048_policy.onnx`, pass size + param gates) and deploy it in Booster Studio's 3v3 SoccerSim with rule-based teammates and opponents
 2. Requires VNC access to cloud instance for GUI-based SoccerSim launcher
 
 ### 8.2 Medium-term: Skill Extension
