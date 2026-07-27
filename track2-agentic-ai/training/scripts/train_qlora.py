@@ -88,7 +88,7 @@ def setup_qlora_config() -> tuple[BitsAndBytesConfig | None, LoraConfig]:
         bnb_config = BitsAndBytesConfig(
             load_in_4bit=True,
             bnb_4bit_quant_type="nf4",
-            bnb_4bit_compute_dtype=torch.float16,
+            bnb_4bit_compute_dtype=torch.bfloat16,
             bnb_4bit_use_double_quant=True,
         )
         # Test if bitsandbytes actually works
@@ -164,8 +164,8 @@ def train(
         save_strategy="steps",
         save_steps=200,
         save_total_limit=3,
-        bf16=False,  # ROCm may not support bf16 on all GPUs
-        fp16=True,
+        bf16=True,   # ROCm + bitsandbytes requires bf16 to avoid GradScaler issues
+        fp16=False,
         gradient_checkpointing=True,
         gradient_checkpointing_kwargs={"use_reentrant": False},
         max_length=max_seq_length,
