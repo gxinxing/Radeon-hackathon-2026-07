@@ -70,8 +70,8 @@ class SoccerEnvHierarchical(SoccerEnv):
         # === Override for high-level ===
         self._hl_initialized = True
         self.num_actions = 3                     # vx, vy, wz
-        self.hl_clip_lin = 0.05                     # Stage 1: small commands
-        self.hl_clip_ang = 0.05                     # Stage 1: small commands
+        self.hl_clip_lin = 0.8                      # Stage 2: full walking speed (was 0.05 Stage-1 crawl)
+        self.hl_clip_ang = 1.0                      # Stage 2: full turn rate (was 0.05 Stage-1 crawl)
         self.high_level_dt = self.dt * high_level_decimation
 
         # Resize obs buffer for high-level (19 dims, not 720)
@@ -129,8 +129,8 @@ class SoccerEnvHierarchical(SoccerEnv):
             torch.clamp(hl_actions[:, 1], -self.hl_clip_lin, self.hl_clip_lin),
             torch.clamp(hl_actions[:, 2], -self.hl_clip_ang, self.hl_clip_ang),
         ], dim=1)
-        # Deadzone: commands below 0.02 are treated as zero
-        self.hl_actions = torch.where(torch.abs(self.hl_actions) < 0.02, torch.zeros_like(self.hl_actions), self.hl_actions)
+        # Deadzone: commands below 0.05 are treated as zero (scaled up with clip range)
+        self.hl_actions = torch.where(torch.abs(self.hl_actions) < 0.05, torch.zeros_like(self.hl_actions), self.hl_actions)
         self.commands[:] = self.hl_actions
 
         # Ensure obs_buf is 720-dim (from parent _update_observation)
