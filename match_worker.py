@@ -1,42 +1,38 @@
-"""Worker process: runs one robot in its own Genesis scene.
+"""Match Worker v2: one robot per Genesis process, with graceful exit.
 
-Connects to MatchCoordinator via socket. Sends robot state, receives
-opponent state + ball state. For the authority process (has_ball=True),
-ball physics is simulated. For non-authority, ball position is set from network.
-
-Usage:
-    python match_worker.py --role agent --has-ball --model runs/.../model_1894.pt
-    python match_worker.py --role opponent --port 9876
+Fixes:
+  - SIGPIPE ignored
+  - BrokenPipeError caught
+  - Graceful shutdown on MSG_END or socket close
+  - 20s match (1000 HL steps at 10Hz)
 """
-import argparse, socket, struct, time, sys, os, math
+import argparse, socket, struct, time, sys, os, signal, math
 import numpy as np
 import torch
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-import yaml
-import genesis as gs
-
-# ─── Protocol (must match match_coordinator.py) ───
 MSG_STATE = 1
 MSG_BALL = 2
 MSG_CMD = 3
 MSG_END = 4
 
 DEFAULT_PORT = 9876
-N_STEPS = 1000  # 20s at 50Hz (HL is 10Hz, but we sync at 50Hz for physics)
-HL_DECIMATION = 5  # 50Hz physics / 5 = 10Hz HL
+N_STEPS = 200  # 20s at 10Hz (HL decimation=5, 50Hz physics)
 
 
 def pack_state(msg_type, data):
-    payload = struct.pack(f'<{len(data)}f', *data)
+    payload = struct.pack(f'<{len(data)}f', *data) if data else b''
     return struct.pack('<BI', msg_type, len(data)) + payload
 
 
 def recv_all(sock, n):
     data = b''
     while len(data) < n:
-        chunk = sock.recv(n - len(data))
+        try:
+            chunk = sock.recv(n - len(data))
+        except (ConnectionResetError, OSError):
+            return None
         if not chunk:
             return None
         data += chunk
@@ -57,51 +53,49 @@ def recv_msg(sock):
 
 
 class MatchWorker:
-    """One robot in one Genesis scene, synced via socket."""
-
-    def __init__(self, role, has_ball, port, model_path, init_pos):
+    def __init__(self, role, has_ball, port, model_path, init_pos, team_id=0):
         self.role = role
         self.has_ball = has_ball
         self.port = port
         self.model_path = model_path
         self.init_pos = init_pos
+        self.team_id = team_id
         self.running = False
-        self.opp_pos = np.array([0, 0, 0.7])
-        self.ball_pos = np.array([0, 0, 0.11])
-        self.ball_vel = np.array([0, 0, 0])
-        self.collision_push = np.array([0, 0, 0])
-
-        # Load config
-        with open('configs/hierarchical_agent.yaml') as f:
-            self.cfg = yaml.safe_load(f)
-        self.env_cfg = dict(self.cfg['env'])
-        self.env_cfg['task'] = 'chase_hl'
-        self.hl_cfg = self.cfg.get('high_level', {})
+        self.opp_states = {}  # other robots' positions
+        self.ball_pos = np.array([0.0, 0.0, 0.11])
+        self.ball_vel = np.array([0.0, 0.0, 0.0])
+        self.collision_push = np.array([0.0, 0.0, 0.0])
 
     def setup(self):
+        import yaml
+        import genesis as gs
+
         gs.init(backend=gs.gpu, logging_level='warning')
+
+        with open('configs/hierarchical_agent.yaml') as f:
+            cfg = yaml.safe_load(f)
+        env_cfg = dict(cfg['env'])
+        env_cfg['task'] = 'chase_hl'
+        hl_cfg = cfg.get('high_level', {})
 
         from envs.soccer_env_hierarchical import SoccerEnvHierarchical
         self.env = SoccerEnvHierarchical(
-            num_envs=1, env_cfg=self.env_cfg, obs_cfg=self.cfg['obs'],
-            reward_cfg=self.cfg['reward'], command_cfg=self.cfg['command'],
-            walk_model_path=self.hl_cfg.get('walk_model_path'),
-            high_level_decimation=self.hl_cfg.get('decimation', 5),
+            num_envs=1, env_cfg=env_cfg, obs_cfg=cfg['obs'],
+            reward_cfg=cfg['reward'], command_cfg=cfg['command'],
+            walk_model_path=hl_cfg.get('walk_model_path'),
+            high_level_decimation=hl_cfg.get('decimation', 5),
             show_viewer=False)
 
-        # Set initial position
-        self.env.init_base_pos = torch.tensor(self.init_pos, dtype=gs.tc_float, device=gs.device)
+        self.cfg = cfg
 
-        # Load policy if agent
         self.policy = None
         if self.model_path:
             from rsl_rl.runners import OnPolicyRunner
-            runner = OnPolicyRunner(self.env, self.cfg['train'],
-                                   'runs/hierarchical_soccer_chase_hl', device=gs.device)
+            runner = OnPolicyRunner(self.env, cfg['train'],
+                                    'runs/hierarchical_soccer_chase_hl', device=gs.device)
             runner.load(self.model_path)
             self.policy = runner.get_inference_policy(device=gs.device)
 
-        # Connect to coordinator
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.connect(('localhost', self.port))
         print(f'[{self.role}] Connected to coordinator')
@@ -110,85 +104,111 @@ class MatchWorker:
         self.running = True
         obs = self.env.reset()
         step = 0
-        last_ball_pos = None
 
         while self.running and step < N_STEPS:
-            # ─── Receive state from coordinator ───
-            for _ in range(3):  # drain messages
+            # Receive ONE set of messages (opp state + ball), then proceed
+            self.sock.settimeout(2.0)
+            try:
+                # Read opp state
                 msg_type, data = recv_msg(self.sock)
-                if msg_type is None:
-                    self.running = False
-                    break
                 if msg_type == MSG_END:
-                    print(f'[{self.role}] Received END signal')
+                    print(f'[{self.role}] Received END signal at step {step}')
                     self.running = False
                     break
                 elif msg_type == MSG_STATE and data:
-                    self.opp_pos = np.array(data[:3])
+                    self.opp_states['opp'] = np.array(data[:3])
+                elif msg_type is None:
+                    print(f'[{self.role}] Connection lost before step {step}')
+                    self.running = False
+                    break
+
+                # Read ball state (if sent)
+                msg_type, data = recv_msg(self.sock)
+                if msg_type == MSG_END:
+                    print(f'[{self.role}] Received END signal at step {step}')
+                    self.running = False
+                    break
                 elif msg_type == MSG_BALL and data:
                     if not self.has_ball:
                         self.ball_pos = np.array(data[:3])
                         self.ball_vel = np.array(data[3:6])
                 elif msg_type == MSG_CMD and data:
                     self.collision_push = np.array(data[:3])
+                elif msg_type is None:
+                    self.running = False
+                    break
+            except socket.timeout:
+                pass  # No new data, use stale state
+            self.sock.settimeout(None)
 
             if not self.running:
                 break
 
-            # ─── Compute action ───
+            # Compute action
             if self.policy:
                 with torch.no_grad():
                     action = self.policy(obs)
             else:
-                # Rule-based: move toward ball
-                ball_rel = self.ball_pos - self.env.base_pos[0, :3].cpu().numpy()
+                # Rule-based: chase ball
+                robot_pos = self.env.base_pos[0, :3].cpu().numpy()
+                ball_rel = self.ball_pos - robot_pos
                 dist = np.linalg.norm(ball_rel[:2])
-                if dist > 0.01:
+                if dist > 0.05:
                     direction = ball_rel[:2] / dist
                     action = torch.tensor([[
                         np.clip(direction[0] * 0.2, -0.2, 0.2),
                         np.clip(direction[1] * 0.2, -0.2, 0.2),
                         np.clip(np.arctan2(ball_rel[1], ball_rel[0]) * 0.1, -0.2, 0.2),
-                    ]], dtype=gs.tc_float, device=gs.device)
+                    ]], dtype=torch.float32, device=self.env.device)
                 else:
-                    action = torch.zeros((1, 3), dtype=gs.tc_float, device=gs.device)
+                    action = torch.zeros((1, 3), dtype=torch.float32, device=self.env.device)
 
-            # ─── Step environment ───
+            # Step environment
             obs, rew, done, extras = self.env.step(action)
             step += 1
 
-            # ─── Send our state to coordinator ───
+            # Send our state
             agent_pos = self.env.base_pos[0].cpu().numpy()
             agent_pitch = self.env.base_euler[0, 1].item()
             agent_roll = self.env.base_euler[0, 0].item()
-            self.sock.sendall(pack_state(MSG_STATE, [
-                agent_pos[0], agent_pos[1], agent_pos[2],
-                agent_pitch, agent_roll
-            ]))
+            try:
+                self.sock.sendall(pack_state(MSG_STATE, [
+                    float(agent_pos[0]), float(agent_pos[1]), float(agent_pos[2]),
+                    agent_pitch, agent_roll
+                ]))
+            except (BrokenPipeError, ConnectionResetError, OSError):
+                print(f'[{self.role}] Connection lost at step {step}')
+                break
 
-            # If authority, send ball state
+            # Send ball state if authority
             if self.has_ball:
                 ball_pos = self.env.ball_pos[0].cpu().numpy()
-                ball_vel = self.env.ball_vel[0].cpu().numpy() if hasattr(self.env, 'ball_vel') else np.zeros(3)
-                self.sock.sendall(pack_state(MSG_BALL, [
-                    ball_pos[0], ball_pos[1], ball_pos[2],
-                    ball_vel[0], ball_vel[1], ball_vel[2]
-                ]))
+                try:
+                    self.sock.sendall(pack_state(MSG_BALL, [
+                        float(ball_pos[0]), float(ball_pos[1]), float(ball_pos[2]),
+                        0.0, 0.0, 0.0
+                    ]))
+                except (BrokenPipeError, ConnectionResetError, OSError):
+                    break
 
             # Log
             if step % 50 == 0:
                 ball_d = np.linalg.norm(agent_pos[:2] - self.ball_pos[:2])
-                opp_d = np.linalg.norm(agent_pos[:2] - self.opp_pos[:2])
-                print(f'[{self.role}] step {step}: h={agent_pos[2]:.3f} ball_d={ball_d:.2f} '
-                      f'opp_d={opp_d:.2f} rew={rew.mean().item():.3f}')
+                print(f'[{self.role}] step {step}/{N_STEPS}: h={agent_pos[2]:.3f} '
+                      f'ball_d={ball_d:.2f} rew={rew.mean().item():.3f}')
 
         print(f'[{self.role}] Finished after {step} steps')
-        self.sock.close()
+        try:
+            self.sock.close()
+        except:
+            pass
 
 
 if __name__ == '__main__':
+    signal.signal(signal.SIGPIPE, signal.SIG_IGN)
+
     parser = argparse.ArgumentParser()
-    parser.add_argument('--role', required=True, choices=['agent', 'opponent'])
+    parser.add_argument('--role', required=True)
     parser.add_argument('--has-ball', action='store_true')
     parser.add_argument('--port', type=int, default=DEFAULT_PORT)
     parser.add_argument('--model', default=None)
