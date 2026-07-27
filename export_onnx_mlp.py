@@ -61,11 +61,17 @@ def main():
     runner = OnPolicyRunner(env, cfg["train"], log_dir, device=gs.device)
     runner.load(model_path)
 
-    policy = runner.alg.actor_critic.actor
+    # rsl_rl 5.4.2: PPO has .actor directly (not .actor_critic)
+    if hasattr(runner.alg, 'actor'):
+        policy = runner.alg.actor
+    elif hasattr(runner.alg, 'actor_critic'):
+        policy = runner.alg.actor_critic.actor
+    else:
+        policy = getattr(runner.alg, 'model', None).actor
 
     # Extract raw MLP (nn.Sequential) — bypass rsl_rl obs_group indexing
     mlp = policy.mlp
-    obs_dim = env.observation_dim
+    obs_dim = env.hl_obs_dim
     action_dim = env.num_actions
 
     print(f"Obs dim: {obs_dim}, Action dim: {action_dim}")
