@@ -70,8 +70,8 @@ class SoccerEnvHierarchical(SoccerEnv):
         # === Override for high-level ===
         self._hl_initialized = True
         self.num_actions = 3                     # vx, vy, wz
-        self.hl_clip_lin = 0.8                      # Stage 2: full walking speed (was 0.05 Stage-1 crawl)
-        self.hl_clip_ang = 1.0                      # Stage 2: full turn rate (was 0.05 Stage-1 crawl)
+        self.hl_clip_lin = env_cfg.get("hl_clip_lin", 0.8)  # Stage 2 default; yaml/CLI overridable
+        self.hl_clip_ang = env_cfg.get("hl_clip_ang", 1.0)
         self.high_level_dt = self.dt * high_level_decimation
 
         # Resize obs buffer for high-level (19 dims, not 720)
@@ -97,6 +97,12 @@ class SoccerEnvHierarchical(SoccerEnv):
         print(f"[hierarchical] Frozen walk model loaded from {walk_model_path}")
         print(f"[hierarchical] HL obs dim={self.hl_obs_dim}, HL action dim={self.num_actions}")
         print(f"[hierarchical] HL dt={self.high_level_dt:.3f}s, decimation={high_level_decimation}")
+        print(f"[hierarchical] HL clip: lin={self.hl_clip_lin} m/s, ang={self.hl_clip_ang} rad/s")
+
+        # GPU-accumulated success metrics for tensorboard (flushed in step(), no per-step sync)
+        self._m_goals = torch.zeros((), dtype=gs.tc_float, device=self.device)
+        self._m_dist = torch.zeros((), dtype=gs.tc_float, device=self.device)
+        self._m_steps = 0
     def set_curriculum_stage(self, clip_lin, clip_ang, task=None):
         """Switch curriculum stage: adjust action clip and optionally switch task."""
         self.hl_clip_lin = clip_lin
@@ -157,6 +163,21 @@ class SoccerEnvHierarchical(SoccerEnv):
         # Use high-level actions for reward (action_rate, energy)
         soccer["last_actions"] = self.last_hl_actions
         self.rew_buf = compute_reward(soccer, self.hl_actions, w, self.task)
+
+        # ── Success metrics → extras["episode"] (rsl_rl logs these to tensorboard) ──
+        # Accumulated on GPU, flushed every 10 HL steps — zero per-step sync cost.
+        self._m_goals += soccer["scored"].float().sum()
+        self._m_dist += soccer["dist_to_ball"].mean()
+        self._m_steps += 1
+        if self._m_steps >= 10:
+            self.extras["episode"] = {
+                "goal_per_1k_steps": (self._m_goals / (10.0 * self.num_envs) * 1000.0).item(),
+                "mean_dist_to_ball": (self._m_dist / 10.0).item(),
+                "goals_total": float(self.goals_scored),
+            }
+            self._m_goals.zero_()
+            self._m_dist.zero_()
+            self._m_steps = 0
 
         # Update prev_dist for next step
         self._resample_ball_if_needed()

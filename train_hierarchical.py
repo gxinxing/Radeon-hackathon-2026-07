@@ -49,6 +49,10 @@ def main():
                         help="Resume from checkpoint path")
     parser.add_argument("--config", type=str, default=None,
                         help="Path to config YAML (default: configs/hierarchical_agent.yaml)")
+    parser.add_argument("--clip_lin", type=float, default=None,
+                        help="Override HL linear velocity clip (m/s). For parallel A/B runs.")
+    parser.add_argument("--clip_ang", type=float, default=None,
+                        help="Override HL angular velocity clip (rad/s). For parallel A/B runs.")
     args = parser.parse_args()
 
     config_path = args.config or "configs/hierarchical_agent.yaml"
@@ -66,6 +70,10 @@ def main():
 
     env_cfg = dict(cfg["env"])
     env_cfg["task"] = task
+    if args.clip_lin is not None:
+        env_cfg["hl_clip_lin"] = args.clip_lin
+    if args.clip_ang is not None:
+        env_cfg["hl_clip_ang"] = args.clip_ang
     obs_cfg = cfg["obs"]
     reward_cfg = cfg["reward"]
     command_cfg = cfg["command"]

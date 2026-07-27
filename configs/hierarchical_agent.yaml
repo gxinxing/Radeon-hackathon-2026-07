@@ -20,6 +20,8 @@ show_viewer: false
 env:
   robot_urdf: urdf/t1/t1.urdf
   episode_length_s: 24.0
+  hl_clip_lin: 0.8       # HL linear velocity command limit (m/s); CLI --clip_lin overrides
+  hl_clip_ang: 1.0       # HL angular velocity limit (rad/s); CLI --clip_ang overrides
   dt: 0.02             # control dt = physics_dt(0.002) * decimation(10)
   substeps: 10
   action_scale: 0.25   # used by low-level (frozen model)
