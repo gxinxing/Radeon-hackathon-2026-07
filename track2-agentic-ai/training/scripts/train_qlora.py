@@ -6,7 +6,7 @@ Designed to run on AMD Radeon GPU with ROCm PyTorch.
 Usage:
     /opt/venv/bin/python training/scripts/train_qlora.py \
         --data training/data/processed/merged_train.jsonl \
-        --model Qwen/Qwen2.5-7B-Instruct \
+        --model /workspace/track2-agentic-ai/models/hf_cache/models--Qwen--Qwen2.5-7B-Instruct/snapshots/<hash> \
         --output models/qwen-trader-lora \
         --epochs 3 --batch-size 4 --grad-accum 4
 
@@ -22,6 +22,11 @@ import json
 import os
 import sys
 from pathlib import Path
+
+# Set HF endpoint before importing HF libraries
+os.environ.setdefault("HF_ENDPOINT", "https://hf-mirror.com")
+os.environ.setdefault("ROCBLAS_USE_HIPBLASLT", "1")
+os.environ.setdefault("HIP_VISIBLE_DEVICES", "0")
 
 import torch
 from datasets import Dataset
@@ -61,15 +66,11 @@ def load_training_data(data_path: str) -> Dataset:
     return Dataset.from_list(samples)
 
 
-def setup_qlora_config() -> tuple[BitsAndBytesConfig, LoraConfig]:
-    """Configure 4-bit quantization and LoRA parameters."""
-    bnb_config = BitsAndBytesConfig(
-        load_in_4bit=True,
-        bnb_4bit_quant_type="nf4",
-        bnb_4bit_compute_dtype=torch.float16,
-        bnb_4bit_use_double_quant=True,
-    )
+def setup_qlora_config() -> tuple[BitsAndBytesConfig | None, LoraConfig]:
+    """Configure 4-bit quantization and LoRA parameters.
 
+    Falls back to non-quantized LoRA if bitsandbytes doesn't support ROCm.
+    """
     lora_config = LoraConfig(
         r=64,
         lora_alpha=128,
@@ -82,7 +83,21 @@ def setup_qlora_config() -> tuple[BitsAndBytesConfig, LoraConfig]:
         task_type="CAUSAL_LM",
     )
 
-    return bnb_config, lora_config
+    # Try 4-bit quantization; fall back to FP16 if bitsandbytes fails on ROCm
+    try:
+        bnb_config = BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_quant_type="nf4",
+            bnb_4bit_compute_dtype=torch.float16,
+            bnb_4bit_use_double_quant=True,
+        )
+        # Test if bitsandbytes actually works
+        import bitsandbytes as bnb
+        print(f"[Train] bitsandbytes version: {bnb.__version__}")
+        return bnb_config, lora_config
+    except Exception as e:
+        print(f"[Train] bitsandbytes 4-bit not available ({e}), using FP16 LoRA")
+        return None, lora_config
 
 
 def train(
@@ -116,18 +131,25 @@ def train(
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
-    # --- Load model with 4-bit quantization ---
-    print(f"[Train] Loading model: {model_name} (4-bit QLoRA)")
+    # --- Load model with 4-bit quantization (or FP16 fallback) ---
+    print(f"[Train] Loading model: {model_name}")
     bnb_config, lora_config = setup_qlora_config()
 
-    model = AutoModelForCausalLM.from_pretrained(
-        model_name,
-        quantization_config=bnb_config,
-        device_map="auto",
-        trust_remote_code=True,
-        torch_dtype=torch.float16,
-    )
-    model = prepare_model_for_kbit_training(model)
+    model_kwargs = {
+        "device_map": "auto",
+        "trust_remote_code": True,
+        "torch_dtype": torch.float16,
+    }
+    if bnb_config is not None:
+        print("[Train] Using 4-bit QLoRA quantization")
+        model_kwargs["quantization_config"] = bnb_config
+    else:
+        print("[Train] Using FP16 LoRA (no quantization)")
+
+    model = AutoModelForCausalLM.from_pretrained(model_name, **model_kwargs)
+
+    if bnb_config is not None:
+        model = prepare_model_for_kbit_training(model)
 
     # --- Training arguments ---
     training_args = SFTConfig(
@@ -148,12 +170,12 @@ def train(
         gradient_checkpointing_kwargs={"use_reentrant": False},
         max_seq_length=max_seq_length,
         packing=True,
-        dataset_text_field="messages",
         report_to="none",
         seed=42,
     )
 
     # --- Initialize SFT Trainer ---
+    # For conversational data (messages field), SFTTrainer auto-detects chat format
     trainer = SFTTrainer(
         model=model,
         args=training_args,
