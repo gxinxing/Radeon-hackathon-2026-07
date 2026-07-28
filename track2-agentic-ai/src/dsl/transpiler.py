@@ -153,26 +153,61 @@ def transpile_to_freqtrade(dsl: dict[str, Any]) -> str:
         elif ind_type == "Stochastic":
             lines.append(
                 f"        stoch_{ind_name} = ti.Stoch("
-                f"input_values highs lows = "
-                f"dataframe['high'].tolist(), "
-                f"dataframe['low'].tolist(), "
+                f"high=dataframe['high'].tolist(), "
+                f"low=dataframe['low'].tolist(), "
+                f"close=dataframe['close'].tolist(), "
                 f"period={period})"
             )
             lines.append(
                 f"        dataframe['{ind_name}'] = "
                 f"[v.k if v else None for v in stoch_{ind_name}]"
             )
-        elif ind_type in ("Supertrend", "ICHIMOKU"):
-            # Complex indicators with multiple outputs
-            class_name, _ = _INDICATOR_MAP.get(ind_type, (ind_type, ""))
-            lines.append(
-                f"        # {ind_type} indicator '{ind_name}' "
-                f"— needs manual implementation"
-            )
-            lines.append(
-                f"        dataframe['{ind_name}'] = "
-                f"dataframe['close'].rolling({period}).mean()"
-            )
+        elif ind_type == "Supertrend":
+            # Supertrend: ATR-based trend following indicator
+            multiplier = params.get("multiplier", 3.0)
+            lines.append(f"        atr_{ind_name} = ti.ATR(")
+            lines.append(f"            input_values_high=dataframe['high'].tolist(),")
+            lines.append(f"            input_values_low=dataframe['low'].tolist(),")
+            lines.append(f"            input_values_close=dataframe['close'].tolist(),")
+            lines.append(f"            period={period})")
+            lines.append(f"        # Supertrend calculation")
+            lines.append(f"        hl2_{ind_name} = (dataframe['high'] + dataframe['low']) / 2.0")
+            lines.append(f"        atr_vals_{ind_name} = [v if v else 0.0 for v in atr_{ind_name}]")
+            lines.append(f"        upper_{ind_name} = hl2_{ind_name} + {multiplier} * pd.Series(atr_vals_{ind_name})")
+            lines.append(f"        lower_{ind_name} = hl2_{ind_name} - {multiplier} * pd.Series(atr_vals_{ind_name})")
+            lines.append(f"        # Determine trend direction")
+            lines.append(f"        st_{ind_name} = pd.Series(index=dataframe.index, dtype=float)")
+            lines.append(f"        direction_{ind_name} = 1")
+            lines.append(f"        for i in range(len(dataframe)):")
+            lines.append(f"            if i == 0:")
+            lines.append(f"                st_{ind_name}.iloc[i] = lower_{ind_name}.iloc[i]")
+            lines.append(f"                continue")
+            lines.append(f"            if dataframe['close'].iloc[i] > upper_{ind_name}.iloc[i-1]:")
+            lines.append(f"                direction_{ind_name} = 1")
+            lines.append(f"            elif dataframe['close'].iloc[i] < lower_{ind_name}.iloc[i-1]:")
+            lines.append(f"                direction_{ind_name} = -1")
+            lines.append(f"            if direction_{ind_name} == 1:")
+            lines.append(f"                st_{ind_name}.iloc[i] = max(lower_{ind_name}.iloc[i], st_{ind_name}.iloc[i-1]) if pd.notna(st_{ind_name}.iloc[i-1]) else lower_{ind_name}.iloc[i]")
+            lines.append(f"            else:")
+            lines.append(f"                st_{ind_name}.iloc[i] = min(upper_{ind_name}.iloc[i], st_{ind_name}.iloc[i-1]) if pd.notna(st_{ind_name}.iloc[i-1]) else upper_{ind_name}.iloc[i]")
+            lines.append(f"        dataframe['{ind_name}'] = st_{ind_name}")
+        elif ind_type == "ICHIMOKU":
+            # Ichimoku Cloud: Tenkan, Kijun, SpanA, SpanB
+            conv_period = params.get("fast_period", 9)
+            base_period = params.get("slow_period", 26)
+            span_b_period = period * 2
+            lines.append(f"        # Ichimoku Cloud components")
+            lines.append(f"        high_s_{ind_name} = dataframe['high'].rolling({conv_period}).max()")
+            lines.append(f"        low_s_{ind_name} = dataframe['low'].rolling({conv_period}).min()")
+            lines.append(f"        dataframe['{ind_name}_tenkan'] = (high_s_{ind_name} + low_s_{ind_name}) / 2.0")
+            lines.append(f"        high_b_{ind_name} = dataframe['high'].rolling({base_period}).max()")
+            lines.append(f"        low_b_{ind_name} = dataframe['low'].rolling({base_period}).min()")
+            lines.append(f"        dataframe['{ind_name}_kijun'] = (high_b_{ind_name} + low_b_{ind_name}) / 2.0")
+            lines.append(f"        dataframe['{ind_name}_spanA'] = (dataframe['{ind_name}_tenkan'] + dataframe['{ind_name}_kijun']) / 2.0")
+            lines.append(f"        high_sb_{ind_name} = dataframe['high'].rolling({span_b_period}).max()")
+            lines.append(f"        low_sb_{ind_name} = dataframe['low'].rolling({span_b_period}).min()")
+            lines.append(f"        dataframe['{ind_name}_spanB'] = (high_sb_{ind_name} + low_sb_{ind_name}) / 2.0")
+            lines.append(f"        dataframe['{ind_name}'] = dataframe['{ind_name}_spanA']")
         else:
             class_name, _ = _INDICATOR_MAP.get(ind_type, (ind_type, ""))
             lines.append(

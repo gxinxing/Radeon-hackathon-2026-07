@@ -31,7 +31,7 @@ fail() { echo "  ❌ $1"; FAIL=$((FAIL+1)); }
 skip() { echo "  ⏭️  $1"; SKIP=$((SKIP+1)); }
 
 # --- Test 1: DSL Validator ---
-echo "[1/6] DSL Schema Validation..."
+echo "[1/7] DSL Schema Validation..."
 ${PYTHON} -c "
 from src.dsl.validator import validate_dsl
 
@@ -62,7 +62,7 @@ print('  Invalid strategy correctly rejected')
 
 # --- Test 2: DSL Transpiler ---
 echo ""
-echo "[2/6] DSL → Freqtrade Transpilation..."
+echo "[2/7] DSL → Freqtrade Transpilation..."
 ${PYTHON} -c "
 from src.dsl.transpiler import transpile_to_freqtrade
 
@@ -91,7 +91,7 @@ print('  Generated strategy code contains all required methods')
 
 # --- Test 3: Backtest API ---
 echo ""
-echo "[3/6] Backtest Microservice..."
+echo "[3/7] Backtest Microservice..."
 # Check if API is running
 if curl -s http://localhost:8080/health >/dev/null 2>&1; then
     # Run a backtest via API
@@ -126,7 +126,7 @@ fi
 
 # --- Test 4: LLM Inference ---
 echo ""
-echo "[4/6] LLM Inference (vLLM)..."
+echo "[4/7] LLM Inference (vLLM)..."
 if curl -s http://localhost:8000/v1/models >/dev/null 2>&1; then
     MODELS=$(curl -s http://localhost:8000/v1/models | ${PYTHON} -c "import sys,json; data=json.load(sys.stdin); print(len(data.get('data',[])))" 2>/dev/null || echo "0")
     if [ "$MODELS" -gt "0" ]; then
@@ -156,7 +156,7 @@ fi
 
 # --- Test 5: Market Data ---
 echo ""
-echo "[5/6] Market Data (CCXT)..."
+echo "[5/7] Market Data (CCXT)..."
 ${PYTHON} -c "
 from src.backtest.data_fetcher import get_market_summary
 summary = get_market_summary('BTC/USDT', 'binance')
@@ -166,7 +166,7 @@ print(f'  BTC/USDT: \${summary[\"last_price\"]:,.2f} ({summary[\"change_pct\"]:+
 
 # --- Test 6: Training Data ---
 echo ""
-echo "[6/6] Training Data..."
+echo "[6/7] Training Data..."
 DATA_FILE="${PROJECT_ROOT}/training/data/processed/merged_train.jsonl"
 if [ -f "$DATA_FILE" ]; then
     COUNT=$(wc -l < "$DATA_FILE")
@@ -177,6 +177,42 @@ if [ -f "$DATA_FILE" ]; then
     fi
 else
     skip "Training data not generated (run: python training/data/prepare_dsl_pairs.py)"
+fi
+
+# --- Test 7: Walk-Forward Analysis ---
+echo ""
+echo "[7/7] Walk-Forward Analysis..."
+if curl -s http://localhost:8080/health >/dev/null 2>&1; then
+    WF_RESPONSE=$(curl -s -X POST http://localhost:8080/api/walkforward \
+        -H "Content-Type: application/json" \
+        -d '{
+            "strategy": {
+                "strategy": {
+                    "name": "WfTest",
+                    "market": {"exchange": "binance", "pair": "BTC/USDT", "timeframe": "1h"},
+                    "indicators": [
+                        {"name": "ema_fast", "type": "EMA", "params": {"period": 20, "field": "close"}},
+                        {"name": "ema_slow", "type": "EMA", "params": {"period": 50, "field": "close"}}
+                    ],
+                    "entry": {"long": "ema_fast > ema_slow", "short": null},
+                    "exit": {"long": "ema_fast < ema_slow", "short": null},
+                    "risk": {"stop_loss": -0.03, "max_open_trades": 3, "stake_amount": 0.1}
+                }
+            },
+            "days": 90
+        }')
+
+    WF_SUCCESS=$(echo "$WF_RESPONSE" | ${PYTHON} -c "import sys,json; print(json.load(sys.stdin).get('success', False))" 2>/dev/null || echo "False")
+    if [ "$WF_SUCCESS" = "True" ]; then
+        IS_RETURN=$(echo "$WF_RESPONSE" | ${PYTHON} -c "import sys,json; print(round(json.load(sys.stdin)['in_sample']['total_return']*100,2))" 2>/dev/null)
+        OOS_RETURN=$(echo "$WF_RESPONSE" | ${PYTHON} -c "import sys,json; print(round(json.load(sys.stdin)['out_of_sample']['total_return']*100,2))" 2>/dev/null)
+        ROBUST=$(echo "$WF_RESPONSE" | ${PYTHON} -c "import sys,json; print(json.load(sys.stdin).get('is_robust', False))" 2>/dev/null)
+        pass "Walk-forward: IS=${IS_RETURN}%, OOS=${OOS_RETURN}%, robust=${ROBUST}"
+    else
+        fail "Walk-forward analysis failed: $WF_RESPONSE"
+    fi
+else
+    skip "API not running (start with: uvicorn src.api:app --port 8080)"
 fi
 
 # --- Summary ---

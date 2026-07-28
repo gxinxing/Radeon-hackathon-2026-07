@@ -80,6 +80,83 @@ async def calculate(req: IndicatorRequest):
                 df["high"].values, df["low"].values, df["close"].values,
                 timeperiod=period,
             ).tolist()
+        elif ind_type == "CCI":
+            result = talib.CCI(
+                df["high"].values, df["low"].values, df["close"].values,
+                timeperiod=period,
+            ).tolist()
+        elif ind_type == "OBV":
+            result = talib.OBV(data, df["volume"].values).tolist()
+        elif ind_type == "Stochastic":
+            k, d = talib.STOCH(
+                df["high"].values, df["low"].values, df["close"].values,
+                fastk_period=period,
+            )
+            values[f"{name}_k"] = k.tolist()
+            values[f"{name}_d"] = d.tolist()
+            last_values[f"{name}_k"] = k[-1] if len(k) > 0 else None
+            last_values[f"{name}_d"] = d[-1] if len(d) > 0 else None
+            continue
+        elif ind_type == "WMA":
+            result = talib.WMA(data, timeperiod=period).tolist()
+        elif ind_type == "VWAP":
+            import pandas as _pd
+            typical_price = (df["high"] + df["low"] + df["close"]) / 3.0
+            cum_tp_vol = (typical_price * df["volume"]).cumsum()
+            cum_vol = df["volume"].cumsum()
+            vwap = (cum_tp_vol / cum_vol).fillna(method="ffill")
+            result = vwap.tolist()
+        elif ind_type == "HMA":
+            import numpy as _np
+            half_period = max(1, period // 2)
+            sqrt_period = max(1, int(_np.sqrt(period)))
+            wma_half = talib.WMA(data, timeperiod=half_period)
+            wma_full = talib.WMA(data, timeperiod=period)
+            raw = 2 * wma_half - wma_full
+            result = talib.WMA(raw, timeperiod=sqrt_period).tolist()
+        elif ind_type == "ZLEMA":
+            import pandas as _pd
+            delay = max(1, period // 2)
+            delayed = _pd.Series(data).shift(delay).values
+            adjusted = 2 * data - delayed
+            result = talib.EMA(adjusted, timeperiod=period).tolist()
+        elif ind_type == "Supertrend":
+            multiplier = params.get("multiplier", 3.0)
+            import pandas as _pd
+            hl2 = (df["high"] + df["low"]) / 2.0
+            atr = talib.ATR(
+                df["high"].values, df["low"].values, df["close"].values,
+                timeperiod=period,
+            )
+            upper_band = hl2 + multiplier * atr
+            lower_band = hl2 - multiplier * atr
+            close = df["close"].values
+            st = _pd.Series(index=df.index, dtype=float)
+            direction = 1
+            for i in range(len(close)):
+                if i == 0:
+                    st.iloc[i] = lower_band[i]
+                    continue
+                if close[i] > upper_band[i - 1]:
+                    direction = 1
+                elif close[i] < lower_band[i - 1]:
+                    direction = -1
+                if direction == 1:
+                    st.iloc[i] = max(lower_band[i], st.iloc[i - 1]) if _pd.notna(st.iloc[i - 1]) else lower_band[i]
+                else:
+                    st.iloc[i] = min(upper_band[i], st.iloc[i - 1]) if _pd.notna(st.iloc[i - 1]) else upper_band[i]
+            result = st.tolist()
+        elif ind_type == "ICHIMOKU":
+            import pandas as _pd
+            high = df["high"].values
+            low = df["low"].values
+            conv_period = params.get("fast_period", 9)
+            base_period = params.get("slow_period", 26)
+            span_b_period = period * 2
+            tenkan = ((_pd.Series(high).rolling(conv_period).max() + _pd.Series(low).rolling(conv_period).min()) / 2.0).tolist()
+            kijun = ((_pd.Series(high).rolling(base_period).max() + _pd.Series(low).rolling(base_period).min()) / 2.0).tolist()
+            spanA = ((tenkan[i] + kijun[i]) / 2.0 for i in range(len(tenkan)))
+            result = list(spanA)
         else:
             result = talib.SMA(data, timeperiod=period).tolist()
 

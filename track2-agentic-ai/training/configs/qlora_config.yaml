@@ -10,7 +10,7 @@ model:
 quantization:
   load_in_4bit: true
   bnb_4bit_quant_type: nf4
-  bnb_4bit_compute_dtype: float16
+  bnb_4bit_compute_dtype: bfloat16  # Match bf16 training precision
   bnb_4bit_use_double_quant: true
 
 # LoRA
@@ -41,8 +41,8 @@ training:
   save_strategy: steps
   save_steps: 200
   save_total_limit: 3
-  fp16: true
-  bf16: false
+  fp16: false
+  bf16: true  # Required for ROCm + bitsandbytes (avoids GradScaler crash)
   gradient_checkpointing: true
   max_seq_length: 2048
   packing: true

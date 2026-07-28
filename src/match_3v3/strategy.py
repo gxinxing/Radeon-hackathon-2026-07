@@ -38,6 +38,11 @@ from .scene import Team, Role, PlayerState, BallState, FieldConstants, DEFAULT_F
 # Frame helpers
 # ═══════════════════════════════════════════════════════════════════
 
+def sigmoid(x: np.ndarray) -> np.ndarray:
+    """Numerically stable logistic sigmoid."""
+    return 1.0 / (1.0 + np.exp(-np.asarray(x, dtype=np.float64)))
+
+
 def world_to_body(rel_xy: np.ndarray, yaw: float) -> np.ndarray:
     """Rotate a world-frame relative (dx, dy) into the robot body frame.
 

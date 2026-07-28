@@ -1,7 +1,7 @@
 """LLM inference client and system prompts.
 
 Wraps vLLM's OpenAI-compatible API for:
-1. NL → DSL generation
+1. NL → DSL generation (with RAG knowledge injection)
 2. Backtest report generation
 3. Risk assessment
 """
@@ -13,6 +13,13 @@ from typing import Any
 
 import httpx
 
+# RAG knowledge base (optional, gracefully degrades if unavailable)
+try:
+    from ..knowledge_base.retriever import retrieve_knowledge
+    HAS_RAG = True
+except ImportError:
+    HAS_RAG = False
+
 
 VLLM_BASE_URL = "http://localhost:8000/v1"
 DEFAULT_MODEL = "qwen-trader-merged"  # Or the HuggingFace model name
@@ -21,10 +28,12 @@ DEFAULT_MODEL = "qwen-trader-merged"  # Or the HuggingFace model name
 # --- System Prompts ---
 
 DSL_GENERATION_SYSTEM = """\
-You are an expert crypto trading strategist. Your task is to convert \
-natural language trading ideas into a YAML strategy DSL specification.
+You are an expert crypto trading strategist with 10+ years of experience. \
+Your task is to convert natural language trading ideas into a YAML strategy DSL \
+specification using Chain-of-Thought reasoning.
 
-The DSL has the following structure:
+## DSL Structure
+
 ```yaml
 strategy:
   name: "StrategyName"           # Valid Python identifier
@@ -51,37 +60,88 @@ strategy:
     trailing_stop_positive: 0.02
     max_open_trades: 3
     stake_amount: 0.1
+```
 
-Available indicator types:
+## Available Indicators
 SMA, EMA, RSI, MACD, ATR, BollingerBands, Stochastic, ADX, CCI, OBV, VWAP, WMA, HMA, ZLEMA
 
-Boolean expressions in entry/exit can use:
-- Indicator names (e.g. ema_fast, rsi)
-- Built-in columns: open, high, low, close, volume
-- Operators: AND, OR, NOT, >, <, >=, <=, ==, !=
-- Arithmetic: +, -, *, /
+## Reasoning Process (think step by step)
 
-Rules:
+1. **Strategy Type**: Identify the strategy type (trend following, mean reversion, breakout, etc.)
+2. **Market Regime**: Consider whether the strategy suits the current market context provided
+3. **Indicators**: Select the minimum set of indicators needed
+4. **Entry Logic**: Define clear, testable entry conditions
+5. **Exit Logic**: Define exit conditions (opposite of entry, or trailing stop)
+6. **Risk Management**: Set appropriate stop-loss based on volatility (ATR-based if possible)
+7. **Validation**: Verify stop_loss is negative, indicator names are snake_case, all referenced indicators are defined
+
+## Few-Shot Example
+
+User: "BTC RSI超卖反弹，做个均值回归策略"
+
+Step 1: Mean reversion strategy — buy oversold, sell overbought
+Step 2: RSI is the core indicator; add volume to filter false signals
+Step 3: Indicators: rsi (14), vol_ma (20, volume)
+Step 4: Entry long: rsi < 30 AND volume > vol_ma (confirm with volume)
+Step 5: Exit long: rsi > 70
+Step 6: Stop-loss 5% (RSI can overspend in strong trends)
+Step 7: Validation: ✓ stop_loss=-0.05, ✓ snake_case, ✓ all refs defined
+
+```yaml
+strategy:
+  name: RSI_MeanReversion
+  market:
+    exchange: binance
+    pair: BTC/USDT
+    timeframe: 1h
+  indicators:
+    - {name: rsi, type: RSI, params: {period: 14}}
+    - {name: vol_ma, type: SMA, params: {period: 20, field: volume}}
+  entry:
+    long: "rsi < 30 AND volume > vol_ma"
+    short: null
+  exit:
+    long: "rsi > 70"
+    short: null
+  risk:
+    stop_loss: -0.05
+    max_open_trades: 2
+    stake_amount: 0.1
+```
+
+## Rules
 1. Output ONLY valid YAML, no explanations
 2. stop_loss must be negative
 3. Indicator names must be snake_case
 4. All referenced indicators must be defined in the indicators list
 5. Keep strategy names short and descriptive
+6. Consider market context when setting parameters (e.g., wider stops in high vol)
 """
 
 REPORT_GENERATION_SYSTEM = """\
-You are a professional crypto trading analyst. Given backtest results, \
-generate a clear, actionable analysis report.
+You are a professional crypto trading analyst with CFA credentials. \
+Given backtest results, generate a rigorous analysis report.
+
+Key metrics to interpret:
+- **Sharpe ratio**: >1.0 acceptable, >2.0 good, >3.0 excellent (risk-free rate = 0)
+- **Sortino ratio**: >1.5 good; focuses on downside risk only
+- **Calmar ratio**: >1.0 means return exceeds max drawdown
+- **Max drawdown**: <10% excellent, <20% acceptable, >30% high risk
+- **Alpha vs Buy&Hold**: Positive alpha means strategy beats passive holding
+- **Max consecutive losses**: Tests psychological sustainability of the strategy
+- **Profit factor**: >1.5 indicates a profitable edge
 
 Format your report as:
 1. **Strategy Summary**: One-paragraph overview of the strategy logic
-2. **Backtest Performance**: Key metrics interpretation
-3. **Risk Assessment**: Drawdown, Sharpe ratio, position sizing analysis
-4. **Strengths & Weaknesses**: What works, what doesn't
-5. **Recommendation**: Whether to deploy, and any suggested improvements
+2. **Performance vs Benchmark**: Compare strategy return to Buy&Hold return
+3. **Risk Analysis**: Drawdown, Sharpe/Sortino ratio, volatility assessment
+4. **Trade Analysis**: Win rate, profit factor, consecutive losses, trade duration
+5. **Strengths & Weaknesses**: What works, what doesn't — be specific
+6. **Recommendation**: APPROVE / MODIFY / REJECT with specific suggestions
 
-Use professional but accessible language. Include specific numbers.
 Be honest about weaknesses — don't sugarcoat poor performance.
+If alpha is negative, clearly state the strategy underperforms buy-and-hold.
+If max consecutive losses > 5, flag psychological sustainability risk.
 """
 
 RISK_ASSESSMENT_SYSTEM = """\
@@ -142,10 +202,19 @@ class LLMClient:
             return data["choices"][0]["message"]["content"]
 
     async def generate_dsl(self, natural_language: str) -> str:
-        """Generate strategy DSL from natural language input."""
+        """Generate strategy DSL from natural language input.
+
+        Injects RAG-retrieved trading knowledge into the prompt for
+        more informed parameter selection.
+        """
+        user_msg = f"Convert this trading idea to DSL:\n\n{natural_language}"
+        if HAS_RAG:
+            rag_ctx = retrieve_knowledge(natural_language, max_results=3)
+            if rag_ctx:
+                user_msg += f"\n\n[Relevant Trading Knowledge]\n{rag_ctx}\n\nUse this knowledge when setting indicator parameters, stop-loss, and other risk values."
         return await self.chat(
             system_prompt=DSL_GENERATION_SYSTEM,
-            user_message=f"Convert this trading idea to DSL:\n\n{natural_language}",
+            user_message=user_msg,
             temperature=0.2,
             max_tokens=1024,
         )

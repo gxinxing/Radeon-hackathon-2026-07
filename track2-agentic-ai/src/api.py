@@ -65,3 +65,20 @@ async def validate(strategy: dict):
     from .dsl.validator import validate_dsl
     is_valid, errors = validate_dsl(strategy)
     return {"is_valid": is_valid, "errors": errors}
+
+
+@app.post("/api/walkforward")
+async def walk_forward(req: BacktestRequest):
+    """Run walk-forward analysis (in-sample / out-of-sample)."""
+    from .backtest.server import walk_forward as _wf
+    return await _wf(req)
+
+
+@app.get("/api/knowledge")
+async def knowledge_retrieval(query: str = ""):
+    """Retrieve trading knowledge from RAG knowledge base."""
+    from .knowledge_base.retriever import retrieve_knowledge
+    if not query:
+        return {"success": False, "error": "Query parameter 'query' is required"}
+    context = retrieve_knowledge(query, max_results=5)
+    return {"success": True, "query": query, "context": context}

@@ -1,7 +1,8 @@
 """Generate NL→DSL instruction pairs for fine-tuning.
 
 These pairs teach the LLM to convert natural language trading ideas
-into structured YAML strategy DSL specifications.
+into structured YAML strategy DSL specifications using Chain-of-Thought
+reasoning.
 
 We use template-based generation to cover common strategy patterns:
 - Moving average crossover
@@ -10,6 +11,12 @@ We use template-based generation to cover common strategy patterns:
 - Volume breakout
 - MACD divergence
 - Multi-indicator confluence
+
+Each training pair includes a reasoning trace that walks through:
+1. Strategy type identification
+2. Indicator selection rationale
+3. Entry/exit logic design
+4. Risk parameter justification
 """
 
 from __future__ import annotations
@@ -307,12 +314,13 @@ def generate_dsl_pairs(
                 "You are a crypto trading strategy expert. "
                 "Convert the following natural language strategy description "
                 "into a YAML strategy DSL specification.\n\n"
-                "Output ONLY valid YAML matching the strategy DSL schema. "
-                "Do not add any explanation.\n\n"
+                "Think step by step: identify the strategy type, select indicators, "
+                "design entry/exit logic, and set appropriate risk parameters. "
+                "Then output ONLY the final YAML.\n\n"
                 f"Strategy description: {nl_text}"
             ),
             "input": "",
-            "output": dsl_str,
+            "output": _build_cot_output(template, params, dsl_str),
             "source": "dsl-pairs",
         })
 
@@ -331,6 +339,33 @@ def _format_dsl(dsl_template: dict, params: dict) -> str:
 
     formatted = _recursive_format(dsl_template, params)
     return yaml.dump(formatted, default_flow_style=False, sort_keys=False, allow_unicode=True)
+
+
+def _build_cot_output(template: dict, params: dict, dsl_str: str) -> str:
+    """Build a Chain-of-Thought output with reasoning trace before final YAML."""
+    template_idx = STRATEGY_TEMPLATES.index(template)
+    strategy_types = [
+        "trend following (MA crossover)", "mean reversion (RSI oversold)",
+        "mean reversion (Bollinger Bands)", "breakout (volume confirmed)",
+        "momentum (MACD crossover)", "multi-indicator confluence",
+    ]
+    strat_type = strategy_types[template_idx]
+    stop_loss = -0.03
+    if "stop_loss" in dsl_str:
+        import re
+        m = re.search(r"stop_loss:\s*(-?[\d.]+)", dsl_str)
+        if m:
+            stop_loss = float(m.group(1))
+
+    reasoning = (
+        f"Step 1: Strategy type — {strat_type}\n"
+        f"Step 2: Indicators selected based on the described pattern\n"
+        f"Step 3: Entry condition captures the core signal\n"
+        f"Step 4: Exit condition reverses or complements entry\n"
+        f"Step 5: Stop-loss set to {abs(stop_loss)*100:.0f}% based on strategy volatility\n"
+        f"Step 6: Validation — stop_loss is negative, names are snake_case\n\n"
+    )
+    return reasoning + dsl_str
 
 
 def _recursive_format(obj, params: dict):

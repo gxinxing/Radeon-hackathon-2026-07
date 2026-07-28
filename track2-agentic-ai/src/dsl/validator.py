@@ -2,25 +2,21 @@
 
 Validates a parsed YAML strategy dict against the JSON Schema,
 then performs semantic checks (indicator references, expression syntax).
+Uses the AST-based expression parser for syntax validation.
 """
 
 from __future__ import annotations
 
 import json
-import re
 from pathlib import Path
 from typing import Any
 
 import jsonschema
 
-_SCHEMA_PATH = Path(__file__).parent / "schema.json"
+from .expr_parser import validate_expression, get_expression_references
 
-# Operators and functions allowed in boolean expressions
-_ALLOWED_EXPR_TOKENS = re.compile(
-    r"^[\w\s\.\*\+\-\/\(\)<>=!&|,\d'\"]+$"
-)
-_INDICATOR_REF_RE = re.compile(r"[a-z][a-z0-9_]*")
-_PY_KEYWORDS = {"and", "or", "not", "true", "false", "null", "none"}
+
+_SCHEMA_PATH = Path(__file__).parent / "schema.json"
 
 
 def load_schema() -> dict[str, Any]:
@@ -60,14 +56,10 @@ def validate_dsl(strategy_dict: dict[str, Any]) -> tuple[bool, list[str]]:
             expr = strategy.get(section, {}).get(direction)
             if expr is None:
                 continue
-            refs = _extract_refs(expr)
-            for ref in refs:
-                if ref not in all_refs and ref not in _PY_KEYWORDS:
-                    errors.append(
-                        f"{section}.{direction} references undefined "
-                        f"indicator: '{ref}'. "
-                        f"Defined: {sorted(all_refs)}"
-                    )
+            # Use AST-based parser for both syntax validation and reference extraction
+            expr_errors = validate_expression(expr, indicator_names)
+            for err in expr_errors:
+                errors.append(f"{section}.{direction}: {err}")
 
     # Check MACD has fast/slow/signal params
     for ind in strategy["indicators"]:
@@ -91,9 +83,3 @@ def validate_dsl(strategy_dict: dict[str, Any]) -> tuple[bool, list[str]]:
         )
 
     return len(errors) == 0, errors
-
-
-def _extract_refs(expr: str) -> set[str]:
-    """Extract identifier-like tokens from a boolean expression."""
-    tokens = _INDICATOR_REF_RE.findall(expr)
-    return {t for t in tokens if t not in _PY_KEYWORDS}
