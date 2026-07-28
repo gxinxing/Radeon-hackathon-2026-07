@@ -205,22 +205,36 @@ def train(
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="QLoRA fine-tuning on AMD ROCm")
     parser.add_argument("--data", type=str, required=True, help="Path to training JSONL")
-    parser.add_argument("--model", type=str, default="Qwen/Qwen2.5-7B-Instruct")
+    parser.add_argument("--model", type=str, default=None, help="Override model from config")
     parser.add_argument("--output", type=str, default="models/qwen-trader-lora")
-    parser.add_argument("--epochs", type=int, default=3)
-    parser.add_argument("--batch-size", type=int, default=4)
-    parser.add_argument("--grad-accum", type=int, default=4)
-    parser.add_argument("--lr", type=float, default=2e-4)
-    parser.add_argument("--max-seq-len", type=int, default=2048)
+    parser.add_argument("--epochs", type=int, default=None, help="Override epochs from config")
+    parser.add_argument("--batch-size", type=int, default=None, help="Override batch size from config")
+    parser.add_argument("--grad-accum", type=int, default=None, help="Override grad accum from config")
+    parser.add_argument("--lr", type=float, default=None, help="Override learning rate from config")
+    parser.add_argument("--max-seq-len", type=int, default=None, help="Override max seq len from config")
     args = parser.parse_args()
+
+    # --- Load YAML config (overridden by argparse if provided) ---
+    config: dict = {}
+    config_path = Path(__file__).parent.parent / "configs" / "qlora_config.yaml"
+    if config_path.exists():
+        import yaml
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        print(f"[Train] Loaded config from {config_path}")
+
+    # Merge config with argparse (argparse takes precedence)
+    model_cfg = config.get("model", {})
+    lora_cfg = config.get("lora", {})
+    train_cfg = config.get("training", {})
 
     train(
         data_path=args.data,
-        model_name=args.model,
+        model_name=args.model or model_cfg.get("base_model", "Qwen/Qwen2.5-7B-Instruct"),
         output_dir=args.output,
-        epochs=args.epochs,
-        batch_size=args.batch_size,
-        grad_accum=args.grad_accum,
-        learning_rate=args.lr,
-        max_seq_length=args.max_seq_len,
+        epochs=args.epochs or train_cfg.get("num_train_epochs", 3),
+        batch_size=args.batch_size or train_cfg.get("per_device_train_batch_size", 4),
+        grad_accum=args.grad_accum or train_cfg.get("gradient_accumulation_steps", 4),
+        learning_rate=args.lr or train_cfg.get("learning_rate", 2e-4),
+        max_seq_length=args.max_seq_len or train_cfg.get("max_seq_length", 2048),
     )
