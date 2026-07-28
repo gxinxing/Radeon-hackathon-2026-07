@@ -209,7 +209,7 @@ def transpile_check(dsl: dict) -> tuple[bool, bool]:
     return ft_ok, bt_ok
 
 
-def run_tests(vllm_url: str | None, offline: bool = False) -> list[TestResult]:
+def run_tests(vllm_url: str | None, offline: bool = False, model: str = "qwen-trader-merged") -> list[TestResult]:
     """Run all NL→DSL test cases."""
     results: list[TestResult] = []
 
@@ -236,7 +236,7 @@ def run_tests(vllm_url: str | None, offline: bool = False) -> list[TestResult]:
             continue
 
         # Call LLM
-        result.raw_output = call_vllm(vllm_url, system_prompt, tc["nl"])
+        result.raw_output = call_vllm(vllm_url, system_prompt, tc["nl"], model=model)
 
         if result.raw_output.startswith("[VLLM_ERROR]") or result.raw_output.startswith("[LLM Error]"):
             result.errors.append(result.raw_output)
@@ -359,9 +359,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.offline:
-        results = run_tests(None, offline=True)
+        results = run_tests(None, offline=True, model=args.model)
     elif args.vllm_url:
-        results = run_tests(args.vllm_url, offline=False)
+        results = run_tests(args.vllm_url, offline=False, model=args.model)
     else:
         print("Usage: python eval_nl_to_dsl.py --vllm-url http://localhost:8000/v1")
         print("       python eval_nl_to_dsl.py --offline")
