@@ -44,7 +44,7 @@ backtests it on historical crypto data, evaluates risk, and optionally executes 
 - **Full-chain automation** — NL input → DSL generation → schema validation → backtest →
   risk assessment → paper trading → natural language report
 - **100% AMD GPU** — LLM inference via vLLM on ROCm, no NVIDIA dependency
-- **Dify-powered agent** — Workflow with LLM nodes, code validation, and tool calls
+- **Gradio-powered agent** — Chat UI with LLM nodes, code validation, and tool calls
 
 ---
 
@@ -52,13 +52,13 @@ backtests it on historical crypto data, evaluates risk, and optionally executes 
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│                         Dify Chat UI                              │
+│                         Gradio Chat UI (port 7860)                   │
 │                                                                   │
 │  "BTC放量突破前高，帮我做一个突破策略，止损3%"                     │
 └──────────────────────────┬────────────────────────────────────────┘
                            │
 ┌──────────────────────────▼────────────────────────────────────────┐
-│                   Dify Workflow Engine                              │
+│                   Pipeline Orchestrator (Gradio)                     │
 │                                                                    │
 │  ┌─────────┐   ┌──────────┐   ┌──────────┐   ┌────────────────┐  │
 │  │ LLM:    │──▶│ Code:    │──▶│ HTTP:    │──▶│ LLM:            │  │
@@ -129,7 +129,7 @@ backtests it on historical crypto data, evaluates risk, and optionally executes 
 | Base model | Qwen2.5-7B-Instruct | Chinese-capable LLM, ROCm-friendly |
 | Fine-tuning | QLoRA (4-bit) via PEFT | Inject trading knowledge without full retrain |
 | Inference | vLLM (ROCm, V1 engine) | High-throughput local LLM serving |
-| Agent framework | Dify (Docker Compose) | Workflow orchestration, chat UI, tool management |
+| Agent framework | Gradio + httpx | Chat UI, LLM orchestration, tool calls |
 | Strategy DSL | YAML + JSON Schema | LLM-friendly intermediate representation |
 | Backtest engine | Freqtrade + CCXT | Crypto-native, event-driven backtesting |
 | Technical indicators | TA-Lib | EMA, RSI, MACD, ATR, Bollinger Bands |
@@ -166,12 +166,12 @@ bash scripts/setup.sh
 ```
 
 This script:
-1. Installs vLLM (ROCm), Freqtrade, Dify dependencies
+1. Installs vLLM (ROCm), Freqtrade, Gradio dependencies
 2. Downloads Qwen2.5-7B-Instruct model
 3. Prepares fine-tuning datasets
 4. Starts vLLM inference server on port 8000
 5. Starts backtest microservice on port 8080
-6. Starts Dify on port 3000
+6. Starts Gradio chat UI on port 7860
 
 ### End-to-end verification
 
@@ -218,7 +218,7 @@ track2-agentic-ai/
 │       └── dataset_config.yaml      # Dataset mixing configuration
 ├── dify/
 │   ├── workflows/
-│   │   └── trading_agent.yml        # Dify workflow definition (export format)
+│   │   └── trading_agent.yml        # Dify workflow (optional, see SETUP_GUIDE.md)
 │   └── tools/
 │       ├── market_data_openapi.yml  # Swagger spec for market data tool
 │       └── backtest_openapi.yml     # Swagger spec for backtest API
@@ -316,9 +316,9 @@ Freqtrade `IStrategy` Python class for backtesting.
 
 ---
 
-## 🔄 Dify Workflow
+## 🔄 Gradio Chat Pipeline
 
-The Dify workflow chains multiple nodes:
+The Gradio chat interface (`src/chat_app.py`) chains multiple steps:
 
 1. **LLM Node (NL→DSL)**: User NL input + system prompt → strategy DSL (YAML)
 2. **Code Node (Validate)**: JSON Schema validation of DSL
