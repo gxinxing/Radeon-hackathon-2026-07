@@ -21,7 +21,9 @@ Booster Robotics' official RL training frameworks (Booster Gym / Booster Train) 
 1. **First AMD-GPU humanoid soccer training pipeline** — Genesis + ROCm PyTorch + rsl_rl as a complete Isaac Gym alternative
 2. **Floating-base dynamics fix** — 5 critical bugs in Genesis URDF loading, state reading, and termination logic identified and fixed, enabling physically accurate humanoid simulation
 3. **Hierarchical policy architecture** — Frozen t1_walk.pt (720→21) for locomotion + trainable high-level PPO (19→3) for soccer behavior, with curriculum-based action clip scheduling
-4. **Complete engineering deliverables** — Benchmark data, demo video, ONNX deployment model, reproducible training pipeline
+4. **Reward function engineering** — Identified and fixed the "ball contact punishment" bug (approach_ball not clamped), enabling first-time kicking and scoring behavior. Added potential-based ball_progress shaping and ball_contact bonus.
+5. **Distributed multi-robot architecture** — Socket-coordinated multi-process system bypassing Genesis ROCm multi-entity crash, enabling 3v3 matches with 6 concurrent robots on a single AMD GPU
+6. **Complete engineering deliverables** — Benchmark data, demo video, ONNX deployment model with verified weights (46,467 params), reproducible training pipeline, multi-agent strategy module
 
 ### 1.3 Technical Stack
 
@@ -263,16 +265,56 @@ After v3, a systematic parameter tuning pass (P0/P1/P2) was conducted to address
 | Action std | 1.0 | 0.07 | ✓ Stable |
 | Ball distance (min) | 4.29m | 0.25m | ▲93% reduction |
 
-### 4.6 Training Performance on AMD Radeon GPU
+### 4.6 Reward Function Fix: Unlocking Kicking Behavior
 
-| Metric | Value |
-|--------|-------|
-| GPU | AMD Radeon Graphics (51 GB VRAM) |
-| ROCm version | 7.2.1 |
-| PyTorch | 2.9.1+gitff65f5b (HIP) |
-| Steps per second | 700-1000 (256 envs) |
-| Iteration time | 6.5-8.0 seconds |
-| Total training time | ~55 min (500 iter) + ~27 min (250 iter) |
+After P0/P1/P2, a critical reward bug was identified: `r_approach_ball = prev_dist - dist_to_ball`
+had **no clamp** — when the robot touched the ball, the ball bounced away, dist increased, and the
+reward went **negative**. The policy learned to camp at 0.25m and never touch the ball. Additionally,
+`r_ball_control` at 0.25m gave +0.13/step for standing still, reinforcing the local optimum.
+
+**Fix (4 files, 35 lines):**
+
+| Change | File | Effect |
+|--------|------|--------|
+| `approach_ball` clamped ≥ 0 | reward.py | Ball contact no longer punished |
+| New `r_ball_progress` | reward.py | Potential-based ball→goal shaping (kicks count) |
+| New `r_ball_contact` | reward.py | Foot within 0.15m of ball = +1 |
+| `prev_ball_goal_dist` + `min_foot_dist` | soccer_env_v4.py | Track ball-to-goal delta + foot distance |
+| Episode resets on goal | soccer_env_hierarchical.py | No goal-camping for free reward |
+| `ball_progress: 10, ball_contact: 1` | yaml | New reward weights |
+
+New reward economics: camp 0.18/step vs dribble 0.31/step vs kick toward goal **1.0/m** — kicking
+became the mathematically optimal action.
+
+### 4.7 Final Training Results (v6: 2048 envs, 300 iter)
+
+| Metric | Start | End | Change |
+|--------|-------|-----|--------|
+| Mean reward | -10.48 | **+11.73** | ▲22.21 |
+| Episode length | 61 | **239** | ▲178 (near max 241) |
+| Action std | 1.0 | **0.63** | ✓ Healthy convergence |
+| Goals scored | 0 | **14** | First-time scoring ✅ |
+| Mean dist to ball | 3.16m | **1.25m** | 60% reduction |
+| Falls | — | **0** | Zero falls throughout |
+
+**A/B Control Experiment** (clip 0.6 vs 0.8):
+
+| Config | Reward | ep_len | std | Conclusion |
+|--------|--------|--------|-----|------------|
+| 1024 envs, clip 0.8 | +10.91 | 232 | 0.67 | Main experiment |
+| 512 envs, clip 0.6 | +11.28 | 237 | 0.63 | Nearly identical |
+| **Verdict** | — | — | — | 119-step fall was caused by old reward, not clip speed |
+
+### 4.8 Training Performance on AMD Radeon GPU
+
+| Metric | v4 (512 envs) | v5 (1024 envs) | v6 (2048 envs) |
+|--------|--------------|---------------|---------------|
+| Steps per second | 1,500 | 2,830 | 4,847→1,768* |
+| Iteration time | 8.0s | 8.7s | 10.2→27.8s* |
+| Total training time | ~67 min | ~78 min | ~72 min |
+| Total steps | 6.1M | 12.3M | 14.7M |
+
+*2048 envs slowed over time due to dual-process overhead (A/B experiment running simultaneously).
 
 ---
 
@@ -323,22 +365,29 @@ Two models compared on 4 standardized ball positions:
 
 | Property | Value |
 |----------|-------|
-| File | `models/chase_v6_2048_policy.onnx` (re-exported from 2048-envs checkpoint; **must be >50 KB**) |
-| Input | `obs` [batch, obs_dim] |
+| File | `models/chase_v6_policy.onnx` |
+| Input | `obs` [batch, 19] |
 | Output | `action` [batch, 3] (vx, vy, wz) |
-| Opset | 14 |
+| Opset | 17 |
 | Nodes | 7 |
+| Parameters | 46,467 (19→256→128→64→3) |
+| File size | 187 KB (weights embedded inline) |
 | Architecture | Linear(19,256)→ELU→Linear(256,128)→ELU→Linear(128,64)→ELU→Linear(64,3) |
+
+**ONNX export fix**: PyTorch 2.9.1's dynamo-based ONNX exporter writes weights to an external
+`.onnx.data` file by default. The initial exports were 1.9 KB stubs with no weight data. Fixed
+by post-processing with `onnx.save_model()` to inline all initializer data.
 
 ### 6.3 Demo Video
 
 | Property | Value |
 |----------|-------|
-| Files | `demos/hierarchical_chase_hl_v3.mp4`, `demos/hierarchical_chase_hl_v4.mp4` |
-| Duration | 300-500 steps (30-50s simulated, 150-250 frames) |
-| Robot height | 0.90-0.93m (stable) |
+| Files | `demos/hierarchical_chase_hl_v5.mp4`, `demos/hierarchical_chase_hl_v6.mp4` |
+| Duration | 500 steps (50s simulated, 250 frames) |
+| Robot height | 0.88-0.91m (stable) |
 | Falls | 0 |
-| Ball distance (v4 min) | 0.25m (closest approach to ball) |
+| Ball distance (v6 min) | 0.40m (robot reaches and kicks ball) |
+| Goals scored (v6 training) | 14 total across 300 iterations |
 
 ### 6.4 GitHub Repository
 
