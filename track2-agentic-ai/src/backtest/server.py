@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from pydantic import BaseModel
 
 from ..dsl.validator import validate_dsl
@@ -173,3 +173,13 @@ async def walk_forward(req: BacktestRequest):
         "is_robust": wf.is_robust,
         "split_ratio": wf.split_ratio,
     }
+
+
+@app.get("/api/knowledge")
+async def knowledge(query: str = ""):
+    """Retrieve trading knowledge from RAG knowledge base."""
+    from ..knowledge_base.retriever import retrieve_knowledge
+    if not query:
+        return {"success": False, "error": "Query parameter 'query' is required"}
+    context = retrieve_knowledge(query, max_results=5)
+    return {"success": True, "query": query, "context": context}
