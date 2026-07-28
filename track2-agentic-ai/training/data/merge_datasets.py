@@ -67,19 +67,26 @@ def merge_datasets(
                 count += 1
         print(f"[Merge] Loaded {count} samples from {fname}")
 
-    # Apply weighted oversampling
+    # Apply weighted oversampling — normalize to proportional representation
+    # Find the largest source, then scale others by weight ratio
+    max_count = max(len(s) for s in by_source.values()) if by_source else 1
+    total_weight = sum(weights.get(s, 1.0) for s in by_source)
+
     all_samples: list[dict] = []
     for source, samples in by_source.items():
         weight = weights.get(source, 1.0)
-        # Oversample: repeat samples to match desired weight proportion
-        target_count = int(len(samples) * weight / max(0.01, 1.0))
+        # Target: proportional to weight, scaled to the largest source size
+        target_count = int(max_count * weight / max(total_weight, 0.01))
         if target_count > len(samples):
             # Oversample with replacement
             random.seed(42)
             extra = [random.choice(samples) for _ in range(target_count - len(samples))]
             all_samples.extend(samples + extra)
-        else:
+        elif target_count < len(samples):
+            # Downsample
             all_samples.extend(samples[:target_count])
+        else:
+            all_samples.extend(samples)
         print(f"[Merge] Source '{source}': {len(samples)} → {min(target_count, len(samples))} (weight={weight})")
 
     if shuffle:
