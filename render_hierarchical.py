@@ -62,6 +62,15 @@ def main():
     cam = env.scene.visualizer.cameras[0]
     env.scene.reset()
 
+    # Apply robot surface material for better visual quality
+    try:
+        robot_surface = gs.surfaces.Rough(color=(0.3, 0.5, 0.9), roughness=0.6)
+        for link in env.robot.links:
+            if hasattr(link, 'set_surface'):
+                link.set_surface(robot_surface)
+    except Exception:
+        pass  # surface API varies across Genesis versions
+
     # Find model checkpoint
     log_dir = f"runs/hierarchical_soccer_{args.task}"
     if args.model:

@@ -48,6 +48,14 @@ def build_scene():
             camera_lookat=(0, 0, 0.5),
             res=(1280, 720),
         ),
+        vis_options=gs.options.VisOptions(
+            show_world_frame=False,
+            show_link_frame=False,
+            show_cameras=False,
+            plane_reflection=True,
+            ambient_light=(0.7, 0.7, 0.7),
+            shadow=True,
+        ),
         show_viewer=True,
     )
 
