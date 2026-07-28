@@ -73,11 +73,15 @@ def _generate_synthetic_ohlcv(
     timeframe: str,
     days: int,
 ) -> pd.DataFrame:
-    """Generate realistic synthetic OHLCV data using geometric Brownian motion.
+    """Generate realistic synthetic OHLCV data.
 
-    Uses pair-specific base price and volatility parameters to create
-    realistic-looking candlestick data for backtesting when exchange APIs
-    are unreachable.
+    Uses Student-t distribution + GARCH(1,1) volatility clustering +
+    market regime switching to produce data that closely mimics real
+    crypto markets:
+    - Fat tails (excess kurtosis from Student-t)
+    - Volatility clustering (high vol follows high vol)
+    - Market regime shifts (bull / bear / sideways)
+    - Volume-price correlation (volume spikes on large moves)
     """
     cache_key = f"{pair}_{timeframe}_{days}"
     if cache_key in _synthetic_cache:
@@ -92,14 +96,12 @@ def _generate_synthetic_ohlcv(
     }
     base_price = base_prices.get(pair, 1000)
 
-    # Volatility per timeframe (annualized, adjusted for timeframe)
+    # Volatility per timeframe
     tf_minutes = {"1m": 1, "5m": 5, "15m": 15, "30m": 30, "1h": 60, "4h": 240, "1d": 1440, "1w": 10080}
     minutes = tf_minutes.get(timeframe, 60)
-    # BTC-like annual volatility ~70%, per-candle vol
-    annual_vol = 0.70
-    periods_per_year = 525600 / minutes  # minutes per year / minutes per candle
-    sigma = annual_vol / np.sqrt(periods_per_year)
-    mu = 0.15 / periods_per_year  # 15% annual drift
+    periods_per_year = 525600 / minutes
+    base_sigma = 0.70 / np.sqrt(periods_per_year)  # 70% annual vol → per-candle
+    base_mu = 0.15 / periods_per_year  # 15% annual drift
 
     # Generate timestamps
     end = datetime.now(timezone.utc)
@@ -108,24 +110,78 @@ def _generate_synthetic_ohlcv(
     timestamps = pd.date_range(start=start, end=end, freq=freq)
     n = len(timestamps)
 
-    # Generate price path with GBM
-    np.random.seed(42)  # Reproducible
-    returns = np.random.normal(mu, sigma, n)
+    np.random.seed(42)
+
+    # --- Market regime switching (Markov chain) ---
+    # States: 0=bull, 1=bear, 2=sideways
+    # Transition matrix (probabilities of staying / switching)
+    transition = np.array([
+        [0.97, 0.02, 0.01],  # bull → bull/bear/sideways
+        [0.02, 0.96, 0.02],  # bear → bull/bear/sideways
+        [0.04, 0.03, 0.93],  # sideways → bull/bear/sideways
+    ])
+    regime_params = {
+        0: {"mu": base_mu * 3.0,  "sigma": base_sigma * 1.2,  "vol_mult": 1.3},  # bull: high drift, higher vol
+        1: {"mu": -base_mu * 2.5, "sigma": base_sigma * 1.5,  "vol_mult": 1.8},  # bear: negative drift, high vol
+        2: {"mu": 0.0,            "sigma": base_sigma * 0.6,  "vol_mult": 0.7},  # sideways: no drift, low vol
+    }
+
+    regime = 0  # Start in bull market
+    regimes = np.zeros(n, dtype=int)
+
+    # --- GARCH(1,1) parameters ---
+    omega = base_sigma**2 * 0.05  # long-run variance contribution
+    alpha_garch = 0.10  # reaction to recent shocks
+    beta_garch = 0.85   # persistence of variance
+    var_t = base_sigma**2  # Initial variance
+
+    # --- Generate returns with regime + GARCH + Student-t ---
+    from scipy.stats import t as student_t
+    df_t = 5  # degrees of freedom (fat tails; normal = inf)
+
+    returns = np.zeros(n)
+    for i in range(n):
+        # Regime transition
+        regime = np.random.choice(3, p=transition[regime])
+        regimes[i] = regime
+        params = regime_params[regime]
+
+        # GARCH(1,1) variance update
+        if i > 0:
+            var_t = omega + alpha_garch * returns[i-1]**2 + beta_garch * var_t
+        # Scale variance by regime volatility multiplier
+        effective_sigma = np.sqrt(var_t) * params["vol_mult"]
+
+        # Student-t sample (fat tails)
+        raw = student_t.rvs(df=df_t, size=1)[0]
+        # Scale to desired std
+        scaled = raw * effective_sigma / np.sqrt(df_t / (df_t - 2))
+        returns[i] = params["mu"] + scaled
+
+    # --- Build price path ---
     prices = base_price * np.exp(np.cumsum(returns))
+    # Ensure prices stay positive
+    prices = np.maximum(prices, base_price * 0.1)
 
-    # Add some trend cycles for realism
-    cycle = np.sin(np.linspace(0, 4 * np.pi, n)) * base_price * 0.05
-    prices = prices + cycle
+    # --- Volume with price-volume correlation ---
+    abs_returns = np.abs(returns)
+    vol_base = np.random.lognormal(mean=15, sigma=1.0, size=n)
+    # Volume spikes on large price moves (correlation with |returns|)
+    vol_multiplier = 1.0 + abs_returns / (base_sigma + 1e-8) * 0.5
+    # Higher volume in high-volatility regimes
+    for i in range(n):
+        regime_vol_mult = regime_params[regimes[i]]["vol_mult"]
+        vol_multiplier[i] *= regime_vol_mult
+    volumes = vol_base * vol_multiplier
 
-    # Build OHLCV from close prices
-    intraday_vol = sigma * base_price * 0.5
+    # --- Build OHLCV from close prices ---
+    intraday_vol = np.maximum(returns, 0.001) * prices * 0.5
     opens = np.roll(prices, 1)
     opens[0] = prices[0]
 
-    highs = np.maximum(opens, prices) + np.random.uniform(0, intraday_vol, n)
-    lows = np.minimum(opens, prices) - np.random.uniform(0, intraday_vol, n)
-    lows = np.maximum(lows, prices * 0.95)  # Ensure positive
-    volumes = np.random.lognormal(mean=15, sigma=1.5, size=n)  # Realistic volume range
+    highs = np.maximum(opens, prices) + np.random.uniform(0, 1, n) * intraday_vol
+    lows = np.minimum(opens, prices) - np.random.uniform(0, 1, n) * intraday_vol
+    lows = np.maximum(lows, prices * 0.90)
 
     df = pd.DataFrame({
         "open": opens,
@@ -136,7 +192,8 @@ def _generate_synthetic_ohlcv(
     }, index=timestamps[:n])
 
     _synthetic_cache[cache_key] = df
-    print(f"[DataFetcher] Generated {len(df)} synthetic candles for {pair} {timeframe}")
+    print(f"[DataFetcher] Generated {len(df)} synthetic candles for {pair} {timeframe}"
+          f" (GARCH + Student-t + regime switching)")
     return df
 
 
@@ -257,6 +314,82 @@ def calculate_indicators(
             df[f"{name}_d"] = d
         elif ind_type == "WMA":
             df[name] = talib.WMA(data, timeperiod=period)
+        elif ind_type == "VWAP":
+            # TA-Lib doesn't have a direct VWAP; compute manually
+            # VWAP = cumsum(typical_price * volume) / cumsum(volume)
+            typical_price = (df["high"] + df["low"] + df["close"]) / 3.0
+            cum_tp_vol = (typical_price * df["volume"]).cumsum()
+            cum_vol = df["volume"].cumsum()
+            df[name] = (cum_tp_vol / cum_vol).fillna(method="ffill")
+        elif ind_type == "HMA":
+            # Hull MA: WMA(2*WMA(n/2) - WMA(n), sqrt(n))
+            import numpy as _np
+            half_period = max(1, period // 2)
+            sqrt_period = max(1, int(_np.sqrt(period)))
+            wma_half = talib.WMA(data, timeperiod=half_period)
+            wma_full = talib.WMA(data, timeperiod=period)
+            raw = 2 * wma_half - wma_full
+            df[name] = talib.WMA(raw, timeperiod=sqrt_period)
+        elif ind_type == "ZLEMA":
+            # Zero-Lag EMA: EMA of (2*price - price(delay))
+            delay = max(1, period // 2)
+            delayed = pd.Series(data).shift(delay).values
+            adjusted = 2 * data - delayed
+            df[name] = talib.EMA(adjusted, timeperiod=period)
+        elif ind_type == "Supertrend":
+            # Supertrend = (hl2 ± multiplier * ATR)
+            # Direction flips when price crosses the band
+            multiplier = params.get("multiplier", 3.0)
+            hl2 = (df["high"] + df["low"]) / 2.0
+            atr = talib.ATR(
+                df["high"].values, df["low"].values, df["close"].values,
+                timeperiod=period,
+            )
+            upper_band = hl2 + multiplier * atr
+            lower_band = hl2 - multiplier * atr
+            # Determine trend direction
+            close = df["close"].values
+            st = pd.Series(index=df.index, dtype=float)
+            direction = 1  # 1=uptrend, -1=downtrend
+            for i in range(len(close)):
+                if i == 0:
+                    st.iloc[i] = lower_band[i]
+                    continue
+                if close[i] > upper_band[i - 1]:
+                    direction = 1
+                elif close[i] < lower_band[i - 1]:
+                    direction = -1
+                if direction == 1:
+                    st.iloc[i] = max(lower_band[i], st.iloc[i - 1]) if pd.notna(st.iloc[i - 1]) else lower_band[i]
+                else:
+                    st.iloc[i] = min(upper_band[i], st.iloc[i - 1]) if pd.notna(st.iloc[i - 1]) else upper_band[i]
+            df[name] = st
+        elif ind_type == "ICHIMOKU":
+            # Ichimoku Cloud: conversion, base, spanA, spanB, lagging
+            high = df["high"].values
+            low = df["low"].values
+            conv_period = params.get("fast_period", 9)
+            base_period = params.get("slow_period", 26)
+            span_b_period = period * 2
+            # Tenkan-sen (Conversion)
+            df[f"{name}_tenkan"] = (
+                pd.Series(high).rolling(conv_period).max() +
+                pd.Series(low).rolling(conv_period).min()
+            ) / 2.0
+            # Kijun-sen (Base)
+            df[f"{name}_kijun"] = (
+                pd.Series(high).rolling(base_period).max() +
+                pd.Series(low).rolling(base_period).min()
+            ) / 2.0
+            # Senkou Span A
+            df[f"{name}_spanA"] = (df[f"{name}_tenkan"] + df[f"{name}_kijun"]) / 2.0
+            # Senkou Span B
+            df[f"{name}_spanB"] = (
+                pd.Series(high).rolling(span_b_period).max() +
+                pd.Series(low).rolling(span_b_period).min()
+            ) / 2.0
+            # Main line = Span A for signal evaluation
+            df[name] = df[f"{name}_spanA"]
         else:
             df[name] = talib.SMA(data, timeperiod=period)
 

@@ -177,6 +177,49 @@ class SoccerEnvHierarchical(SoccerEnv):
 
         # Use high-level actions for reward (action_rate, energy)
         soccer["last_actions"] = self.last_hl_actions
+
+        # ── Feed team-geometry into the coop (3v3) reward terms ──
+        # Only when multiagent_obs is on (the 3v3 harness supplies teammate/
+        # opponent positions). Harmless no-op otherwise — the coop terms are
+        # inert unless these obs keys exist. Possession is computed here (from
+        # current post-step positions) so the reward matches this step exactly.
+        if self.use_multiagent_obs:
+            gx = float(self.goal_x)
+            self_xy = self.base_pos[:, :2]
+            ball_xy = self.ball_pos[:, :2]
+            attack_goal_xy = torch.full_like(self_xy, 0.0)
+            attack_goal_xy[:, 0] = gx
+            defend_goal_xy = torch.full_like(self_xy, 0.0)
+            defend_goal_xy[:, 0] = -gx
+
+            # Possession flag (mirror _multiagent_extra): +1 if I'm the chaser on
+            # the controlling team, 0 if a teammate is, -1 if opponents are closer.
+            self_ball = torch.norm((self.ball_pos - self.base_pos)[:, :2], dim=-1)
+            if self.teammate_pos is not None:
+                tm_ball = torch.norm((self.teammate_pos - self.ball_pos[:, None, :])[:, :, :2],
+                                     dim=-1).min(dim=-1).values
+            else:
+                tm_ball = torch.full_like(self_ball, float("inf"))
+            if self.opponent_pos is not None:
+                op_ball = torch.norm((self.opponent_pos - self.ball_pos[:, None, :])[:, :, :2],
+                                     dim=-1).min(dim=-1).values
+            else:
+                op_ball = torch.full_like(self_ball, float("inf"))
+            team_min = torch.minimum(self_ball, tm_ball)
+            in_possession = torch.where(
+                team_min <= op_ball,
+                torch.where(self_ball <= tm_ball, 1.0, 0.0),
+                -1.0).unsqueeze(-1)
+
+            soccer["self_xy"] = self_xy
+            soccer["ball_xy"] = ball_xy
+            soccer["attack_goal_xy"] = attack_goal_xy
+            soccer["defend_goal_xy"] = defend_goal_xy
+            soccer["in_possession"] = in_possession
+            # Goal-credit: a ball in the attack goal is my team's score. The
+            # harness may override with scored_my_team when goal-side is known.
+            soccer["scored_my_team"] = soccer["scored"].float()
+
         self.rew_buf = compute_reward(soccer, self.hl_actions, w, self.task)
 
         # ── Success metrics → extras["episode"] (rsl_rl logs these to tensorboard) ──
@@ -365,8 +408,6 @@ class SoccerEnvHierarchical(SoccerEnv):
                            -1.0)                                         # opponents closer
         flag = flag.unsqueeze(-1)                                            # num_envs x 1
 
-        # Stash for the coop reward terms (r_defensive_position / r_support_position).
-        self._ma_possession = flag
         return torch.cat([tm_nearest, op_nearest, flag], dim=-1)          # num_envs x 5
 
     # ─── Overrides for hierarchical behavior ──────────────────────

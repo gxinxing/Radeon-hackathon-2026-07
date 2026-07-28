@@ -107,20 +107,50 @@ Qwen2.5-7B fine-tuned on a curated dataset of:
 ### 4.3 Full-Chain Autonomous Pipeline
 
 The system implements a complete pipeline from idea to execution:
-1. **NL Input** — User describes a strategy in natural language
-2. **DSL Generation** — LLM generates structured YAML strategy spec
-3. **Schema Validation** — JSON Schema validates structure and semantics
-4. **Backtest** — Strategy is backtested on 90-180 days of historical data
-5. **Risk Assessment** — Metrics computed: drawdown, Sharpe, win rate, profit factor
-6. **Report** — Natural language analysis with recommendations
-7. **Paper Trade** — Optional deployment to Binance Testnet (API available)
+1. **Market Context Fetch** — Current price, 24h change, volume fetched and injected into LLM prompt
+2. **NL Input** — User describes a strategy in natural language
+3. **DSL Generation** — LLM generates structured YAML strategy spec using Chain-of-Thought reasoning
+4. **Schema Validation** — JSON Schema validates structure and semantics
+5. **Backtest** — Strategy is backtested on 90-180 days of historical data with multi-position management and slippage model
+6. **Risk Assessment** — Metrics computed: Sharpe, Sortino, Calmar, max drawdown, max consecutive losses, alpha vs benchmark
+7. **Report** — Natural language analysis with benchmark comparison and specific recommendations
+8. **Paper Trade** — Optional deployment to Binance Testnet (API available)
 
-### 4.4 Synthetic Data Fallback
+### 4.4 Realistic Market Simulation
 
-When exchange APIs are unreachable (network-restricted cloud instances),
-the system generates realistic synthetic OHLCV data using geometric Brownian
-motion with pair-specific parameters (BTC base price $65K, 70% annual volatility).
-This ensures the full pipeline remains testable in any environment.
+The synthetic data generator replaces naive geometric Brownian motion with:
+- **GARCH(1,1) volatility clustering** — High volatility periods cluster, mimicking real market dynamics
+- **Student-t distribution** — Fat tails produce realistic extreme events (flash crashes, pumps)
+- **Markov regime switching** — Bull/bear/sideways market states with transition probabilities
+- **Volume-price correlation** — Volume spikes on large price moves, higher in volatile regimes
+
+### 4.5 Walk-Forward Analysis (Overfitting Detection)
+
+The system includes a walk-forward analysis endpoint (`/api/walkforward`) that splits
+historical data into in-sample (70%) and out-of-sample (30%) segments, runs the strategy
+on both, and compares performance:
+
+- **Overfitting Score**: In-sample return minus out-of-sample return. High positive values
+  indicate the strategy fits historical noise rather than capturing a persistent edge.
+- **Robustness Assessment**: A strategy is flagged as robust only if out-of-sample Sharpe > 0,
+  return > 0, and max drawdown < 30%.
+- **Visual Output**: The Gradio UI displays a comparison table with IS/OOS metrics side by side.
+
+### 4.6 Professional-Grade Backtest Metrics
+
+The backtest engine computes a comprehensive metric suite comparable to professional quantitative platforms:
+
+| Metric | Description |
+|--------|-------------|
+| Sharpe Ratio | Risk-adjusted return (annualized, timeframe-aware) |
+| Sortino Ratio | Downside-risk-adjusted return |
+| Calmar Ratio | Annualized return / max drawdown |
+| Max Consecutive Losses | Psychological sustainability indicator |
+| Alpha vs Buy&Hold | Strategy excess return over passive benchmark |
+| Volatility (Annual) | Annualized standard deviation of returns |
+| Avg Trade Duration | Average holding period in candles |
+| Profit Factor | Gross profit / gross loss |
+| Win Rate | Percentage of profitable trades |
 
 ## 5. Datasets Used
 
@@ -140,12 +170,12 @@ This ensures the full pipeline remains testable in any environment.
 | DSL validator | `src/dsl/validator.py` | ✅ 10 tests passing |
 | DSL transpiler | `src/dsl/transpiler.py` | ✅ 10 tests passing |
 | Backtest microservice | `src/backtest/server.py` | ✅ Running on :8080 |
-| Backtest runner | `src/backtest/runner.py` | ✅ Full trade simulation |
+| Backtest runner | `src/backtest/runner.py` | ✅ Multi-position, slippage, benchmark, walk-forward |
 | Market data tools | `src/tools/market_data.py` | ✅ With synthetic fallback |
 | Indicator calculator | `src/tools/indicators.py` | ✅ TA-Lib integration |
 | Paper trading | `src/tools/paper_trade.py` | ✅ Binance Testnet |
-| LLM prompts | `src/llm/prompts.py` | ✅ 3 specialized prompts |
-| Chat UI | `src/chat_app.py` | ✅ Gradio on :7860 |
+| LLM prompts | `src/llm/prompts.py` | ✅ CoT + few-shot + market context |
+| Chat UI | `src/chat_app.py` | ✅ Gradio + equity curve chart + walk-forward |
 | QLoRA training script | `training/scripts/train_qlora.py` | ✅ ROCm-optimized |
 | LoRA merge script | `training/scripts/merge_lora.py` | ✅ PEFT merge |
 | vLLM serving script | `training/scripts/serve_vllm.sh` | ✅ ROCm env configured |

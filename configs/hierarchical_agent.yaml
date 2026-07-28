@@ -13,6 +13,8 @@
 
 exp_name: hierarchical_soccer
 task: chase_hl
+# For 3v3 multi-agent training, set:  task: coop_hl   AND   env.multiagent_obs: true
+# (coop_hl adds team-shaping rewards that need team geometry supplied by the harness).
 num_envs: 2048
 seed: 42
 show_viewer: false
@@ -71,6 +73,13 @@ reward:
   ball_contact: 1.0        # foot within 0.15 m of ball
   ball_to_goal: 3.0        # reward for ball moving toward goal
   goal_scored: 30.0        # big reward for scoring (episode resets on goal)
+
+  # ── Cooperative (3v3) shaping — ONLY active when task=coop_hl AND
+  # multiagent_obs=true (the 3v3 harness feeds team geometry). Kept modest so
+  # they nudge formation without overriding the ball-objectives above.
+  defensive_position: 0.5   # stay goal-side of ball when NOT in possession (zonal D)
+  support_position: 0.5    # offer an advanced, un-crowded outlet when IN possession
+  coop_goal: 10.0           # shared credit: all 3 teammates rewarded on a team goal
 
   # ── Penalties ──
   fall_penalty: -5.0
