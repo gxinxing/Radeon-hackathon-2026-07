@@ -64,21 +64,27 @@ def prepare_fnspid(
         Path to the processed JSONL file.
     """
     print("[FNSPID] Loading dataset from HuggingFace...")
-    try:
-        ds = load_dataset(
-            "Zihan1004/FNSPID",
-            "stock_news",
-            split="train",
-            trust_remote_code=True,
-        )
-    except Exception as e:
-        print(f"[FNSPID] Warning: Could not load full dataset: {e}")
-        print("[FNSPID] Falling back to filtered subset...")
-        ds = load_dataset(
-            "Zihan1004/FNSPID",
-            split="train[:5000]",
-            trust_remote_code=True,
-        )
+    ds = None
+    # Try different loading strategies — FNSPID config names vary across versions
+    for attempt in [
+        ("Zihan1004/FNSPID", "Stock_news", "train"),
+        ("Zihan1004/FNSPID", None, "train[:5000]"),
+        ("Zihan1004/FNSPID", None, "train"),
+    ]:
+        try:
+            if attempt[1]:
+                ds = load_dataset(attempt[0], attempt[1], split=attempt[2], trust_remote_code=True)
+            else:
+                ds = load_dataset(attempt[0], split=attempt[2], trust_remote_code=True)
+            print(f"[FNSPID] Loaded with config='{attempt[1]}', split='{attempt[2]}'")
+            break
+        except Exception as e:
+            print(f"[FNSPID] Attempt failed (config={attempt[1]}): {e}")
+            continue
+
+    if ds is None:
+        print("[FNSPID] All loading attempts failed. Generating synthetic financial news samples...")
+        return _generate_synthetic_fnspid(max_samples, output_path)
 
     print(f"[FNSPID] Loaded {len(ds)} samples, processing up to {max_samples}...")
 
@@ -179,6 +185,57 @@ def _generate_reasoning(title: str, summary: str, sentiment: str) -> str:
         f"No clear directional bias.",
     }
     return reason_map.get(sentiment, "Further analysis needed.")
+
+
+def _generate_synthetic_fnspid(max_samples: int, output_path: str | None = None) -> str:
+    """Generate synthetic financial news samples when FNSPID is unavailable."""
+    import random
+    random.seed(42)
+
+    news_templates = [
+        ("Bitcoin surges past ${price} amid institutional adoption", "Bullish",
+         "Large buyers entering the market, supply shrinking"),
+        ("BTC drops {pct}% as regulators announce new crackdown", "Bearish",
+         "Regulatory uncertainty causing selloff"),
+        ("Ethereum {pct}% rally driven by DeFi TVL growth", "Bullish",
+         "Strong fundamentals supporting price appreciation"),
+        ("Crypto market flat as investors await Fed decision", "Neutral",
+         "Low volatility, market in wait-and-see mode"),
+        ("Exchange hack causes {pct}% flash crash in BTC", "Bearish",
+         "Security incident triggering panic selling"),
+        ("Major company announces Bitcoin treasury allocation", "Bullish",
+         "Institutional demand signal, reduced circulating supply"),
+    ]
+
+    processed = []
+    for i in range(min(max_samples, 1000)):
+        template = random.choice(news_templates)
+        title, sentiment, factors = template
+        price = random.randint(60000, 70000)
+        pct = random.randint(5, 20)
+        title_filled = title.format(price=price, pct=pct)
+
+        instruction = NEWS_ANALYSIS_TEMPLATES[0]["instruction"].format(
+            news=factors, headline=title_filled,
+        )
+        response = NEWS_ANALYSIS_TEMPLATES[0]["response"].format(
+            sentiment=sentiment, factors=factors,
+            impact="Short-term price movement expected" if sentiment != "Neutral" else "Limited impact",
+            implication=_sentiment_to_advice(sentiment),
+            assessment=sentiment, confidence="Medium",
+            reasoning=_generate_reasoning(title_filled, factors, sentiment),
+        )
+        processed.append({
+            "instruction": instruction, "input": "",
+            "output": response, "source": "fnspid-synthetic",
+        })
+
+    output = output_path or str(OUTPUT_DIR / "fnspid_train.jsonl")
+    with open(output, "w") as f:
+        for item in processed:
+            f.write(json.dumps(item, ensure_ascii=False) + "\n")
+    print(f"[FNSPID] Generated {len(processed)} synthetic samples → {output}")
+    return output
 
 
 if __name__ == "__main__":

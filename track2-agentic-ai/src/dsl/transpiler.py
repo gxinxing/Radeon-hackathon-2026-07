@@ -70,6 +70,7 @@ def transpile_to_freqtrade(dsl: dict[str, Any]) -> str:
     lines.append('"""')
     lines.append("from freqtrade.strategy import IStrategy, DecimalParameter, IntParameter")
     lines.append("from pandas import DataFrame")
+    lines.append("import pandas as pd")
     lines.append("import talipp.indicators as ti")
     lines.append("")
     lines.append("")

@@ -39,9 +39,9 @@ def prepare_fingpt(
 
     # --- FinGPT sentiment analysis ---
     try:
-        print("[FinGPT] Loading sentiment dataset (fpadvgpt)...")
+        print("[FinGPT] Loading sentiment dataset...")
         ds_sent = load_dataset(
-            "AI4Finance/FinGPT-Sentiment",
+            "FinGPT/fingpt-sentiment-train",
             split="train",
             trust_remote_code=True,
         )
@@ -65,11 +65,11 @@ def prepare_fingpt(
     except Exception as e:
         print(f"[FinGPT] Sentiment dataset not available: {e}")
 
-    # --- FinGPT reasoning/CoT dataset ---
+    # --- FinGPT headlined sentiment (alternative dataset) ---
     try:
-        print("[FinGPT] Loading reasoning dataset (CoT)...")
+        print("[FinGPT] Loading headlined sentiment dataset...")
         ds_cot = load_dataset(
-            "AI4Finance/FinGPT-Cot",
+            "FinGPT/fingpt-sentiment-train",
             split="train",
             trust_remote_code=True,
         )

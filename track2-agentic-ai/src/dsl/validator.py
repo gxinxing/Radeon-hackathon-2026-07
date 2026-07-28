@@ -15,8 +15,31 @@ import jsonschema
 
 from .expr_parser import validate_expression, get_expression_references
 
-
 _SCHEMA_PATH = Path(__file__).parent / "schema.json"
+
+# Indicators that produce multiple output columns (sub-fields)
+_MULTI_COLUMN_INDICATORS: dict[str, list[str]] = {
+    "MACD": ["_signal", "_hist"],
+    "BollingerBands": ["_upper", "_middle", "_lower"],
+    "Stochastic": ["_k", "_d"],
+    "ICHIMOKU": ["_tenkan", "_kijun", "_spanA", "_spanB"],
+}
+
+
+def _expand_indicator_names(indicators: list[dict]) -> set[str]:
+    """Expand indicator names to include sub-field columns.
+
+    For example, a BollingerBands indicator named 'bb' produces:
+    bb, bb_upper, bb_middle, bb_lower
+    """
+    names: set[str] = set()
+    for ind in indicators:
+        base_name = ind["name"]
+        names.add(base_name)
+        ind_type = ind["type"]
+        for suffix in _MULTI_COLUMN_INDICATORS.get(ind_type, []):
+            names.add(f"{base_name}{suffix}")
+    return names
 
 
 def load_schema() -> dict[str, Any]:
@@ -44,8 +67,8 @@ def validate_dsl(strategy_dict: dict[str, Any]) -> tuple[bool, list[str]]:
 
     # --- Semantic validation ---
 
-    # Collect indicator names
-    indicator_names = {ind["name"] for ind in strategy["indicators"]}
+    # Collect indicator names (including multi-column sub-fields)
+    indicator_names = _expand_indicator_names(strategy["indicators"])
     # Built-in data columns always available
     builtin_cols = {"open", "high", "low", "close", "volume"}
     all_refs = indicator_names | builtin_cols
