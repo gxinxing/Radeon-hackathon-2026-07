@@ -252,31 +252,62 @@ class SoccerEnv:
             _FL = self.field_x; _FW = self.field_y; _HL = _FL / 2; _HW = _FW / 2
             _LH = 0.005; _LW = 0.12; _GW = self.goal_half * 2; _GH = 1.0; _PR = 0.05; _CR = self.circle_radius
 
-            # Green field via gs.morphs.Plane (has proper UV for texture mapping)
-            _field_texture_path = os.path.join(os.path.dirname(__file__), "assets", "textures", "soccer_field.png")
-            if os.path.exists(_field_texture_path):
-                _field_surface = gs.surfaces.Rough(
-                    diffuse_texture=gs.textures.ImageTexture(image_path=_field_texture_path),
-                    roughness=0.9,
-                )
-            else:
-                _field_surface = gs.surfaces.Rough(color=(0.12, 0.45, 0.15), roughness=0.9)
-
-            # Use Plane for textured field (Plane has UV coords, Box does not)
+            # Green field surface
+            _field_surface = gs.surfaces.Rough(color=(0.12, 0.45, 0.15), roughness=0.9)
             self.scene.add_entity(
                 morph=gs.morphs.Plane(pos=(0, 0, 0.001), plane_size=(_FL, _FW), fixed=True),
                 surface=_field_surface,
             )
 
-            # White field lines as thin Boxes on top of the green surface
+            # White field lines as thin Boxes
             _w = gs.surfaces.Rough(color=(1, 1, 1), roughness=0.8)
-            for _x, _y in [(0, -_HW), (0, _HW)]:
-                self.scene.add_entity(morph=gs.morphs.Box(size=(_FL, _LW, _LH), pos=(_x, _y, _LH / 2 + 0.002), fixed=True), surface=_w)
-            for _x, _y in [(-_HL, 0), (_HL, 0), (0, 0)]:
-                self.scene.add_entity(morph=gs.morphs.Box(size=(_LW, _FW, _LH), pos=(_x, _y, _LH / 2 + 0.002), fixed=True), surface=_w)
-            for _i in range(32):
-                _a = 2 * _m.pi * _i / 32
-                self.scene.add_entity(morph=gs.morphs.Box(size=(0.3, _LW, _LH), pos=(_CR * _m.cos(_a), _CR * _m.sin(_a), _LH / 2 + 0.002), euler=(0, 0, _m.degrees(_a)), fixed=True), surface=_w)
+            _z = _LH / 2 + 0.002
+
+            # Boundary lines (4 sides)
+            self.scene.add_entity(morph=gs.morphs.Box(size=(_FL, _LW, _LH), pos=(0, -_HW, _z), fixed=True), surface=_w)
+            self.scene.add_entity(morph=gs.morphs.Box(size=(_FL, _LW, _LH), pos=(0,  _HW, _z), fixed=True), surface=_w)
+            self.scene.add_entity(morph=gs.morphs.Box(size=(_LW, _FW, _LH), pos=(-_HL, 0, _z), fixed=True), surface=_w)
+            self.scene.add_entity(morph=gs.morphs.Box(size=(_LW, _FW, _LH), pos=( _HL, 0, _z), fixed=True), surface=_w)
+
+            # Halfway line
+            self.scene.add_entity(morph=gs.morphs.Box(size=(_LW, _FW, _LH), pos=(0, 0, _z), fixed=True), surface=_w)
+
+            # Center circle (128 segments with overlap for solid smooth circle)
+            _NSEG = 128
+            _seg_len = 2 * _m.pi * _CR / _NSEG + _LW  # overlap by full line width
+            for _i in range(_NSEG):
+                _a = 2 * _m.pi * _i / _NSEG
+                self.scene.add_entity(
+                    morph=gs.morphs.Box(size=(_seg_len, _LW, _LH),
+                                        pos=(_CR * _m.cos(_a), _CR * _m.sin(_a), _z),
+                                        euler=(0, 0, _m.degrees(_a)), fixed=True),
+                    surface=_w)
+
+            # Center spot
+            self.scene.add_entity(morph=gs.morphs.Box(size=(0.08, 0.08, _LH), pos=(0, 0, _z), fixed=True), surface=_w)
+
+            # Penalty areas (both sides)
+            _PA_DEPTH = 2.0   # penalty area depth
+            _PA_HALF = 2.5    # penalty area half-width
+            for _sx in [-_HL, _HL]:
+                _pa_x = _sx + (_PA_DEPTH / 2) * (1 if _sx < 0 else -1)
+                # 3 lines per penalty area: back, left, right
+                self.scene.add_entity(morph=gs.morphs.Box(size=(_LW, _PA_HALF * 2, _LH), pos=(_pa_x, 0, _z), fixed=True), surface=_w)
+                self.scene.add_entity(morph=gs.morphs.Box(size=(_PA_DEPTH, _LW, _LH), pos=(_pa_x - _PA_DEPTH/2 * (1 if _sx < 0 else -1), -_PA_HALF, _z), fixed=True), surface=_w)
+                self.scene.add_entity(morph=gs.morphs.Box(size=(_PA_DEPTH, _LW, _LH), pos=(_pa_x - _PA_DEPTH/2 * (1 if _sx < 0 else -1),  _PA_HALF, _z), fixed=True), surface=_w)
+
+            # Goal areas (smaller boxes inside penalty areas)
+            _GA_DEPTH = 1.0
+            _GA_HALF = 1.5
+            for _sx in [-_HL, _HL]:
+                _ga_x = _sx + (_GA_DEPTH / 2) * (1 if _sx < 0 else -1)
+                self.scene.add_entity(morph=gs.morphs.Box(size=(_LW, _GA_HALF * 2, _LH), pos=(_ga_x, 0, _z), fixed=True), surface=_w)
+                self.scene.add_entity(morph=gs.morphs.Box(size=(_GA_DEPTH, _LW, _LH), pos=(_ga_x - _GA_DEPTH/2 * (1 if _sx < 0 else -1), -_GA_HALF, _z), fixed=True), surface=_w)
+                self.scene.add_entity(morph=gs.morphs.Box(size=(_GA_DEPTH, _LW, _LH), pos=(_ga_x - _GA_DEPTH/2 * (1 if _sx < 0 else -1),  _GA_HALF, _z), fixed=True), surface=_w)
+
+            # Penalty spots
+            for _sx in [-_HL + 1.5, _HL - 1.5]:
+                self.scene.add_entity(morph=gs.morphs.Box(size=(0.08, 0.08, _LH), pos=(_sx, 0, _z), fixed=True), surface=_w)
 
             # Goal posts (white)
             _gs_s = gs.surfaces.Rough(color=(0.95, 0.95, 0.95), roughness=0.5)
