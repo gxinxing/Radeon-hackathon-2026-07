@@ -131,7 +131,12 @@ def build_3v3_scene(robot_urdf: str, show_viewer: bool = False, record_video: bo
         viewer_options=gs.options.ViewerOptions(
             camera_pos=(0, -15, 10), camera_lookat=(0, 0, 0.5), camera_fov=50, res=(1280, 720)),
         vis_options=gs.options.VisOptions(
-            ambient_light=(0.5, 0.5, 0.5), shadow=True),
+            show_world_frame=False,
+            show_link_frame=False,
+            show_cameras=False,
+            plane_reflection=True,
+            ambient_light=(0.7, 0.7, 0.7),
+            shadow=True),
         renderer=gs.renderers.Rasterizer(),
         show_viewer=show_viewer,
     )

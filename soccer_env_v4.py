@@ -230,7 +230,15 @@ class SoccerEnv:
             sim_options=gs.options.SimOptions(dt=PHYSICS_DT, substeps=1),
             rigid_options=gs.options.RigidOptions(enable_self_collision=True, tolerance=1e-5, max_collision_pairs=512),
             viewer_options=gs.options.ViewerOptions(camera_pos=(6, 6, 4), camera_lookat=(0, 0, 0.5), camera_fov=40),
-            vis_options=gs.options.VisOptions(rendered_envs_idx=[0], ambient_light=(0.5, 0.5, 0.5), shadow=True),
+            vis_options=gs.options.VisOptions(
+                rendered_envs_idx=[0],
+                show_world_frame=False,
+                show_link_frame=False,
+                show_cameras=False,
+                plane_reflection=True,
+                ambient_light=(0.7, 0.7, 0.7),
+                shadow=True,
+            ),
             renderer=gs.renderers.Rasterizer(),
             show_viewer=show_viewer,
         )
