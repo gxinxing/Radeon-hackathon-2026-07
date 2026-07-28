@@ -249,24 +249,27 @@ class SoccerEnv:
         # Soccer field (only for single-env rendering)
         if self.num_envs == 1:
             import math as _m
-            _w = gs.surfaces.Rough(color=(1, 1, 1), roughness=0.8)
-            _gs_s = gs.surfaces.Rough(color=(0.95, 0.95, 0.95), roughness=0.5)
             _FL = self.field_x; _FW = self.field_y; _HL = _FL / 2; _HW = _FW / 2
             _LH = 0.005; _LW = 0.12; _GW = self.goal_half * 2; _GH = 1.0; _PR = 0.05; _CR = self.circle_radius
-            for _x, _y in [(0, -_HW), (0, _HW)]:
-                self.scene.add_entity(morph=gs.morphs.Box(size=(_FL, _LW, _LH), pos=(_x, _y, _LH / 2), fixed=True), surface=_w)
-            for _x, _y in [(-_HL, 0), (_HL, 0), (0, 0)]:
-                self.scene.add_entity(morph=gs.morphs.Box(size=(_LW, _FW, _LH), pos=(_x, _y, _LH / 2), fixed=True), surface=_w)
-            for _i in range(32):
-                _a = 2 * _m.pi * _i / 32
-                self.scene.add_entity(morph=gs.morphs.Box(size=(0.3, _LW, _LH), pos=(_CR * _m.cos(_a), _CR * _m.sin(_a), _LH / 2), euler=(0, 0, _m.degrees(_a)), fixed=True), surface=_w)
-            _pw = 3.0
-            for _px in [-_HL + 1.5, _HL - 1.5]:
-                self.scene.add_entity(morph=gs.morphs.Box(size=(_LW, 6.0, _LH), pos=(_px, -_pw, _LH / 2), fixed=True), surface=_w)
-                self.scene.add_entity(morph=gs.morphs.Box(size=(_LW, 6.0, _LH), pos=(_px, _pw, _LH / 2), fixed=True), surface=_w)
-            for _sx in [-_HL, _HL]:
-                self.scene.add_entity(morph=gs.morphs.Box(size=(3.0, _LW, _LH), pos=(_sx, _pw, _LH / 2), fixed=True), surface=_w)
-                self.scene.add_entity(morph=gs.morphs.Box(size=(3.0, _LW, _LH), pos=(_sx, -_pw, _LH / 2), fixed=True), surface=_w)
+
+            # Soccer field texture on a thin box (top face = field)
+            _field_texture_path = os.path.join(os.path.dirname(__file__), "assets", "textures", "soccer_field.png")
+            if os.path.exists(_field_texture_path):
+                _field_surface = gs.surfaces.Rough(
+                    diffuse_texture=gs.textures.ImageTexture(image_path=_field_texture_path),
+                    roughness=0.9,
+                )
+            else:
+                _field_surface = gs.surfaces.Rough(color=(0.12, 0.45, 0.15), roughness=0.9)
+
+            # Thin box as the pitch (top face at z=0.001 to avoid z-fighting)
+            self.scene.add_entity(
+                morph=gs.morphs.Box(size=(_FL, _FW, 0.002), pos=(0, 0, 0.001), fixed=True),
+                surface=_field_surface,
+            )
+
+            # Goal posts (white)
+            _gs_s = gs.surfaces.Rough(color=(0.95, 0.95, 0.95), roughness=0.5)
             _hg = _GW / 2; _pw2 = _PR * 2
             for _gx in [-_HL, _HL]:
                 self.scene.add_entity(morph=gs.morphs.Box(size=(_pw2, _pw2, _GH), pos=(_gx, -_hg, _GH / 2), fixed=True), surface=_gs_s)
