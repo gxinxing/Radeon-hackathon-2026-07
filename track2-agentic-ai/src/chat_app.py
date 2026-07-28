@@ -83,9 +83,16 @@ strategy:
 ```
 
 ## Available Indicators
-SMA, EMA, RSI, MACD, ATR, BollingerBands, Stochastic, ADX, CCI, OBV, VWAP, WMA
+SMA, EMA, RSI, MACD, ATR, BollingerBands, Stochastic, ADX, CCI, OBV, VWAP, WMA, HMA, ZLEMA, Supertrend, ICHIMOKU
+
+## Multi-Column Indicators (produce sub-fields)
+- BollingerBands: {name}_upper, {name}_middle, {name}_lower
+- MACD: {name}_signal, {name}_hist
+- Stochastic: {name}_k, {name}_d
+- ICHIMOKU: {name}_tenkan, {name}_kijun, {name}_spanA, {name}_spanB
+Use these sub-field names directly in entry/exit expressions (e.g. close < bb_lower).
+
 Boolean operators: AND, OR, NOT, >, <, >=, <=, ==, !=
-Arithmetic: +, -, *, /
 
 ## Rules
 1. Output ONLY valid YAML — no explanations, no markdown code fences
@@ -152,25 +159,44 @@ def run_backtest(strategy_dsl: dict) -> dict:
 
 
 def extract_yaml(text: str) -> dict | None:
-    """Extract YAML from LLM response."""
-    # Try to find YAML block
-    yaml_match = re.search(r"```yaml\s*(.*?)\s*```", text, re.DOTALL)
+    """Extract YAML from LLM response.
+
+    Handles multiple output formats:
+    1. Fenced YAML: ```yaml ... ``` or ```yml ... ```
+    2. Bare code fence: ``` ... ``` containing strategy:
+    3. CoT reasoning followed by bare YAML (find 'strategy:' marker)
+    4. Entire text as YAML (fallback)
+    """
+    # 1. Try fenced YAML blocks (yaml or yml or bare ```)
+    yaml_match = re.search(r"```(?:ya?ml)?\s*\n(.*?)\n```", text, re.DOTALL)
     if yaml_match:
         yaml_text = yaml_match.group(1)
-    else:
-        # Try to find strategy: at the start
-        yaml_match = re.search(r"(strategy:\s*\n.*?)$", text, re.DOTALL)
-        if yaml_match:
-            yaml_text = yaml_match.group(1)
-        else:
-            yaml_text = text
+        try:
+            parsed = yaml.safe_load(yaml_text)
+            if isinstance(parsed, dict) and "strategy" in parsed:
+                return parsed
+        except yaml.YAMLError:
+            pass
 
+    # 2. Try to find 'strategy:' anywhere in the text (handles CoT before YAML)
+    strategy_match = re.search(r"(^|\n)(strategy:\s*\n.*)", text, re.DOTALL)
+    if strategy_match:
+        yaml_text = strategy_match.group(2)
+        try:
+            parsed = yaml.safe_load(yaml_text)
+            if isinstance(parsed, dict) and "strategy" in parsed:
+                return parsed
+        except yaml.YAMLError:
+            pass
+
+    # 3. Try entire text as YAML (last resort)
     try:
-        parsed = yaml.safe_load(yaml_text)
+        parsed = yaml.safe_load(text)
         if isinstance(parsed, dict) and "strategy" in parsed:
             return parsed
     except yaml.YAMLError:
         pass
+
     return None
 
 

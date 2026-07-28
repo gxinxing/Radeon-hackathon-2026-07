@@ -1,32 +1,48 @@
 """Merge all training datasets into a unified JSONL for SFT.
 
 Combines FNSPID, FinGPT, and NL→DSL pairs into a single
-training file with consistent format.
+training file with consistent format. Supports weighted sampling
+based on source_weights configuration.
 """
 
 from __future__ import annotations
 
 import json
+import random
 from pathlib import Path
 
 
 DATA_DIR = Path(__file__).parent.parent / "data" / "processed"
 
+# Default source weights (can be overridden by qlora_config.yaml)
+DEFAULT_SOURCE_WEIGHTS: dict[str, float] = {
+    "fnspid": 0.3,
+    "fingpt": 0.3,
+    "dsl-pairs": 0.4,
+}
+
 
 def merge_datasets(
     output_path: str | None = None,
     shuffle: bool = True,
+    source_weights: dict[str, float] | None = None,
 ) -> str:
-    """Merge all processed datasets into one JSONL.
+    """Merge all processed datasets into one JSONL with weighted sampling.
 
     Args:
         output_path: Custom output path.
         shuffle: Whether to shuffle the merged data.
+        source_weights: Dict mapping source name to sampling weight.
+            If None, uses DEFAULT_SOURCE_WEIGHTS. Sources not in the
+            dict get weight 1.0.
 
     Returns:
         Path to the merged JSONL file.
     """
-    all_samples: list[dict] = []
+    weights = source_weights or DEFAULT_SOURCE_WEIGHTS
+
+    # Group samples by source
+    by_source: dict[str, list[dict]] = {}
     source_counts: dict[str, int] = {}
 
     input_files = [
@@ -45,14 +61,28 @@ def merge_datasets(
         with open(fpath) as f:
             for line in f:
                 sample = json.loads(line.strip())
-                all_samples.append(sample)
                 source = sample.get("source", "unknown")
+                by_source.setdefault(source, []).append(sample)
                 source_counts[source] = source_counts.get(source, 0) + 1
                 count += 1
         print(f"[Merge] Loaded {count} samples from {fname}")
 
+    # Apply weighted oversampling
+    all_samples: list[dict] = []
+    for source, samples in by_source.items():
+        weight = weights.get(source, 1.0)
+        # Oversample: repeat samples to match desired weight proportion
+        target_count = int(len(samples) * weight / max(0.01, 1.0))
+        if target_count > len(samples):
+            # Oversample with replacement
+            random.seed(42)
+            extra = [random.choice(samples) for _ in range(target_count - len(samples))]
+            all_samples.extend(samples + extra)
+        else:
+            all_samples.extend(samples[:target_count])
+        print(f"[Merge] Source '{source}': {len(samples)} → {min(target_count, len(samples))} (weight={weight})")
+
     if shuffle:
-        import random
         random.seed(42)
         random.shuffle(all_samples)
 
