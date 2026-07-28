@@ -72,6 +72,58 @@ def r_goal(scored):
     return scored.float()
 
 
+# ─────────────────────────────────────────────────────────────────────────
+# Cooperative (3v3) shaping terms.
+# These are OPT-IN: compute_reward only applies them when the corresponding
+# term name is in the active task AND the required obs fields are present, so
+# single-agent training (chase_hl) is completely unaffected. They read team-
+# level geometry that the multi-agent harness supplies via the obs dict.
+# ─────────────────────────────────────────────────────────────────────────
+
+def r_defensive_position(self_xy, ball_xy, defend_goal_xy, in_possession,
+                         spread=2.0, lateral_tol=0.5):
+    """Reward a robot for staying goal-side of the ball when its team is NOT in
+    possession (zonal defending). High when the robot lies between the ball and
+    its own goal, dropping as it drifts ball-side or wanders too wide.
+
+    Disabled (zeroed) when the team has the ball — then the robot should push up.
+    """
+    axis = defend_goal_xy - ball_xy                       # (N,2) ball→own-goal
+    axis_len = torch.norm(axis, dim=-1, keepdim=True) + 1e-9
+    axis_u = axis / axis_len
+    rel = self_xy - ball_xy                              # (N,2)
+    proj = torch.sum(rel * axis_u, dim=-1, keepdim=True)  # goal-side distance
+    lateral = torch.norm(rel - proj * axis_u, dim=-1, keepdim=True)
+    on_side = torch.sigmoid(proj / spread)              # 0..1
+    tight = torch.exp(-torch.clamp(lateral - lateral_tol, min=0.0))
+    return (on_side * tight).squeeze(-1) * (1.0 - in_possession)
+
+
+def r_support_position(self_xy, ball_xy, attack_goal_xy, in_possession,
+                       push=1.5, crowd_tol=0.5):
+    """Reward a non-carrier for offering an advanced, un-crowded passing outlet
+    when its team HAS the ball. High when the robot is ahead of the ball (toward
+    the attack goal) but not crowding the carrier. Disabled when not in possession.
+    """
+    axis = attack_goal_xy - ball_xy
+    axis_len = torch.norm(axis, dim=-1, keepdim=True) + 1e-9
+    axis_u = axis / axis_len
+    rel = self_xy - ball_xy
+    proj = torch.sum(rel * axis_u, dim=-1, keepdim=True)
+    lateral = torch.norm(rel - proj * axis_u, dim=-1, keepdim=True)
+    advanced = torch.sigmoid((proj - push) / 1.0)
+    not_crowding = torch.exp(-torch.clamp(crowd_tol - lateral, min=0.0) * 2.0)
+    return (advanced * not_crowding).squeeze(-1) * in_possession
+
+
+def r_coop_goal(scored, scored_my_team):
+    """Shared-credit goal reward: ALL three teammates are rewarded when the team
+    scores, so supporters learn to enable the scorer instead of ball-watching.
+    `scored_my_team` is a per-env float (1 if the goal was for my team).
+    """
+    return scored.float() * scored_my_team.float()
+
+
 def r_fall(fallen):
     return fallen.float()
 
@@ -137,6 +189,14 @@ TASK_TERMS = {
                  "fall", "recovery", "action_rate"},
     "balance_hl": {"upright", "alive", "lin_vel_z", "ang_vel_xy", "orientation",
                    "fall", "recovery", "action_rate", "command_penalty"},
+    # 3v3 cooperative task: extends chase_hl with team-shaping terms. Only active
+    # in multi-agent training (multiagent_obs on) and when the harness supplies
+    # the team-geometry obs fields; otherwise these terms are inert.
+    "coop_hl": {"upright", "alive", "approach_ball", "ball_control", "ball_progress", "ball_contact",
+                "ball_to_goal", "goal_scored",
+                "defensive_position", "support_position", "coop_goal",
+                "lin_vel_z", "ang_vel_xy", "orientation",
+                "fall", "recovery", "action_rate"},
 }
 
 
@@ -178,6 +238,15 @@ def compute_reward(obs: dict, action: torch.Tensor, w: dict, task: str) -> torch
         total += w["ball_to_goal"] * r_ball_to_goal(obs["ball_vel_to_goal"])
     if "goal_scored" in terms:
         total += w["goal_scored"] * r_goal(obs["scored"])
+    if "defensive_position" in terms and "self_xy" in obs:
+        total += w["defensive_position"] * r_defensive_position(
+            obs["self_xy"], obs["ball_xy"], obs["defend_goal_xy"], obs["in_possession"])
+    if "support_position" in terms and "self_xy" in obs:
+        total += w["support_position"] * r_support_position(
+            obs["self_xy"], obs["ball_xy"], obs["attack_goal_xy"], obs["in_possession"])
+    if "coop_goal" in terms and "self_xy" in obs:
+        scored_my_team = obs.get("scored_my_team", torch.ones_like(obs["scored"]))
+        total += w["coop_goal"] * r_coop_goal(obs["scored"], scored_my_team)
     if "lin_vel_z" in terms:
         total += w.get("lin_vel_z", -2.0) * r_lin_vel_z(obs.get("base_lin_vel_z", torch.zeros_like(obs["torso_up"])))
     if "ang_vel_xy" in terms:

@@ -14,10 +14,22 @@ from .roles import Role, Team, RoleAssignment, RoleAssigner
 from .policy import PolicyAction, RulePolicy, SharedRLPolicy
 from .scene import Scene3v3, SceneConfig, FieldConstants, DEFAULT_FIELD, PlayerState, BallState
 from .result import MatchResult, MatchSummary, ScoreBoard
+from .strategy import (
+    Possession, PossessionTracker, SmartRoleAssigner, FormationTargets,
+    PassDecision, PassPlanner, TeamBrain, PlayerCommand,
+    build_hl_observation, world_to_body, normalize_angle,
+)
+from .multiagent_obs import compute_multiagent_features, build_full_observation, N_EXTRA
 
 __all__ = [
     "Role", "Team", "RoleAssignment", "RoleAssigner",
     "PolicyAction", "RulePolicy", "SharedRLPolicy",
     "Scene3v3", "SceneConfig", "FieldConstants", "DEFAULT_FIELD", "PlayerState", "BallState",
     "MatchResult", "MatchSummary", "ScoreBoard",
+    # strategy brain
+    "Possession", "PossessionTracker", "SmartRoleAssigner", "FormationTargets",
+    "PassDecision", "PassPlanner", "TeamBrain", "PlayerCommand",
+    "build_hl_observation", "world_to_body", "normalize_angle",
+    # multi-agent observation
+    "compute_multiagent_features", "build_full_observation", "N_EXTRA",
 ]
