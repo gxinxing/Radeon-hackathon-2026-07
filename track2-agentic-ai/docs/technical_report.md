@@ -73,15 +73,14 @@ quantitative trading.
 - **VRAM Usage**: ~20GB for model + KV cache, leaving 31GB for Track 3 (Physical AI)
 - **Serving**: OpenAI-compatible API at `http://localhost:8000/v1`
 
-### Model Fine-tuning (QLoRA on ROCm)
+### Model Fine-tuning (LoRA on ROCm)
 
-- **Method**: 4-bit NF4 quantization + LoRA (r=64, alpha=128)
+- **Method**: LoRA (r=64, alpha=128) — FP16 mode (bitsandbytes 4-bit not available on this ROCm build; MI210 has 64GB VRAM so FP16 LoRA fits comfortably)
 - **Framework**: PEFT + TRL (SFTTrainer) on ROCm PyTorch 2.9.1
-- **Training Data**: 7,000 samples (2,000 NL→DSL pairs + 5,000 financial QA)
-- **Precision**: bf16 (fp16 causes GradScaler errors with bitsandbytes on ROCm)
+- **Training Data**: 2,000 NL→DSL pairs with Chain-of-Thought reasoning traces (6 strategy templates × parameter expansion)
+- **Precision**: bf16 (fp16 causes GradScaler errors on ROCm)
 - **Attention**: AOTriton backend (ROCm-native SDPA)
-- **Training Time**: ~2 hours for 3 epochs (234 steps × 31s/step)
-- **Peak VRAM**: ~20GB during training
+- **Training Config**: 3 epochs, batch_size=4, grad_accum=4, lr=2e-4, cosine scheduler, packing=True
 - **Post-training**: LoRA weights merged into base model via PEFT `merge_and_unload()`
 
 ## 4. Innovation and Key Technical Contributions
@@ -100,9 +99,9 @@ output and executable code:
 ### 4.2 Fine-tuned Trading LLM
 
 Qwen2.5-7B fine-tuned on a curated dataset of:
-- NL→DSL instruction pairs (2,000 synthetic examples) — strategy generation
-- Financial QA (5,000 synthetic pairs) — trading knowledge and reasoning
-- System prompts for DSL generation, report writing, and risk assessment
+- NL→DSL instruction pairs (2,000 samples) with Chain-of-Thought reasoning traces — strategy generation
+- 6 strategy templates: EMA crossover, RSI mean reversion, Bollinger Bands, volume breakout, MACD, multi-indicator confluence
+- System prompts enhanced with RAG knowledge base (20 entries covering indicators, strategies, risk management, market characteristics)
 
 ### 4.3 Full-Chain Autonomous Pipeline
 
@@ -156,33 +155,38 @@ The backtest engine computes a comprehensive metric suite comparable to professi
 
 | Dataset | Source | Size | Purpose |
 |---------|--------|------|---------|
-| NL→DSL pairs | Synthetic (template-based) | 2,000 samples | NL → strategy DSL generation |
-| Financial QA | Synthetic (12 template types) | 5,000 samples | Trading knowledge, indicator explanations |
-| Market data | CCXT (synthetic GBM fallback) | 90-180 days OHLCV | Backtesting |
+| NL→DSL pairs | Synthetic (6 templates × parameter expansion) | 2,000 samples | NL → strategy DSL generation with CoT |
+| Market data | CCXT (synthetic GARCH+Student-t fallback) | 90-180 days OHLCV | Backtesting |
+| RAG knowledge base | Curated (20 entries) | Indicators, strategies, risk, market | LLM prompt enhancement |
 | Model | HuggingFace (via hf-mirror.com) | Qwen2.5-7B-Instruct | Base LLM |
 
 ## 6. Final Deliverables
 
 | Deliverable | Location | Status |
 |-------------|----------|--------|
-| Fine-tuned model | `models/qwen-trader-merged/` | ✅ Trained on AMD ROCm |
-| DSL schema | `src/dsl/schema.json` | ✅ Complete |
-| DSL validator | `src/dsl/validator.py` | ✅ 10 tests passing |
-| DSL transpiler | `src/dsl/transpiler.py` | ✅ 10 tests passing |
+| Fine-tuned model | `models/qwen-trader-lora/` | ✅ Trained on AMD ROCm (FP16 LoRA) |
+| DSL schema | `src/dsl/schema.json` | ✅ Complete (16 indicator types) |
+| DSL validator | `src/dsl/validator.py` | ✅ Multi-column indicator support |
+| DSL expr parser | `src/dsl/expr_parser.py` | ✅ AST-based safe evaluation |
+| DSL Freqtrade transpiler | `src/dsl/transpiler.py` | ✅ All 16 indicators |
+| DSL Backtrader transpiler | `src/dsl/transpiler_backtrader.py` | ✅ All 16 indicators (stock bt API) |
+| DSL specification | `docs/dsl_specification.md` | ✅ Formal spec document |
 | Backtest microservice | `src/backtest/server.py` | ✅ Running on :8080 |
-| Backtest runner | `src/backtest/runner.py` | ✅ Multi-position, slippage, benchmark, walk-forward |
+| Backtest runner | `src/backtest/runner.py` | ✅ Multi-position, short, slippage, walk-forward |
 | Market data tools | `src/tools/market_data.py` | ✅ With synthetic fallback |
-| Indicator calculator | `src/tools/indicators.py` | ✅ TA-Lib integration |
+| Indicator calculator | `src/tools/indicators.py` | ✅ TA-Lib integration (16 types) |
 | Paper trading | `src/tools/paper_trade.py` | ✅ Binance Testnet |
 | LLM prompts | `src/llm/prompts.py` | ✅ CoT + few-shot + market context |
 | Chat UI | `src/chat_app.py` | ✅ Gradio + equity curve chart + walk-forward |
-| QLoRA training script | `training/scripts/train_qlora.py` | ✅ ROCm-optimized |
+| QLoRA training script | `training/scripts/train_qlora.py` | ✅ Loads YAML config, ROCm-optimized |
 | LoRA merge script | `training/scripts/merge_lora.py` | ✅ PEFT merge |
 | vLLM serving script | `training/scripts/serve_vllm.sh` | ✅ ROCm env configured |
 | Deploy script | `training/scripts/deploy.sh` | ✅ One-command deploy |
 | Setup script | `scripts/setup.sh` | ✅ Complete |
-| E2E verification | `scripts/verify_e2e.sh` | ✅ 6 checks |
-| Unit tests | `tests/` (3 files) | ✅ 22 tests passing |
+| E2E verification | `scripts/verify_e2e.sh` | ✅ 7 checks |
+| NL→DSL evaluation | `scripts/eval_nl_to_dsl.py` | ✅ 10 test prompts, online/offline modes |
+| RAG knowledge base | `src/knowledge_base/` | ✅ 20 entries, keyword retrieval |
+| Unit tests | `tests/` (6 files) | ✅ 83 tests passing |
 | Technical report | `docs/technical_report.md` | ✅ This document |
 
 ## 7. Team
