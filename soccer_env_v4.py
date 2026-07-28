@@ -252,7 +252,7 @@ class SoccerEnv:
             _FL = self.field_x; _FW = self.field_y; _HL = _FL / 2; _HW = _FW / 2
             _LH = 0.005; _LW = 0.12; _GW = self.goal_half * 2; _GH = 1.0; _PR = 0.05; _CR = self.circle_radius
 
-            # Soccer field texture on a thin box (top face = field)
+            # Green field via gs.morphs.Plane (has proper UV for texture mapping)
             _field_texture_path = os.path.join(os.path.dirname(__file__), "assets", "textures", "soccer_field.png")
             if os.path.exists(_field_texture_path):
                 _field_surface = gs.surfaces.Rough(
@@ -262,11 +262,21 @@ class SoccerEnv:
             else:
                 _field_surface = gs.surfaces.Rough(color=(0.12, 0.45, 0.15), roughness=0.9)
 
-            # Thin box as the pitch (top face at z=0.001 to avoid z-fighting)
+            # Use Plane for textured field (Plane has UV coords, Box does not)
             self.scene.add_entity(
-                morph=gs.morphs.Box(size=(_FL, _FW, 0.002), pos=(0, 0, 0.001), fixed=True),
+                morph=gs.morphs.Plane(pos=(0, 0, 0.001), plane_size=(_FL, _FW), fixed=True),
                 surface=_field_surface,
             )
+
+            # White field lines as thin Boxes on top of the green surface
+            _w = gs.surfaces.Rough(color=(1, 1, 1), roughness=0.8)
+            for _x, _y in [(0, -_HW), (0, _HW)]:
+                self.scene.add_entity(morph=gs.morphs.Box(size=(_FL, _LW, _LH), pos=(_x, _y, _LH / 2 + 0.002), fixed=True), surface=_w)
+            for _x, _y in [(-_HL, 0), (_HL, 0), (0, 0)]:
+                self.scene.add_entity(morph=gs.morphs.Box(size=(_LW, _FW, _LH), pos=(_x, _y, _LH / 2 + 0.002), fixed=True), surface=_w)
+            for _i in range(32):
+                _a = 2 * _m.pi * _i / 32
+                self.scene.add_entity(morph=gs.morphs.Box(size=(0.3, _LW, _LH), pos=(_CR * _m.cos(_a), _CR * _m.sin(_a), _LH / 2 + 0.002), euler=(0, 0, _m.degrees(_a)), fixed=True), surface=_w)
 
             # Goal posts (white)
             _gs_s = gs.surfaces.Rough(color=(0.95, 0.95, 0.95), roughness=0.5)
