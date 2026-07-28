@@ -74,10 +74,25 @@ class SoccerEnvHierarchical(SoccerEnv):
         self.hl_clip_ang = env_cfg.get("hl_clip_ang", 1.0)
         self.high_level_dt = self.dt * high_level_decimation
 
-        # Resize obs buffer for high-level (19 dims, not 720)
-        self.hl_obs_dim = 19
+        # ── Opt-in multi-agent observation (19 → 24 dims) ───────────
+        # OFF by default so the v6 checkpoint (19-dim) stays valid. When ON, the
+        # 3v3 training harness must populate self.teammate_pos / self.opponent_pos
+        # (world-frame xyz) each step before _update_observation(); see
+        # _multiagent_extra(). The 5 extra dims are appended *after* the base 19,
+        # so an old policy is untouched and a new one can be trained with them.
+        self.use_multiagent_obs = bool(env_cfg.get("multiagent_obs", False))
+        self.ma_teammate_dim = 2          # other 2 teammates
+        self.ma_opponent_dim = 3         # 3 opponents
+        self.ma_extra_dim = 5            # tm_rel(2) + opp_rel(2) + possession_flag(1)
+
+        # Resize obs buffer for high-level (19, or 24 with multi-agent on)
+        self.hl_obs_dim = 19 + (self.ma_extra_dim if self.use_multiagent_obs else 0)
         self.obs_buf = torch.empty((self.num_envs, self.hl_obs_dim),
                                    dtype=gs.tc_float, device=self.device)
+        # Multi-agent position buffers (num_envs x K x 3). Set by the 3v3 harness;
+        # start as None and default to zeros inside _multiagent_extra().
+        self.teammate_pos = None
+        self.opponent_pos = None
 
         # Load frozen walking model
         self.walk_model = torch.jit.load(walk_model_path, map_location=self.device)
@@ -296,6 +311,63 @@ class SoccerEnvHierarchical(SoccerEnv):
             goal_dist,                          # 1
             self.last_hl_actions,               # 3
         ], dim=-1)  # Total: 19
+
+        # Append multi-agent features (teammates/opponents/possession) in-place
+        # of the 3v3 training flag. No-op when multiagent_obs is False.
+        if self.use_multiagent_obs:
+            extra = self._multiagent_extra(inv_bq)
+            self.obs_buf = torch.cat([self.obs_buf, extra], dim=-1)  # 24
+
+    def _multiagent_extra(self, inv_bq):
+        """Compute the 5-dim multi-agent extension in body frame.
+
+        Reads ``self.teammate_pos`` (num_envs x 2 x 3) and ``self.opponent_pos``
+        (num_envs x 3 x 3) — world-frame xyz of the *other* robots, set by the
+        3v3 training harness each step. Returns a (num_envs x 5) tensor:
+
+            [tm_rel_x, tm_rel_y, opp_rel_x, opp_rel_y, possession_flag]
+
+        where tm/opp rel are the body-frame xy of the *nearest* teammate /
+        opponent, and possession_flag is +1 if this robot's team controls the
+        ball, -1 if opponents do, 0 if loose. Mirrors
+        ``match_3v3.multiagent_obs.compute_multiagent_features`` (numpy) 1:1.
+        """
+        if self.teammate_pos is None:
+            self.teammate_pos = torch.zeros((self.num_envs, self.ma_teammate_dim, 3),
+                                            dtype=gs.tc_float, device=self.device)
+        if self.opponent_pos is None:
+            self.opponent_pos = torch.zeros((self.num_envs, self.ma_opponent_dim, 3),
+                                            dtype=gs.tc_float, device=self.device)
+
+        # Nearest teammate relative position (body frame).
+        tm_rel = self.teammate_pos - self.base_pos[:, None, :]      # num_envs x 2 x 3
+        tm_body = transform_by_quat(tm_rel, inv_bq[:, None, :])     # num_envs x 2 x 3
+        tm_dist = torch.norm(tm_body[:, :, :2], dim=-1)             # num_envs x 2
+        tm_nearest = tm_body[torch.arange(self.num_envs),
+                             torch.argmin(tm_dist, dim=-1), :2]     # num_envs x 2
+
+        # Nearest opponent relative position (body frame).
+        op_rel = self.opponent_pos - self.base_pos[:, None, :]
+        op_body = transform_by_quat(op_rel, inv_bq[:, None, :])
+        op_dist = torch.norm(op_body[:, :, :2], dim=-1)
+        op_nearest = op_body[torch.arange(self.num_envs),
+                             torch.argmin(op_dist, dim=-1), :2]
+
+        # Possession flag: compare each team's closest robot to the ball.
+        self_ball = torch.norm((self.ball_pos - self.base_pos)[:, :2], dim=-1)  # num_envs
+        tm_ball = torch.norm((self.teammate_pos - self.ball_pos[:, None, :])[:, :, :2],
+                             dim=-1).min(dim=-1).values                        # num_envs
+        op_ball = torch.norm((self.opponent_pos - self.ball_pos[:, None, :])[:, :, :2],
+                             dim=-1).min(dim=-1).values                        # num_envs
+        team_min = torch.minimum(self_ball, tm_ball)
+        flag = torch.where(team_min <= op_ball,       # my team closer to ball
+                           torch.where(self_ball <= tm_ball, 1.0, 0.0),  # am I the chaser?
+                           -1.0)                                         # opponents closer
+        flag = flag.unsqueeze(-1)                                            # num_envs x 1
+
+        # Stash for the coop reward terms (r_defensive_position / r_support_position).
+        self._ma_possession = flag
+        return torch.cat([tm_nearest, op_nearest, flag], dim=-1)          # num_envs x 5
 
     # ─── Overrides for hierarchical behavior ──────────────────────
 
