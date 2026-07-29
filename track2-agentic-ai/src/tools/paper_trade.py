@@ -122,6 +122,7 @@ async def execute_paper_trade(req: PaperTradeRequest):
 
     # Get current price (works in both modes — public endpoint)
     current_price = 0.0
+    ticker = {}
     try:
         exchange = get_testnet_exchange()
         ticker = exchange.fetch_ticker(req.pair)
@@ -129,15 +130,16 @@ async def execute_paper_trade(req: PaperTradeRequest):
     except Exception:
         # Fallback if Testnet unreachable
         current_price = 65000.0  # Approximate BTC price for DRY_RUN
+        ticker = {"last": current_price, "bid": current_price, "ask": current_price, "baseVolume": 0}
 
     if req.action == "status":
         return PaperTradeResponse(
             success=True, action="status", pair=req.pair, mode=mode,
             details={
                 "last_price": current_price,
-                "bid": ticker.get("bid", 0) if current_price else 0,
-                "ask": ticker.get("ask", 0) if current_price else 0,
-                "volume": ticker.get("baseVolume", 0) if current_price else 0,
+                "bid": ticker.get("bid", 0),
+                "ask": ticker.get("ask", 0),
+                "volume": ticker.get("baseVolume", 0),
                 "dry_run": dry_run,
                 "position": _position_tracker.get(req.pair, 0),
             },
