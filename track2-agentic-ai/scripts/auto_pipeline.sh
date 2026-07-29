@@ -90,7 +90,7 @@ nohup $PYTHON -m uvicorn src.api:app --host 0.0.0.0 --port 8080 > /tmp/api.log 2
 API_PID=$!
 sleep 3
 
-$PYTHON scripts/eval_nl_to_dsl.py --vllm-url http://localhost:8000/v1 2>&1 | tee /tmp/eval_results.txt
+$PYTHON scripts/eval_nl_to_dsl.py --vllm-url http://localhost:8000/v1 --model models/qwen-trader-merged 2>&1 | tee /tmp/eval_results.txt
 log "Evaluation complete. Results saved to /tmp/eval_results.txt"
 
 # ===== PHASE 4: Summary =====
