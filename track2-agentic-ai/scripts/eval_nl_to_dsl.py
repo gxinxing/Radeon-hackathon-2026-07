@@ -181,15 +181,26 @@ def extract_yaml(text: str) -> dict | None:
 
 
 def validate_dsl(dsl: dict) -> tuple[bool, bool, list[str], list]:
-    """Validate DSL with canonicalization — returns (schema_valid, semantic_valid, errors, repairs)."""
-    from src.dsl.validator import canonicalize_and_validate
-    is_valid, errors, repairs = canonicalize_and_validate(dsl)
-    # Replace dsl in-place with canonicalized version
-    if is_valid:
-        from src.dsl.canonicalizer import canonicalize_dsl
-        canon_dsl, _, _ = canonicalize_dsl(dsl)
-        dsl.clear()
-        dsl.update(canon_dsl)
+    """Validate DSL with canonicalization — returns (schema_valid, semantic_valid, errors, repairs).
+
+    The dsl dict is modified in-place to contain the canonicalized version.
+    """
+    from src.dsl.canonicalizer import canonicalize_dsl
+    from src.dsl.validator import validate_dsl as _raw_validate
+
+    # Canonicalize (modifies dsl in-place since canonicalize_dsl mutates the dict)
+    canon_dsl, repairs, canon_errors = canonicalize_dsl(dsl)
+
+    if canon_errors:
+        return False, False, canon_errors, repairs
+
+    # Validate the canonicalized version
+    is_valid, errors = _raw_validate(canon_dsl)
+
+    # Update the original dict in-place so downstream code sees canonicalized version
+    dsl.clear()
+    dsl.update(canon_dsl)
+
     return is_valid, is_valid, errors, repairs
 
 
