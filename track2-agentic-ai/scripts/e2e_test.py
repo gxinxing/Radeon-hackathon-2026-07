@@ -73,7 +73,7 @@ def main():
                 {'role': 'user', 'content': NL_PROMPT},
             ],
             'temperature': 0.2,
-            'max_tokens': 1024,
+            'max_tokens': 2048,
         })
         raw = r.json()['choices'][0]['message']['content']
     llm_time = time.time() - t0
@@ -85,7 +85,23 @@ def main():
     # Step 2: Extract YAML
     dsl = extract_yaml(raw)
     if not dsl or 'strategy' not in dsl:
-        print('EXTRACT FAILED')
+        # Retry with shorter prompt
+        print('EXTRACT FAILED — retrying with simpler prompt...')
+        with httpx.Client(timeout=120) as c:
+            r = c.post(f'{VLLM}/chat/completions', json={
+                'model': MODEL,
+                'messages': [
+                    {'role': 'system', 'content': SYSTEM},
+                    {'role': 'user', 'content': 'Create a simple EMA crossover strategy for BTC/USDT. EMA 20 and 50. Stop loss 3%. Output ONLY valid YAML.'},
+                ],
+                'temperature': 0.1,
+                'max_tokens': 2048,
+            })
+            raw = r.json()['choices'][0]['message']['content']
+        print(f'RETRY RAW[:300]: {raw[:300]}')
+        dsl = extract_yaml(raw)
+    if not dsl or 'strategy' not in dsl:
+        print('EXTRACT FAILED (after retry)')
         sys.exit(1)
     strat_name = dsl.get('strategy', {}).get('name', 'Unknown')
     print(f'STRATEGY: {strat_name}')
