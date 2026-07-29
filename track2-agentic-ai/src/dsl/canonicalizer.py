@@ -267,8 +267,21 @@ def _fix_stop_loss(value: float, repairs: list[Repair]) -> float:
 
 
 def _canonicalize_entry_exit(section: dict, name: str, repairs: list[Repair], errors: list[str]) -> None:
-    """Canonicalize entry/exit section."""
+    """Canonicalize entry/exit section.
+
+    Strips illegal fields (schema only allows 'long' and 'short').
+    LLMs sometimes output 'buy', 'sell', 'enter', etc.
+    """
     prefix = f"strategy.{name}"
+
+    # Strip illegal keys — only 'long' and 'short' are valid
+    allowed = {"long", "short"}
+    illegal_keys = set(section.keys()) - allowed
+    for key in illegal_keys:
+        repairs.append(Repair(f"{prefix}.{key}", section[key], None,
+                              "strip_illegal",
+                              f"Removed illegal field '{key}' from {name} (only 'long'/'short' allowed)"))
+        del section[key]
 
     for direction in ("long", "short"):
         if direction not in section:

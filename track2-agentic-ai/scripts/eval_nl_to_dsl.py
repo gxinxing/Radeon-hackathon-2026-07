@@ -272,12 +272,40 @@ def run_tests(vllm_url: str | None, offline: bool = False, model: str = "qwen-tr
 
         # Validate with canonicalization
         schema_ok, semantic_ok, errors, repairs = validate_dsl(result.extracted_dsl)
+
+        # Check for unrecoverable errors → retry once
+        unrecoverable_keywords = ("cannot parse", "Missing 'indicators'", "expression", "Missing 'strategy'")
+        has_unrecoverable = any(any(kw in e for kw in unrecoverable_keywords) for e in errors)
+
+        if has_unrecoverable and not schema_ok:
+            log_msg = f"Unrecoverable errors on first attempt, retrying: {errors[:2]}"
+            retry_prompt = (
+                f"{tc['nl']}\n\n"
+                f"Your previous output had these errors:\n"
+                + "\n".join(f"- {e}" for e in errors[:3])
+                + "\n\nPlease fix and output ONLY valid YAML. "
+                "stop_loss must be a negative number (e.g. -0.03). "
+                "indicators must be a non-empty list. "
+                "entry/exit must only have 'long' and 'short' keys."
+            )
+            result.raw_output = call_vllm(vllm_url, system_prompt, retry_prompt, model=model)
+            result.extracted_dsl = extract_yaml(result.raw_output)
+            if result.extracted_dsl is not None:
+                # Re-validate the retry output
+                schema_ok, semantic_ok, errors, retry_repairs = validate_dsl(result.extracted_dsl)
+                repairs.extend(retry_repairs)
+                result.repairs.append(f"[RETRY] Attempted retry after unrecoverable errors")
+            else:
+                result.errors.append("Retry: Failed to extract YAML")
+                results.append(result)
+                continue
+
         result.schema_valid = schema_ok
         result.semantic_valid = semantic_ok
         if errors:
             result.errors.extend(errors)
         if repairs:
-            result.repairs = [f"{r.field}: {r.raw} → {r.normalized} ({r.repair_type})" for r in repairs]
+            result.repairs.extend([f"{r.field}: {r.raw} → {r.normalized} ({r.repair_type})" for r in repairs])
 
         # Transpile
         ft_ok, bt_ok = transpile_check(result.extracted_dsl)
