@@ -295,6 +295,7 @@ def _simulate_trades(
             row.get("enter_long", False)
             and len(open_positions) < max_open_trades
             and current_price > 0
+            and balance > 0  # Prevent opening positions with negative balance
         ):
             pos_capital = balance * per_trade_pct / max(1, max_open_trades - len(open_positions))
             pos_capital = min(pos_capital, balance * 0.90)
@@ -398,8 +399,8 @@ def _simulate_trades(
     open_positions.clear()
 
     # --- Calculate metrics ---
-    result.final_balance = round(balance, 2)
-    result.total_return = round((balance - initial_balance) / initial_balance, 4)
+    result.final_balance = round(max(balance, 0), 2)  # Floor at 0
+    result.total_return = round(max((balance - initial_balance) / initial_balance, -1.0), 4)  # Cap at -100%
     result.equity_curve = equity_curve
     result.dates = dates
     result.trades = trades
