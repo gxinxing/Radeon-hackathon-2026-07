@@ -153,24 +153,31 @@ def main():
         m = bt.get('metrics', {})
         print()
         print(f'=== BACKTEST RESULTS ===')
+
+        def safe_fmt(val, fmt, default=0):
+            try:
+                return fmt.format(float(val))
+            except (TypeError, ValueError):
+                return fmt.format(float(default))
+
         print(f'  Strategy:     {bt.get("strategy_name", "?")}')
         print(f'  Total trades: {m.get("total_trades", 0)}')
-        print(f'  Win rate:     {float(m.get("win_rate", 0)):.1%}')
-        print(f'  Total return: {float(m.get("total_return", 0)):.2%}')
-        print(f'  B&H return:  {float(m.get("benchmark_return", 0)):.2%}')
-        print(f'  Alpha:        {float(m.get("alpha", 0)):+.2%}')
-        print(f'  Max drawdown: {float(m.get("max_drawdown", 0)):.2%}')
-        print(f'  Sharpe:       {float(m.get("sharpe_ratio", 0)):.2f}')
-        print(f'  Sortino:      {float(m.get("sortino_ratio", 0)):.2f}')
-        print(f'  Calmar:       {float(m.get("calmar_ratio", 0)):.2f}')
-        print(f'  Final bal:    ${float(m.get("final_balance", 0)):,.2f}')
+        print(f'  Win rate:     {safe_fmt(m.get("win_rate"), "{:.1%}")}')
+        print(f'  Total return: {safe_fmt(m.get("total_return"), "{:.2%}")}')
+        print(f'  B&H return:  {safe_fmt(m.get("benchmark_return"), "{:.2%}")}')
+        print(f'  Alpha:        {safe_fmt(m.get("alpha"), "{:+.2%}")}')
+        print(f'  Max drawdown: {safe_fmt(m.get("max_drawdown"), "{:.2%}")}')
+        print(f'  Sharpe:       {safe_fmt(m.get("sharpe_ratio"), "{:.2f}")}')
+        print(f'  Sortino:      {safe_fmt(m.get("sortino_ratio"), "{:.2f}")}')
+        print(f'  Calmar:       {safe_fmt(m.get("calmar_ratio"), "{:.2f}")}')
+        print(f'  Final bal:    ${safe_fmt(m.get("final_balance"), "{:,.2f}")}')
         print(f'  Win/Loss:     {m.get("win_trades", 0)}/{m.get("loss_trades", 0)}')
         print()
 
         print(f'=== RISK ASSESSMENT ===')
-        sharpe = m.get('sharpe_ratio', 0)
-        dd = m.get('max_drawdown', 0)
-        alpha = m.get('alpha', 0)
+        sharpe = float(m.get('sharpe_ratio', 0) or 0)
+        dd = float(m.get('max_drawdown', 0) or 0)
+        alpha = float(m.get('alpha', 0) or 0)
         consec = m.get('max_consecutive_losses', 0)
 
         if sharpe > 1.0:
