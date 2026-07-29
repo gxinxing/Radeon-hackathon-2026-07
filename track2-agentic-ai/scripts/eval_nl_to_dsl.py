@@ -264,7 +264,8 @@ def run_tests(vllm_url: str | None, offline: bool = False, model: str = "qwen-tr
 
         # Check indicators
         if result.extracted_dsl and "strategy" in result.extracted_dsl:
-            actual_inds = {i["name"] for i in result.extracted_dsl["strategy"]["indicators"]}
+            strategy = result.extracted_dsl["strategy"]
+            actual_inds = {i["name"] for i in strategy.get("indicators", [])} if isinstance(strategy.get("indicators"), list) else set()
             expected = tc.get("expected_indicators", set())
             # Check if expected indicators are a subset (LLM may add extra)
             result.indicators_match = expected.issubset(actual_inds)
