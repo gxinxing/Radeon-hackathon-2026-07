@@ -116,6 +116,12 @@ strategy:
 4. All referenced indicators must be defined in the indicators list
 5. Keep strategy names short and descriptive
 6. Consider market context when setting parameters (e.g., wider stops in high vol)
+7. The root object must contain strategy; strategy must contain market, indicators, entry, exit, and risk
+8. indicators must be a non-empty list
+9. stop_loss is allowed only under strategy.risk.stop_loss, must be a numeric negative ratio, and must never be an expression
+10. Use entry.long/exit.long for long strategies and entry.short/exit.short for short strategies
+11. Never output exit.buy, exit.sell, root-level stop_loss, or any undeclared field
+12. If any required field is missing or uncertain, regenerate the complete YAML before responding
 """
 
 REPORT_GENERATION_SYSTEM = """\

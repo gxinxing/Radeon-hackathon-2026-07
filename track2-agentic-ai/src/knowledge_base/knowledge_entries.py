@@ -17,6 +17,48 @@ retriever lowercases and does substring / multi-char matching.
 
 KNOWLEDGE_ENTRIES: list[dict] = [
 
+    # ==================== DSL CONTRACT ====================
+
+    {
+        "keywords": ["dsl", "schema", "validation", "parser", "canonicalize"],
+        "aliases": ["策略格式", "字段规范", "结构校验", "输出格式", "合法策略"],
+        "category": "dsl_contract",
+        "title": "DSL Output Contract and Safety Rules",
+        "content": (
+            "Every generated strategy must follow this exact contract:\n"
+            "1. The root object contains strategy.\n"
+            "2. strategy contains market, indicators, entry, exit, and risk.\n"
+            "3. indicators is a non-empty list; every indicator referenced by entry or exit "
+            "must be declared there.\n"
+            "4. stop_loss is only allowed under strategy.risk.stop_loss. It must be a numeric "
+            "negative ratio such as -0.03, never a positive percentage and never an expression.\n"
+            "5. period and length are integers; multiplier, std_dev, and ratios are numbers.\n"
+            "6. Long signals use entry.long and exit.long. Short signals use entry.short and "
+            "exit.short. Never emit exit.buy, exit.sell, or other undeclared fields.\n"
+            "7. If a required field cannot be inferred, regenerate the DSL instead of inventing "
+            "an invalid structure."
+        ),
+        "weight": 2.0,
+    },
+    {
+        "keywords": ["dsl error", "invalid field", "stop_loss expression", "missing indicators"],
+        "aliases": ["错误示例", "修复案例", "非法字段", "缺少指标", "止损表达式"],
+        "category": "dsl_contract",
+        "title": "Common DSL Generation Failures and Repairs",
+        "content": (
+            "Common invalid outputs and safe repairs:\n"
+            "- exit.buy is invalid; remove it and use exit.long or exit.short.\n"
+            "- A root-level stop_loss is invalid; place it under risk.stop_loss.\n"
+            "- stop_loss: ema_fast - atr * 3 is invalid because risk values must be numeric; "
+            "use a fixed negative ratio such as -0.03 or regenerate.\n"
+            "- Missing indicators cannot be safely guessed; regenerate with an explicit "
+            "non-empty indicators list.\n"
+            "- Numeric strings such as '50' may be canonicalized to 50, but semantic and "
+            "structural errors must be rejected or regenerated."
+        ),
+        "weight": 2.0,
+    },
+
     # ==================== INDICATORS ====================
 
     {
