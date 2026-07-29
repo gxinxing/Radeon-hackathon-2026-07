@@ -47,6 +47,7 @@ class BacktestResult:
     equity_curve: list[float] = field(default_factory=list)
     dates: list[str] = field(default_factory=list)
     error: str | None = None
+    is_valid: bool = True  # False if backtest sanity check failed
     # --- New metrics ---
     sortino_ratio: float = 0.0
     calmar_ratio: float = 0.0
@@ -474,6 +475,27 @@ def _simulate_trades(
         if result.max_drawdown < 0:
             ann_return = (1 + result.total_return) ** (periods_per_year / len(returns)) - 1
             result.calmar_ratio = round(ann_return / abs(result.max_drawdown), 4)
+
+    # --- Backtest sanity check ---
+    # Detect invalid backtests caused by cash constraint violations
+    if balance < 0:
+        result.is_valid = False
+        result.error = "Backtest INVALID: cash went negative — strategy opened positions with insufficient funds"
+    elif result.max_drawdown <= -1.0:
+        result.is_valid = False
+        result.error = "Backtest INVALID: max drawdown = -100% — total capital wipeout"
+    elif abs(result.total_return) > 10.0:  # >1000% return is almost certainly a bug
+        result.is_valid = False
+        result.error = f"Backtest INVALID: total return {result.total_return:.2%} exceeds sanity threshold (1000%) — likely cash constraint violation"
+
+    if not result.is_valid:
+        # Reset metrics to safe values for display
+        result.final_balance = 0.0
+        result.total_return = -1.0  # -100%
+        result.alpha = -1.0
+        result.sharpe_ratio = 0.0
+        result.sortino_ratio = 0.0
+        result.calmar_ratio = 0.0
 
     return result
 

@@ -36,12 +36,9 @@ PROMPTS = [
 ]
 
 
-def safe(val, default=0, cap=None):
+def safe(val, default=0):
     try:
-        v = float(val)
-        if cap is not None:
-            v = min(v, cap)
-        return v
+        return float(val)
     except (TypeError, ValueError):
         return float(default)
 
@@ -170,24 +167,44 @@ def main():
     bt = run_backtest(canon)
     bt_time = time.time() - t0
     m = bt.get('metrics', {})
+    bt_error = bt.get('error', '')
+    bt_valid = bt.get('is_valid', True)
+
     print(f'[6] BACKTEST ({bt_time:.1f}s, 180 days)')
-    print(f'    Success: {bt.get("success")}')
+    print(f'    Status: {"INVALID" if not bt_valid else "VALID"}')
+    if not bt_valid:
+        print(f'    Reason: {bt_error}')
     print(f'    Strategy: {bt.get("strategy_name")}')
     print(f'    Trades: {m.get("total_trades", 0)}')
     print(f'    Win rate: {safe(m.get("win_rate")):.1%}')
-    print(f'    Total return: {safe(m.get("total_return"), cap=999.0):.2%}')
+    print(f'    Total return: {safe(m.get("total_return")):.2%}')
     print(f'    B&H return: {safe(m.get("benchmark_return")):.2%}')
-    print(f'    Alpha: {safe(m.get("alpha"), cap=999.0):+.2%}')
+    print(f'    Alpha: {safe(m.get("alpha")):+.2%}')
     print(f'    Max drawdown: {safe(m.get("max_drawdown")):.2%}')
     print(f'    Sharpe: {safe(m.get("sharpe_ratio")):.2f}')
-    print(f'    Sortino: {safe(m.get("sortino_ratio")):.2f}')
-    print(f'    Final balance: ${safe(m.get("final_balance"), cap=9999999):,.2f}')
+    print(f'    Final balance: ${safe(m.get("final_balance")):,.2f}')
     print(f'    Win/Loss: {m.get("win_trades", 0)}/{m.get("loss_trades", 0)}')
     print()
 
     # Step 6: Paper trading
     print(f'[7] PAPER TRADING ({mode})')
     trade_amount = 0.001  # 0.001 BTC ≈ $65 for demo
+
+    if not bt_valid:
+        print(f'    SKIP: Backtest INVALID — paper trade rejected')
+        print(f'    Reason: {bt_error}')
+        print()
+        print(f'[8] RISK ASSESSMENT')
+        print(f'    [REJECT] Backtest sanity check failed')
+        print(f'    Reason: {bt_error}')
+        print(f'    VERDICT: REJECT — strategy rejected, no paper trade executed')
+        print()
+        print('=' * 70)
+        print(f'  DEMO COMPLETE')
+        print(f'  LLM: {llm_time:.1f}s | Backtest: {bt_time:.1f}s | Mode: {mode}')
+        print(f'  Strategy: {strat_name} | Verdict: REJECT (INVALID_BACKTEST)')
+        print('=' * 70)
+        return
 
     # Check market status
     pt_status = paper_trade('status', pair)
@@ -217,7 +234,7 @@ def main():
     # Step 7: Risk Assessment
     sharpe = safe(m.get('sharpe_ratio'))
     dd = safe(m.get('max_drawdown'))
-    alpha = safe(m.get('alpha'), cap=999.0)
+    alpha = safe(m.get('alpha'))
     consec = m.get('max_consecutive_losses', 0)
     win_rate = safe(m.get('win_rate'))
 
@@ -264,7 +281,7 @@ def main():
     print(f'  DEMO COMPLETE')
     print(f'  LLM: {llm_time:.1f}s | Backtest: {bt_time:.1f}s | Mode: {mode}')
     print(f'  Strategy: {strat_name} | Verdict: {verdict}')
-    print(f'  Return: {safe(m.get("total_return"), cap=999.0):.2%} | Sharpe: {sharpe:.2f} | DD: {dd:.2%}')
+    print(f'  Return: {safe(m.get("total_return")):.2%} | Sharpe: {sharpe:.2f} | DD: {dd:.2%}')
     print(f'  Paper position: {trade_amount} BTC ({mode})')
     print('=' * 70)
 
