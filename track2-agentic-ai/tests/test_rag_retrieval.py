@@ -87,8 +87,8 @@ def test_new_entries_present():
 
 def test_total_entry_count():
     kr = KnowledgeRetriever()
-    # 23 original + 8 new = 31
-    assert len(kr._entries) == 31, len(kr._entries)
+    # 23 original + 8 existing additions + 2 DSL contract entries = 33
+    assert len(kr._entries) == 33, len(kr._entries)
 
 
 def test_semantic_module_imports_safe_without_deps():
