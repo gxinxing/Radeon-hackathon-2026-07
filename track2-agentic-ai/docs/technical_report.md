@@ -81,7 +81,10 @@ quantitative trading.
 - **Precision**: bf16 (fp16 causes GradScaler errors on ROCm)
 - **Attention**: AOTriton backend (ROCm-native SDPA)
 - **Training Config**: 3 epochs, batch_size=4, grad_accum=4, lr=2e-4, cosine scheduler, packing=True
+- **Training Results**: 81 steps, final loss=0.1625, token accuracy=98.71%, peak GPU memory=16.14 GB, runtime≈82 min
 - **Post-training**: LoRA weights merged into base model via PEFT `merge_and_unload()`
+- **Model Path**: `/workspace/persistent/qwen-trader-merged/` (4 safetensors, ~15GB)
+- **Adapter Path**: `/workspace/persistent/qwen-trader-lora/final/`
 
 ## 4. Innovation and Key Technical Contributions
 
@@ -150,6 +153,50 @@ The backtest engine computes a comprehensive metric suite comparable to professi
 | Avg Trade Duration | Average holding period in candles |
 | Profit Factor | Gross profit / gross loss |
 | Win Rate | Percentage of profitable trades |
+
+### 4.7 NL→DSL Generation Quality Evaluation
+
+The fine-tuned model was evaluated against 10 natural language prompts covering
+8 strategy categories (trend following, mean reversion, momentum, breakout,
+confluence, short, risk-based, filtered).
+
+**Pipeline**: LLM output → YAML extraction → canonicalization → schema validation →
+semantic validation → Freqtrade/Backtrader transpilation → indicator matching
+
+**Schema-guided canonicalization** (`src/dsl/canonicalizer.py`) normalizes common
+LLM output errors before validation:
+- String→int/float coercion (`period: "50"` → `50`)
+- Stop-loss sign correction (`3.0` → `-0.03`, interpreted as 3% loss)
+- Illegal field stripping (e.g. `exit.buy` removed, only `long`/`short` allowed)
+- Safe defaults for missing `risk` section
+
+**LLM retry**: When canonicalization encounters unrecoverable errors (expression-based
+stop_loss, missing `indicators`), the system sends a retry prompt with error feedback
+to the LLM, requesting corrected output.
+
+**Results** (10 test prompts, AMD MI210 GPU, vLLM inference):
+
+| Metric | Rate |
+|--------|------|
+| YAML extraction | 10/10 (100%) |
+| Schema validation | 9/10 (90%) |
+| Semantic validation | 9/10 (90%) |
+| Freqtrade transpilation | 9/10 (90%) |
+| Backtrader transpilation | 9/10 (90%) |
+| Indicator matching | 9/10 (90%) |
+| **Overall pass rate** | **9/10 (90%)** |
+
+**By category**: breakout 1/1, confluence 1/1, filtered 1/1, mean_reversion 2/2,
+momentum 1/1, risk_based 1/1, short 1/1, trend_following 1/2
+
+**Failed case** (`supertrend_simple`): Model placed `stop_loss` at the `strategy`
+root level instead of inside the `risk` field. The system safely rejected this
+output — it did not enter the backtest or trading execution pipeline.
+
+**Safety boundary**: The system allows 9 strategies to proceed to backtesting
+while safely rejecting 1 structurally non-compliant strategy. The canonicalizer
+applies 2-4 repairs per test case on average (type coercion, default fills, illegal
+field stripping). All repairs are logged for audit transparency.
 
 ## 5. Datasets Used
 

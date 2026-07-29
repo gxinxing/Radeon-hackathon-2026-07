@@ -1,11 +1,18 @@
 """Knowledge base entries for crypto trading RAG.
 
 Each entry has:
-- keywords: terms that trigger retrieval (English + Chinese)
+- keywords: canonical trigger terms (English + Chinese)
 - category: indicator | strategy | risk | market
 - title: Short title
 - content: Knowledge text injected into LLM prompt
 - weight: Priority weight (higher = more relevant when scores tie)
+- aliases:  synonyms / colloquial phrasings / paraphrases that should also
+            trigger this entry. This is what turns the retriever from a
+            brittle keyword-matcher into something that survives rephrasing
+            (e.g. "横盘" -> Mean Reversion, "双均线" -> MA Crossover).
+
+NOTE: ordering of terms in `keywords`/`aliases` is not significant; the
+retriever lowercases and does substring / multi-char matching.
 """
 
 KNOWLEDGE_ENTRIES: list[dict] = [
@@ -14,6 +21,7 @@ KNOWLEDGE_ENTRIES: list[dict] = [
 
     {
         "keywords": ["ema", "ma", "moving average", "均线", "移动平均", "sma", "wma"],
+        "aliases": ["双均线", "均线交叉", "均线金叉", "dual ma", "moving average cross"],
         "category": "indicator",
         "title": "Moving Averages (SMA/EMA/WMA/HMA)",
         "content": (
@@ -32,6 +40,7 @@ KNOWLEDGE_ENTRIES: list[dict] = [
     },
     {
         "keywords": ["rsi", "relative strength", "超卖", "超买", "oversold", "overbought"],
+        "aliases": ["相对强弱", "强弱指标", "rsi背离", "rsi指标"],
         "category": "indicator",
         "title": "RSI (Relative Strength Index)",
         "content": (
@@ -48,6 +57,7 @@ KNOWLEDGE_ENTRIES: list[dict] = [
     },
     {
         "keywords": ["macd", "moving average convergence", "金叉", "死叉"],
+        "aliases": ["macd柱", "macd线", "指数平滑异同移动平均", "macd背离"],
         "category": "indicator",
         "title": "MACD (Moving Average Convergence Divergence)",
         "content": (
@@ -64,6 +74,7 @@ KNOWLEDGE_ENTRIES: list[dict] = [
     },
     {
         "keywords": ["bollinger", "bb", "布林带", "upper band", "lower band"],
+        "aliases": ["布林", "布林线", "布林通道"],
         "category": "indicator",
         "title": "Bollinger Bands",
         "content": (
@@ -80,6 +91,7 @@ KNOWLEDGE_ENTRIES: list[dict] = [
     },
     {
         "keywords": ["atr", "average true range", "volatility", "波动率"],
+        "aliases": ["真实波幅", "平均真实波幅", "波动幅度"],
         "category": "indicator",
         "title": "ATR (Average True Range)",
         "content": (
@@ -96,6 +108,7 @@ KNOWLEDGE_ENTRIES: list[dict] = [
     },
     {
         "keywords": ["supertrend", "趋势跟踪"],
+        "aliases": ["超级趋势", "超级趋势线", "supertrend指标"],
         "category": "indicator",
         "title": "Supertrend Indicator",
         "content": (
@@ -111,6 +124,7 @@ KNOWLEDGE_ENTRIES: list[dict] = [
     },
     {
         "keywords": ["ichimoku", "一目均衡", "cloud"],
+        "aliases": ["一目", "均衡表", "云图", "ichimoku云"],
         "category": "indicator",
         "title": "Ichimoku Cloud",
         "content": (
@@ -127,6 +141,7 @@ KNOWLEDGE_ENTRIES: list[dict] = [
     },
     {
         "keywords": ["vwap", "volume weighted", "成交量加权"],
+        "aliases": ["成交量加权均价", "vwap线", "量价均线"],
         "category": "indicator",
         "title": "VWAP (Volume Weighted Average Price)",
         "content": (
@@ -142,6 +157,7 @@ KNOWLEDGE_ENTRIES: list[dict] = [
     },
     {
         "keywords": ["adx", "trend strength", "趋势强度"],
+        "aliases": ["趋向指标", "平均趋向指数", "趋势强度指标", "adx指标"],
         "category": "indicator",
         "title": "ADX (Average Directional Index)",
         "content": (
@@ -160,6 +176,8 @@ KNOWLEDGE_ENTRIES: list[dict] = [
 
     {
         "keywords": ["crossover", "金叉", "cross", "突破", "breakout"],
+        "aliases": ["双均线", "均线交叉", "金叉死叉", "golden cross", "death cross",
+                     "趋势跟随", "均线策略"],
         "category": "strategy",
         "title": "Trend Following: MA Crossover",
         "content": (
@@ -179,6 +197,8 @@ KNOWLEDGE_ENTRIES: list[dict] = [
     },
     {
         "keywords": ["mean reversion", "超卖反弹", "oversold", "reversion", "回归", "反转"],
+        "aliases": ["横盘", "盘整", "震荡", "震荡市", "range trading", "反转策略",
+                     "均值回归策略", "高抛低吸"],
         "category": "strategy",
         "title": "Mean Reversion: RSI / Bollinger Bands",
         "content": (
@@ -197,6 +217,7 @@ KNOWLEDGE_ENTRIES: list[dict] = [
     },
     {
         "keywords": ["breakout", "突破", "volume breakout", "放量突破"],
+        "aliases": ["放量", "突破策略", "volume break", "突破买入", "平台突破"],
         "category": "strategy",
         "title": "Volume-Confirmed Breakout",
         "content": (
@@ -214,6 +235,7 @@ KNOWLEDGE_ENTRIES: list[dict] = [
     },
     {
         "keywords": ["momentum", "动量", "macd strategy"],
+        "aliases": ["动量策略", "macd动量", "动能交易"],
         "category": "strategy",
         "title": "Momentum: MACD Crossover",
         "content": (
@@ -231,6 +253,7 @@ KNOWLEDGE_ENTRIES: list[dict] = [
     },
     {
         "keywords": ["confluence", "共振", "多指标", "multi-indicator"],
+        "aliases": ["多指标共振", "信号共振", "指标共振", "confluence策略"],
         "category": "strategy",
         "title": "Multi-Indicator Confluence",
         "content": (
@@ -248,6 +271,7 @@ KNOWLEDGE_ENTRIES: list[dict] = [
     },
     {
         "keywords": ["short", "做空", "shorting", "bearish"],
+        "aliases": ["沽空", "short策略", "空头", "做空策略", "空单"],
         "category": "strategy",
         "title": "Short Selling Strategy",
         "content": (
@@ -267,6 +291,7 @@ KNOWLEDGE_ENTRIES: list[dict] = [
 
     {
         "keywords": ["stop loss", "止损", "stop", "风险"],
+        "aliases": ["砍仓", "stop", "sl", "止损位", "止损线", "割肉"],
         "category": "risk",
         "title": "Stop-Loss Best Practices",
         "content": (
@@ -285,6 +310,7 @@ KNOWLEDGE_ENTRIES: list[dict] = [
     },
     {
         "keywords": ["position sizing", "仓位", "stake", "position size", "资金管理"],
+        "aliases": ["仓位管理", "头寸", "position size", "仓位控制", "资金仓位"],
         "category": "risk",
         "title": "Position Sizing Rules",
         "content": (
@@ -301,6 +327,7 @@ KNOWLEDGE_ENTRIES: list[dict] = [
     },
     {
         "keywords": ["trailing stop", "追踪止损", "trailing"],
+        "aliases": ["移动止损", "跟踪止损", "trailing stop"],
         "category": "risk",
         "title": "Trailing Stop Configuration",
         "content": (
@@ -318,6 +345,7 @@ KNOWLEDGE_ENTRIES: list[dict] = [
     },
     {
         "keywords": ["take profit", "止盈", "profit target"],
+        "aliases": ["盈利目标", "tp", "profit target", "获利了结"],
         "category": "risk",
         "title": "Take-Profit Strategy",
         "content": (
@@ -332,6 +360,7 @@ KNOWLEDGE_ENTRIES: list[dict] = [
     },
     {
         "keywords": ["time in trade", "持仓时间", "max holding"],
+        "aliases": ["最大持仓", "持仓时限", "max holding", "持仓周期"],
         "category": "risk",
         "title": "Time-in-Trade Limits",
         "content": (
@@ -352,6 +381,7 @@ KNOWLEDGE_ENTRIES: list[dict] = [
 
     {
         "keywords": ["btc", "bitcoin", "比特币"],
+        "aliases": ["大饼", "btc", "比特币现货"],
         "category": "market",
         "title": "BTC Market Characteristics",
         "content": (
@@ -369,6 +399,7 @@ KNOWLEDGE_ENTRIES: list[dict] = [
     },
     {
         "keywords": ["eth", "ethereum", "以太坊"],
+        "aliases": ["以太", "eth", "以太坊现货"],
         "category": "market",
         "title": "ETH Market Characteristics",
         "content": (
@@ -384,6 +415,7 @@ KNOWLEDGE_ENTRIES: list[dict] = [
     },
     {
         "keywords": ["timeframe", "时间周期", "1h", "4h", "1d", "15m"],
+        "aliases": ["周期", "时间框架", "时间级别", "timeframe", "k线周期"],
         "category": "market",
         "title": "Timeframe Selection Guide",
         "content": (
@@ -397,5 +429,142 @@ KNOWLEDGE_ENTRIES: list[dict] = [
             "DSL: market.timeframe determines candle period and affects all metrics."
         ),
         "weight": 0.9,
+    },
+
+    # ==================== NEW ENTRIES (expanded corpus) ====================
+
+    {
+        "keywords": ["funding rate", "资金费率", "永续", "perpetual", "溢价"],
+        "aliases": ["资金费用", "funding", "永续合约", "perp", "持仓费"],
+        "category": "market",
+        "title": "Funding Rate (Perpetual Swaps)",
+        "content": (
+            "Funding rate is the periodic payment between longs and shorts in perpetual "
+            "futures, keeping the contract price anchored to spot.\n"
+            "- Positive funding: longs pay shorts → market is euphoric/overleveraged long\n"
+            "- Negative funding: shorts pay longs → bearish overcrowding\n"
+            "- Very high positive funding often precedes long squeezes / local tops\n"
+            "Trading use: fade extreme funding; avoid opening with-the-crowd at extremes.\n"
+            "DSL note: Not a chart indicator, but use it as a market-context filter. "
+            "E.g. skip new longs when funding > 0.1% per 8h."
+        ),
+        "weight": 0.9,
+    },
+    {
+        "keywords": ["regime", "市场状态", "市场结构", "牛市", "熊市", "横盘"],
+        "aliases": ["市场 regime", "regime detection", "趋势市", "震荡市", "盘整市",
+                     "市场风格", "行情分类"],
+        "category": "market",
+        "title": "Market Regime Classification",
+        "content": (
+            "Markets alternate between trending and ranging regimes; the right strategy "
+            "depends on the regime.\n"
+            "- Trending: ADX > 25, use trend-following / breakout / momentum\n"
+            "- Ranging: ADX < 20, use mean reversion (RSI / Bollinger)\n"
+            "- Bull/Bear: positional bias — long-biased in bull, short-biased in bear\n"
+            "Detection: combine ADX (strength) + slope of EMA200 (direction).\n"
+            "Pitfall: running a trend strategy in a range burns capital on whipsaws.\n"
+            "DSL tip: gate entries with 'adx > 25' for trend systems; drop it for reversion."
+        ),
+        "weight": 0.9,
+    },
+    {
+        "keywords": ["drawdown", "最大回撤", "回撤", "portfolio risk", "仓位上限"],
+        "aliases": ["回撤控制", "亏损控制", "组合风险", "最大亏损", "资金曲线回撤"],
+        "category": "risk",
+        "title": "Drawdown & Portfolio Risk Control",
+        "content": (
+            "Drawdown = peak-to-trough decline of the equity curve. It is the number that "
+            "kills accounts.\n"
+            "- Cap single-strategy drawdown at 15-20%; whole-portfolio at 25-30%\n"
+            "- Risk per trade 1-2% of equity; with -0.03 stop and 10% stake that is 0.3%\n"
+            "- Correlated assets (BTC/ETH ~0.75) do NOT diversify — count them as one risk\n"
+            "- Use max_open_trades + stake_amount to cap deployed capital\n"
+            "DSL tip: stake_amount=0.1, max_open_trades=3 caps deployment at 30%; "
+            "tighten if backtest max drawdown exceeds your comfort band."
+        ),
+        "weight": 0.9,
+    },
+    {
+        "keywords": ["sol", "solana", "索拉纳"],
+        "aliases": ["solana", "sol币", "sol现货"],
+        "category": "market",
+        "title": "SOL Market Characteristics",
+        "content": (
+            "Solana-specific considerations:\n"
+            "- High beta: moves more % than BTC/ETH in both directions\n"
+            "- Annual volatility: ~100%+\n"
+            "- Narrative-driven (DeFi, memecoins, airdrops) → sharp regime shifts\n"
+            "- Lower liquidity than BTC/ETH → wider slippage, use wider stops (-0.05 to -0.07)\n"
+            "For SOL: size smaller than BTC; treat -0.05 as a 1h baseline stop."
+        ),
+        "weight": 0.7,
+    },
+    {
+        "keywords": ["bnb", "币安币"],
+        "aliases": ["binance coin", "bnb币", "bnb现货"],
+        "category": "market",
+        "title": "BNB Market Characteristics",
+        "content": (
+            "BNB (Binance Coin) considerations:\n"
+            "- Tied to Binance exchange health / burn mechanism (quarterly burn supports price)\n"
+            "- Annual volatility: ~80-90%\n"
+            "- Correlation with BTC: ~0.7\n"
+            "- Often steadier than alt-L1 peers during market stress\n"
+            "For BNB: stop sizing similar to ETH (-0.04 on 1h)."
+        ),
+        "weight": 0.6,
+    },
+    {
+        "keywords": ["overfitting", "过拟合", "样本外", "out of sample", "回测陷阱",
+                      "walk forward", "前视偏差", "lookahead"],
+        "aliases": ["样本内", "过拟合陷阱", "曲线拟合", "walk-forward", "前视", "偷看未来"],
+        "category": "risk",
+        "title": "Backtest Validity & Overfitting",
+        "content": (
+            "A backtest that looks perfect is usually lying. Common traps:\n"
+            "- Overfitting: too many params tuned on one history → fails live\n"
+            "- Look-ahead / 前视偏差: using future info (e.g. close of bar to enter same bar)\n"
+            "- Survivorship bias: testing only coins that survived\n"
+            "- No out-of-sample: train/validate on disjoint windows\n"
+            "Mitigations:\n"
+            "- Walk-forward: retrain on rolling window, test on the next\n"
+            "- Hold out the last 20-30% of data as a never-touched test set\n"
+            "- Keep params few and economically motivated (not 9 fitted constants)\n"
+            "DSL note: prefer simple, interpretable entry conditions over baroque formulas."
+        ),
+        "weight": 0.9,
+    },
+    {
+        "keywords": ["correlation", "相关性", "分散", "diversification", "对冲"],
+        "aliases": ["相关系数", "组合分散", "对冲策略", "资产相关性"],
+        "category": "risk",
+        "title": "Correlation & Diversification",
+        "content": (
+            "Diversification only works when assets are NOT correlated.\n"
+            "- BTC/ETH correlation ~0.75 → holding both is ~one bet, not two\n"
+            "- Most large-caps move with BTC beta in risk-off events\n"
+            "- True diversifiers: stablecoins (cash), or non-crypto assets\n"
+            "Hedging: a short on a high-beta alt can offset BTC long partially\n"
+            "DSL tip: cap correlated exposure via max_open_trades; don't assume "
+            "stake_amount*N is diversified when N coins all track BTC."
+        ),
+        "weight": 0.7,
+    },
+    {
+        "keywords": ["dca", "定投", "美元成本平均", "分批买入"],
+        "aliases": ["美元成本平均法", "平均成本法", "分批建仓", "定期买入"],
+        "category": "strategy",
+        "title": "DCA (Dollar-Cost Averaging)",
+        "content": (
+            "DCA = buy a fixed amount at fixed intervals, ignoring price.\n"
+            "Type: Passive / accumulation (not a signal-based exit strategy).\n"
+            "Best for: long-term stacking, removing timing emotion.\n"
+            "Strength: beats lump-sum on average in volatile, directionless markets.\n"
+            "Weakness: no profit-taking; pair with a take-profit rule on the stack.\n"
+            "DSL note: DCA is closer to a scheduling/accumulation rule than a "
+            "entry.long condition; model it as recurring buys, not indicator crosses."
+        ),
+        "weight": 0.6,
     },
 ]

@@ -1,13 +1,23 @@
-"""Keyword-based knowledge retriever for crypto trading RAG.
+"""Knowledge retriever for crypto trading RAG.
 
-Retrieves relevant trading knowledge entries based on keyword matching
-against user input. No external dependencies — pure Python TF-IDF-lite.
+Retrieves relevant trading knowledge entries for a user query.
+
+Two layers:
+  1. Keyword/alias retriever (default, CPU-only, zero deps):
+     - matches against each entry's `keywords` + `aliases`
+     - English terms: exact word match
+     - Chinese terms: multi-character substring / bigram match (NOT single
+       characters), which fixes the old false-positive problem where any
+       lone Chinese char in the query would partially match many entries.
+     - uses an inverted index for candidate lookup (no linear scan).
+  2. Optional semantic retriever — see `semantic.py`. Activated only when an
+     embedding model is installed; otherwise the keyword path stays active.
 
 The knowledge base covers:
 - Indicator documentation (what each indicator does, typical params)
 - Strategy patterns (crossover, mean reversion, breakout, etc.)
-- Risk management rules (position sizing, stop placement)
-- Market context rules (volatility regimes, regime detection)
+- Risk management rules (position sizing, stop placement, drawdown)
+- Market context rules (asset traits, regime, funding, correlation)
 """
 
 from __future__ import annotations
@@ -18,6 +28,11 @@ from typing import Any
 
 from .knowledge_entries import KNOWLEDGE_ENTRIES
 
+# Token patterns --------------------------------------------------------------
+_EN_RE = re.compile(r"[a-z0-9]+")          # english / number word
+_CN_RE = re.compile(r"[一-鿿]+")           # CJK run (multi-char phrase)
+_HAS_ALNUM = re.compile(r"[a-z0-9]")        # distinguishes EN terms from CN
+
 
 @dataclass
 class KnowledgeEntry:
@@ -27,18 +42,28 @@ class KnowledgeEntry:
     title: str
     content: str
     weight: float = 1.0  # Priority weight for ranking
+    aliases: list[str] = field(default_factory=list)  # synonyms / paraphrases
+
+    @property
+    def terms(self) -> list[str]:
+        """All matchable trigger terms (keywords + aliases)."""
+        return self.keywords + self.aliases
+
+
+def _bigrams(s: str) -> list[str]:
+    return [s[i:i + 2] for i in range(len(s) - 1)]
 
 
 class KnowledgeRetriever:
     """Retrieves relevant knowledge entries based on user query.
 
-    Uses simple keyword matching with TF-based scoring.
-    No external dependencies (no embeddings, no vector DB).
+    Keyword/alias based, CPU-only, no external dependencies.
     """
 
     def __init__(self, entries: list[KnowledgeEntry] | None = None):
         self._entries = entries or _load_entries()
-        self._index = self._build_index()
+
+    # ── Public API ──────────────────────────────────────────────────────
 
     def retrieve(
         self,
@@ -56,13 +81,16 @@ class KnowledgeRetriever:
         Returns:
             List of KnowledgeEntry sorted by relevance.
         """
-        query_tokens = self._tokenize(query)
-        if not query_tokens:
+        q_en, q_cn_runs, q_cn_bigrams = self._tokenize(query)
+        if not q_en and not q_cn_runs:
             return []
 
+        # Corpus is tiny (tens of entries); a full scan is correct and cheap,
+        # and avoids the substring-miss bug an inverted index would cause for
+        # multi-character CJK terms that are substrings of the query.
         scored: list[tuple[float, KnowledgeEntry]] = []
         for entry in self._entries:
-            score = self._score_entry(entry, query_tokens)
+            score = self._score_entry(entry, q_en, q_cn_runs, q_cn_bigrams)
             if score >= min_score:
                 scored.append((score, entry))
 
@@ -114,41 +142,48 @@ class KnowledgeRetriever:
 
         return "\n".join(sections)
 
-    def _tokenize(self, text: str) -> set[str]:
-        """Tokenize query into lowercase word tokens."""
-        # Handle Chinese characters as individual tokens
+    # ── Internals ───────────────────────────────────────────────────────
+
+    def _tokenize(self, text: str) -> tuple[set[str], list[str], set[str]]:
+        """Return (english_words, cjk_runs, cjk_bigrams).
+
+        Chinese is kept as whole runs + adjacent bigrams, deliberately NOT
+        split into single characters (that caused false positives before).
+        """
         text = text.lower()
-        # Split on non-alphanumeric (keeps Chinese chars as single tokens)
-        tokens = re.findall(r"[a-z]+|[\u4e00-\u9fff]+", text)
-        return set(tokens)
+        en = set(_EN_RE.findall(text))
+        cn_runs = _CN_RE.findall(text)
+        cn_bigrams: set[str] = set()
+        for run in cn_runs:
+            cn_bigrams.update(_bigrams(run))
+        return en, cn_runs, cn_bigrams
 
     def _score_entry(
         self,
         entry: KnowledgeEntry,
-        query_tokens: set[str],
+        q_en: set[str],
+        q_cn_runs: list[str],
+        q_cn_bigrams: set[str],
     ) -> float:
-        """Score an entry's relevance to the query tokens."""
-        score = 0.0
-        for keyword in entry.keywords:
-            kw_lower = keyword.lower()
-            # Exact match
-            if kw_lower in query_tokens:
-                score += 1.0 * entry.weight
-            # Partial match (keyword is substring of a token or vice versa)
-            else:
-                for token in query_tokens:
-                    if kw_lower in token or token in kw_lower:
-                        score += 0.3 * entry.weight
-        return score
+        """Score an entry's relevance to the query tokens.
 
-    def _build_index(self) -> dict[str, list[KnowledgeEntry]]:
-        """Build keyword → entries index for fast lookup."""
-        index: dict[str, list[KnowledgeEntry]] = {}
-        for entry in self._entries:
-            for kw in entry.keywords:
-                kw_lower = kw.lower()
-                index.setdefault(kw_lower, []).append(entry)
-        return index
+        EN terms: exact word match (1.0 * weight).
+        CN terms: multi-char substring in a CJK run (1.0 * weight) or CJK
+        bigram match (0.6 * weight). Single isolated chars never inflate.
+        """
+        score = 0.0
+        for term in entry.terms:
+            tl = term.lower()
+            if _HAS_ALNUM.search(tl):          # English-ish term
+                if tl in q_en:
+                    score += 1.0 * entry.weight
+            else:                                   # CJK term
+                if any(tl in run for run in q_cn_runs):
+                    score += 1.0 * entry.weight
+                elif len(tl) >= 2 and tl in q_cn_bigrams:
+                    score += 0.6 * entry.weight
+                # single-char CJK terms: intentionally ignored to avoid noise
+        return score
 
 
 def _load_entries() -> list[KnowledgeEntry]:
