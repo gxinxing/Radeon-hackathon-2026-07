@@ -283,8 +283,12 @@ correct DSL with proper types, negative stop_loss, and valid indicator reference
 | Setup script | `scripts/setup.sh` | ✅ Complete |
 | E2E verification | `scripts/verify_e2e.sh` | ✅ 7 checks |
 | NL→DSL evaluation | `scripts/eval_nl_to_dsl.py` | ✅ 10 test prompts, online/offline modes |
-| RAG knowledge base | `src/knowledge_base/` | ✅ 20 entries, keyword retrieval |
-| Unit tests | `tests/` (6 files) | ✅ 83 tests passing |
+| RAG knowledge base | `src/knowledge_base/` | ✅ 40+ entries, keyword + semantic retrieval |
+| DSL canonicalizer | `src/dsl/canonicalizer.py` | ✅ Type coercion + repair logging |
+| Unit tests | `tests/` (7 files) | ✅ 93 tests passing, 2 deselected (async) |
+| Batch eval (100 prompts) | `scripts/gen_eval_dataset.py` | ✅ 88/100 (88%) |
+| vLLM benchmark | `scripts/vllm_benchmark.py` | ✅ 6.2× scaling, 201.7 tokens/s |
+| Corrected training data | `scripts/gen_corrected_dataset.py` | ✅ 43 valid samples |
 | Technical report | `docs/technical_report.md` | ✅ This document |
 
 ## 7. Team
