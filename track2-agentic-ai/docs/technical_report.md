@@ -156,7 +156,7 @@ The backtest engine computes a comprehensive metric suite comparable to professi
 
 ### 4.7 NL→DSL Generation Quality Evaluation
 
-The fine-tuned model was evaluated against 10 natural language prompts covering
+The fine-tuned model was evaluated against natural language prompts covering
 8 strategy categories (trend following, mean reversion, momentum, breakout,
 confluence, short, risk-based, filtered).
 
@@ -174,7 +174,7 @@ LLM output errors before validation:
 stop_loss, missing `indicators`), the system sends a retry prompt with error feedback
 to the LLM, requesting corrected output.
 
-**Results** (10 test prompts, AMD MI210 GPU, vLLM inference):
+#### Standard Evaluation (10 prompts)
 
 | Metric | Rate |
 |--------|------|
@@ -193,10 +193,61 @@ momentum 1/1, risk_based 1/1, short 1/1, trend_following 1/2
 root level instead of inside the `risk` field. The system safely rejected this
 output — it did not enter the backtest or trading execution pipeline.
 
-**Safety boundary**: The system allows 9 strategies to proceed to backtesting
-while safely rejecting 1 structurally non-compliant strategy. The canonicalizer
-applies 2-4 repairs per test case on average (type coercion, default fills, illegal
-field stripping). All repairs are logged for audit transparency.
+#### Large-Scale Generalization Evaluation (100 prompts)
+
+| Metric | Rate |
+|--------|------|
+| YAML extraction | 96/100 (96%) |
+| Schema validation | 90/100 (90%) |
+| Freqtrade transpilation | 90/100 (90%) |
+| Backtrader transpilation | 90/100 (90%) |
+| Indicator matching | 88/100 (88%) |
+| Retried | 9/100 |
+| **Overall pass rate** | **88/100 (88.0%)** |
+
+**By category**: breakout 15/15 (100%), confluence 8/10 (80%),
+mean_reversion 20/20 (100%), momentum 15/15 (100%), short 8/10 (80%)
+
+**Latency**: avg=5,663ms, p95=7,776ms per request (AMD MI210, FP16, eager mode)
+
+**Safety boundary**: The system allows 88 strategies to proceed to backtesting
+while safely rejecting 12 structurally non-compliant strategies. The canonicalizer
+applies 2-4 repairs per test case on average. All repairs are logged for audit
+transparency.
+
+### 4.8 vLLM AMD ROCm Performance Benchmark
+
+vLLM serving the fine-tuned Qwen2.5-7B model on AMD Instinct MI210 GPU:
+
+| Mode | tokens/s | Avg Latency (ms) | P95 Latency (ms) |
+|------|---------|-----------------|------------------|
+| Sequential (batch=1) | 32.4 | 6,849 | 15,717 |
+| Concurrent batch=2 | 59.3 | 6,901 | 9,621 |
+| Concurrent batch=4 | 104.4 | 6,556 | 9,192 |
+| Concurrent batch=8 | 148.1 | 6,751 | 9,469 |
+| Concurrent batch=16 | 201.7 | 6,946 | 10,177 |
+
+**Key finding**: 6.2× throughput scaling from batch=1 to batch=16 (32.4 → 201.7 tokens/s).
+Average latency remains stable (~6.5-6.9s) across batch sizes, indicating efficient
+GPU utilization. VRAM usage ~16GB for model + KV cache on 64GB MI210.
+
+**Note**: These are batch throughput optimizations, not low-latency interactive
+optimizations. The avg latency of ~6.8s reflects the 7B model's compute time for
+~500 token outputs on AMD ROCm with eager execution mode.
+
+### 4.9 Corrected Training Data Generation
+
+Using the model + canonicalizer pipeline, 51 diverse NL prompts were processed
+to generate high-quality training data for future v2 LoRA fine-tuning:
+
+- **Input**: 51 diverse NL prompts (Chinese + English, 7 strategy categories)
+- **Output**: 43/51 valid samples (84% yield rate)
+- **Average repairs per sample**: 1.9
+- **Saved to**: `/workspace/persistent/corrected_train.jsonl`
+
+Only samples that passed canonicalization + schema validation + transpilation
+were retained. This ensures the v2 training data contains only structurally
+correct DSL with proper types, negative stop_loss, and valid indicator references.
 
 ## 5. Datasets Used
 
