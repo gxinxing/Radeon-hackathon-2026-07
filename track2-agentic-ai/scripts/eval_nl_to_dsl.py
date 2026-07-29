@@ -123,6 +123,7 @@ class TestResult:
     backtrader_transpile: bool = False
     indicators_match: bool = False
     errors: list[str] = field(default_factory=list)
+    repairs: list[str] = field(default_factory=list)
     passed: bool = False
 
 
@@ -179,11 +180,17 @@ def extract_yaml(text: str) -> dict | None:
     return None
 
 
-def validate_dsl(dsl: dict) -> tuple[bool, bool, list[str]]:
-    """Validate DSL — returns (schema_valid, semantic_valid, errors)."""
-    from src.dsl.validator import validate_dsl as _validate
-    is_valid, errors = _validate(dsl)
-    return is_valid, is_valid, errors
+def validate_dsl(dsl: dict) -> tuple[bool, bool, list[str], list]:
+    """Validate DSL with canonicalization — returns (schema_valid, semantic_valid, errors, repairs)."""
+    from src.dsl.validator import canonicalize_and_validate
+    is_valid, errors, repairs = canonicalize_and_validate(dsl)
+    # Replace dsl in-place with canonicalized version
+    if is_valid:
+        from src.dsl.canonicalizer import canonicalize_dsl
+        canon_dsl, _, _ = canonicalize_dsl(dsl)
+        dsl.clear()
+        dsl.update(canon_dsl)
+    return is_valid, is_valid, errors, repairs
 
 
 def transpile_check(dsl: dict) -> tuple[bool, bool]:
@@ -250,12 +257,14 @@ def run_tests(vllm_url: str | None, offline: bool = False, model: str = "qwen-tr
             results.append(result)
             continue
 
-        # Validate
-        schema_ok, semantic_ok, errors = validate_dsl(result.extracted_dsl)
+        # Validate with canonicalization
+        schema_ok, semantic_ok, errors, repairs = validate_dsl(result.extracted_dsl)
         result.schema_valid = schema_ok
         result.semantic_valid = semantic_ok
         if errors:
             result.errors.extend(errors)
+        if repairs:
+            result.repairs = [f"{r.field}: {r.raw} → {r.normalized} ({r.repair_type})" for r in repairs]
 
         # Transpile
         ft_ok, bt_ok = transpile_check(result.extracted_dsl)
@@ -335,6 +344,9 @@ def print_report(results: list[TestResult]) -> None:
     for r in online_results:
         status = "✅ PASS" if r.passed else "❌ FAIL"
         print(f"  {status} [{r.category}] {r.test_id}")
+        if r.repairs:
+            for rep in r.repairs[:3]:
+                print(f"         🔧 {rep[:80]}")
         if r.errors:
             for err in r.errors[:3]:
                 print(f"         → {err[:80]}")
