@@ -36,9 +36,14 @@ PROMPTS = [
 ]
 
 
-def safe(val, default=0):
-    try: return float(val)
-    except (TypeError, ValueError): return float(default)
+def safe(val, default=0, cap=None):
+    try:
+        v = float(val)
+        if cap is not None:
+            v = min(v, cap)
+        return v
+    except (TypeError, ValueError):
+        return float(default)
 
 
 def call_llm(prompt):
@@ -170,13 +175,13 @@ def main():
     print(f'    Strategy: {bt.get("strategy_name")}')
     print(f'    Trades: {m.get("total_trades", 0)}')
     print(f'    Win rate: {safe(m.get("win_rate")):.1%}')
-    print(f'    Total return: {safe(m.get("total_return")):.2%}')
+    print(f'    Total return: {safe(m.get("total_return"), cap=999.0):.2%}')
     print(f'    B&H return: {safe(m.get("benchmark_return")):.2%}')
-    print(f'    Alpha: {safe(m.get("alpha")):+.2%}')
+    print(f'    Alpha: {safe(m.get("alpha"), cap=999.0):+.2%}')
     print(f'    Max drawdown: {safe(m.get("max_drawdown")):.2%}')
     print(f'    Sharpe: {safe(m.get("sharpe_ratio")):.2f}')
     print(f'    Sortino: {safe(m.get("sortino_ratio")):.2f}')
-    print(f'    Final balance: ${safe(m.get("final_balance")):,.2f}')
+    print(f'    Final balance: ${safe(m.get("final_balance"), cap=9999999):,.2f}')
     print(f'    Win/Loss: {m.get("win_trades", 0)}/{m.get("loss_trades", 0)}')
     print()
 
