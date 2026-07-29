@@ -1,7 +1,11 @@
 """DSL schema validator for trading strategy specifications.
 
-Validates a parsed YAML strategy dict against the JSON Schema,
-then performs semantic checks (indicator references, expression syntax).
+Pipeline: YAML parse → canonicalize_dsl() → validate_dsl() → backtest
+
+Canonicalization normalizes LLM output (string→int, positive stop_loss→negative)
+before schema validation. This ensures format errors from the model don't
+block the pipeline when the intent is clear.
+
 Uses the AST-based expression parser for syntax validation.
 """
 
@@ -14,6 +18,7 @@ from typing import Any
 import jsonschema
 
 from .expr_parser import validate_expression, get_expression_references
+from .canonicalizer import canonicalize_dsl, Repair
 
 _SCHEMA_PATH = Path(__file__).parent / "schema.json"
 
@@ -47,14 +52,28 @@ def load_schema() -> dict[str, Any]:
         return json.load(f)
 
 
+def canonicalize_and_validate(strategy_dict: dict[str, Any]) -> tuple[bool, list[str], list[Repair]]:
+    """Canonicalize then validate a DSL dict.
+
+    This is the recommended entry point for LLM-generated DSL.
+
+    Returns (is_valid, error_messages, repairs).
+    """
+    canonicalized, repairs, canon_errors = canonicalize_dsl(strategy_dict)
+
+    if canon_errors:
+        return False, canon_errors, repairs
+
+    is_valid, errors = validate_dsl(canonicalized)
+    return is_valid, errors, repairs
+
+
 def validate_dsl(strategy_dict: dict[str, Any]) -> tuple[bool, list[str]]:
     """Validate a strategy DSL dict against schema and semantic rules.
 
     Returns (is_valid, error_messages).
     """
     errors: list[str] = []
-
-    # --- Schema validation ---
     schema = load_schema()
     try:
         jsonschema.validate(instance=strategy_dict, schema=schema)
