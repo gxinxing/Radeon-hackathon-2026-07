@@ -118,9 +118,10 @@ async def backtest(req: BacktestRequest) -> BacktestResponse:
             "avg_trade_duration": result.avg_trade_duration,
             "benchmark_return": result.benchmark_return,
             "alpha": result.alpha,
+            "is_valid": result.is_valid,
         },
         trades=result.trades[-20:],  # Last 20 trades for brevity
-        equity_curve=result.equity_curve[::max(1, len(result.equity_curve) // 100)],  # Sample down
+        equity_curve=result.equity_curve[::max(1, len(result.equity_curve) // 100)],
         dates=result.dates[::max(1, len(result.dates) // 100)],
         benchmark_curve=result.benchmark_curve[::max(1, len(result.benchmark_curve) // 100)] if result.benchmark_curve else []
     )
