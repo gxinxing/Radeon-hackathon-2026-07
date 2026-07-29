@@ -217,7 +217,7 @@ def main():
     # Step 7: Risk Assessment
     sharpe = safe(m.get('sharpe_ratio'))
     dd = safe(m.get('max_drawdown'))
-    alpha = safe(m.get('alpha'))
+    alpha = safe(m.get('alpha'), cap=999.0)
     consec = m.get('max_consecutive_losses', 0)
     win_rate = safe(m.get('win_rate'))
 
@@ -264,7 +264,7 @@ def main():
     print(f'  DEMO COMPLETE')
     print(f'  LLM: {llm_time:.1f}s | Backtest: {bt_time:.1f}s | Mode: {mode}')
     print(f'  Strategy: {strat_name} | Verdict: {verdict}')
-    print(f'  Return: {safe(m.get("total_return")):.2%} | Sharpe: {sharpe:.2f} | DD: {dd:.2%}')
+    print(f'  Return: {safe(m.get("total_return"), cap=999.0):.2%} | Sharpe: {sharpe:.2f} | DD: {dd:.2%}')
     print(f'  Paper position: {trade_amount} BTC ({mode})')
     print('=' * 70)
 
