@@ -10,8 +10,8 @@ info:
     name: AMD Hackathon Track 2
 
 servers:
-  - url: http://localhost:8080
-    description: Local server
+  - url: http://host.docker.internal:8080
+    description: Trading API on host (accessible from Dify Docker container)
 
 paths:
   /api/market/summary:
