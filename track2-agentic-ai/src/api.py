@@ -15,6 +15,7 @@ This single server exposes:
 from __future__ import annotations
 
 from fastapi import FastAPI
+from fastapi.responses import PlainTextResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from .backtest.server import app as backtest_app, BacktestRequest, BacktestResponse
@@ -57,6 +58,13 @@ async def backtest(req: BacktestRequest):
     """Run a strategy backtest from DSL specification."""
     from .backtest.server import backtest as _backtest
     return await _backtest(req)
+
+
+@app.post("/api/backtest/report", response_class=PlainTextResponse)
+async def backtest_report(req: BacktestRequest):
+    """Run a strategy backtest and return a concise Chinese report."""
+    from .backtest.server import backtest_report as _backtest_report
+    return await _backtest_report(req)
 
 
 @app.post("/api/validate")
