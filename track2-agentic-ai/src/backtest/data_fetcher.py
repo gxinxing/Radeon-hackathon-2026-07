@@ -140,6 +140,8 @@ def _generate_synthetic_ohlcv(
     df_t = 5  # degrees of freedom (fat tails; normal = inf)
 
     returns = np.zeros(n)
+    min_variance = (base_sigma * 0.25) ** 2
+    max_variance = (base_sigma * 6.0) ** 2
     for i in range(n):
         # Regime transition
         regime = np.random.choice(3, p=transition[regime])
@@ -149,6 +151,9 @@ def _generate_synthetic_ohlcv(
         # GARCH(1,1) variance update
         if i > 0:
             var_t = omega + alpha_garch * returns[i-1]**2 + beta_garch * var_t
+        # Student-t shocks can otherwise make recursive GARCH variance explode.
+        # Bound variance to a realistic per-candle range before sampling.
+        var_t = float(np.clip(var_t, min_variance, max_variance))
         # Scale variance by regime volatility multiplier
         effective_sigma = np.sqrt(var_t) * params["vol_mult"]
 
@@ -156,10 +161,17 @@ def _generate_synthetic_ohlcv(
         raw = student_t.rvs(df=df_t, size=1)[0]
         # Scale to desired std
         scaled = raw * effective_sigma / np.sqrt(df_t / (df_t - 2))
-        returns[i] = params["mu"] + scaled
+        # A single synthetic candle must never create non-finite prices. 12% is
+        # deliberately generous for crypto while still preventing exp overflow.
+        returns[i] = float(np.clip(params["mu"] + scaled, -0.12, 0.12))
 
     # --- Build price path ---
-    prices = base_price * np.exp(np.cumsum(returns))
+    # Keep the full synthetic path plausible for the requested horizon. The
+    # bound expands with sqrt(time), matching how volatility scales over time.
+    max_price_factor = 1.0 + 1.5 * np.sqrt(max(days, 1) / 365.0)
+    max_log_move = np.log(max_price_factor)
+    cumulative_returns = np.clip(np.cumsum(returns), -max_log_move, max_log_move)
+    prices = base_price * np.exp(cumulative_returns)
     # Ensure prices stay positive
     prices = np.maximum(prices, base_price * 0.1)
 
@@ -175,7 +187,7 @@ def _generate_synthetic_ohlcv(
     volumes = vol_base * vol_multiplier
 
     # --- Build OHLCV from close prices ---
-    intraday_vol = np.maximum(returns, 0.001) * prices * 0.5
+    intraday_vol = np.maximum(np.abs(returns), 0.001) * prices * 0.5
     opens = np.roll(prices, 1)
     opens[0] = prices[0]
 
