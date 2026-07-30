@@ -429,6 +429,9 @@ class SoccerEnv:
         torso_up = torch.clamp(-self.projected_gravity[:, 2], min=-1.0, max=1.0)
         fallen = (self.base_pos[:, 2] < self.fall_height) | (torch.abs(self.base_euler[:, 1]) > 45) | (torch.abs(self.base_euler[:, 0]) > 45)
         dist_to_ball = torch.norm(self.base_pos[:, :2] - self.ball_pos[:, :2], dim=1)
+        inv_bq = inv_quat(self.base_quat)
+        ball_rel = self.ball_pos - self.base_pos
+        ball_rel_body = transform_by_quat(ball_rel, inv_bq)
         goal_dir = torch.stack([self.goal_x - self.ball_pos[:, 0], -self.ball_pos[:, 1], torch.zeros_like(self.ball_pos[:, 0])], dim=1)
         goal_dir = goal_dir / (torch.norm(goal_dir, dim=1, keepdim=True) + 1e-6)
         ball_vel_to_goal = torch.sum(self.ball_vel[:, :2] * goal_dir[:, :2], dim=1)
@@ -466,6 +469,8 @@ class SoccerEnv:
             "commands": self.commands,
             "gait_process": torch.zeros(self.num_envs, device=self.device),
             "gait_frequency": torch.ones(self.num_envs, device=self.device),
+            "goal_dir_body": goal_dir[:, :2],
+            "ball_rel_body": ball_rel_body[:, :2],
             "feet_contact": self.feet_contact,
             "feet_pos": self.feet_pos, "last_feet_pos": self.last_feet_pos,
             "episode_length_buf": self.episode_length_buf,

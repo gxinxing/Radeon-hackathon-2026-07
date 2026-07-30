@@ -1,0 +1,3554 @@
+[38;5;226m[Genesis] [22:48:18] [WARNING] Mesh is not watertight. Falling back to convex hull for estimating inertial properties.[0m
+[38;5;226m[Genesis] [22:48:18] [WARNING] Mesh is not watertight. Falling back to convex hull for estimating inertial properties.[0m
+[38;5;226m[Genesis] [22:48:19] [WARNING] Mesh is not watertight. Falling back to convex hull for estimating inertial properties.[0m
+[38;5;226m[Genesis] [22:48:19] [WARNING] Mesh is not watertight. Falling back to convex hull for estimating inertial properties.[0m
+/opt/venv/lib/python3.12/site-packages/quadrants/lang/ast/ast_transformers/function_def_transformer.py:715: DeprecationWarning: ast.Str is deprecated and will be removed in Python 3.14; use ast.Constant instead
+  return index == 0 and isinstance(stmt, ast.Expr) and isinstance(stmt.value, (ast.Constant, ast.Str))
+[hierarchical] Walk model normalizer loaded: mean=torch.Size([1, 720])
+[hierarchical] Frozen walk model loaded from /workspace/booster_deploy/tasks/locomotion/models/t1_walk.pt
+[hierarchical] HL obs dim=19, HL action dim=3
+[hierarchical] HL dt=0.100s, decimation=5
+[hierarchical] HL clip: lin=1.2 m/s, ang=1.2 rad/s
+--------------------------------------------------------------------------------
+Resolved observation sets: 
+	 actor :  ['policy']
+	 critic :  ['policy']
+--------------------------------------------------------------------------------
+Actor Model: MLPModel(
+  (obs_normalizer): Identity()
+  (distribution): GaussianDistribution()
+  (mlp): MLP(
+    (0): Linear(in_features=19, out_features=256, bias=True)
+    (1): ELU(alpha=1.0)
+    (2): Linear(in_features=256, out_features=128, bias=True)
+    (3): ELU(alpha=1.0)
+    (4): Linear(in_features=128, out_features=64, bias=True)
+    (5): ELU(alpha=1.0)
+    (6): Linear(in_features=64, out_features=3, bias=True)
+  )
+)
+Critic Model: MLPModel(
+  (obs_normalizer): Identity()
+  (mlp): MLP(
+    (0): Linear(in_features=19, out_features=256, bias=True)
+    (1): ELU(alpha=1.0)
+    (2): Linear(in_features=256, out_features=128, bias=True)
+    (3): ELU(alpha=1.0)
+    (4): Linear(in_features=128, out_features=64, bias=True)
+    (5): ELU(alpha=1.0)
+    (6): Linear(in_features=64, out_features=1, bias=True)
+  )
+)
+
+============================================================
+  Hierarchical Soccer Training
+============================================================
+  High-level obs dim:    19
+  High-level action dim: 3 (vx, vy, wz)
+  Low-level model:       /workspace/booster_deploy/tasks/locomotion/models/t1_walk.pt
+  Decimation:            5 (HL dt = 0.100s)
+  Envs:                  2048
+  Max iterations:        500
+  Save interval:         50
+  Log dir:               runs/hierarchical_soccer_chase_hl
+============================================================
+
+Could not find git repository in /opt/venv/lib/python3.12/site-packages/rsl_rl/__init__.py. Skipping.
+################################################################################
+[1m                            Learning iteration 0/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 49152 
+                       Steps per second: 2229 
+                        Collection time: 21.091s 
+                          Learning time: 0.959s 
+                        Mean value loss: 94.5602
+                    Mean surrogate loss: 0.0096
+                      Mean entropy loss: 4.2410
+                            Mean reward: -24.44
+                    Mean episode length: 19.17
+                        Mean action std: 0.99
+         Mean episode goal_per_1k_steps: 0.0000
+         Mean episode mean_dist_to_ball: 3.2844
+               Mean episode goals_total: 0.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 22.05s
+                           Time elapsed: 0:00:22
+                                    ETA: 3:03:22
+
+################################################################################
+[1m                            Learning iteration 1/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 98304 
+                       Steps per second: 4485 
+                        Collection time: 10.728s 
+                          Learning time: 0.231s 
+                        Mean value loss: 116.1915
+                    Mean surrogate loss: 0.0016
+                      Mean entropy loss: 4.2051
+                            Mean reward: -25.52
+                    Mean episode length: 19.07
+                        Mean action std: 0.97
+         Mean episode goal_per_1k_steps: 0.0000
+         Mean episode mean_dist_to_ball: 3.2836
+               Mean episode goals_total: 0.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 10.96s
+                           Time elapsed: 0:00:33
+                                    ETA: 2:16:59
+
+################################################################################
+[1m                            Learning iteration 2/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 147456 
+                       Steps per second: 4518 
+                        Collection time: 10.646s 
+                          Learning time: 0.231s 
+                        Mean value loss: 111.3504
+                    Mean surrogate loss: -0.0007
+                      Mean entropy loss: 4.0970
+                            Mean reward: -25.15
+                    Mean episode length: 22.73
+                        Mean action std: 0.94
+         Mean episode goal_per_1k_steps: 0.0000
+         Mean episode mean_dist_to_ball: 3.3153
+               Mean episode goals_total: 0.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 10.88s
+                           Time elapsed: 0:00:43
+                                    ETA: 2:01:10
+
+################################################################################
+[1m                            Learning iteration 3/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 196608 
+                       Steps per second: 4486 
+                        Collection time: 10.724s 
+                          Learning time: 0.231s 
+                        Mean value loss: 103.8963
+                    Mean surrogate loss: 0.0032
+                      Mean entropy loss: 4.0051
+                            Mean reward: -22.25
+                    Mean episode length: 22.63
+                        Mean action std: 0.91
+         Mean episode goal_per_1k_steps: 0.0000
+         Mean episode mean_dist_to_ball: 3.3630
+               Mean episode goals_total: 0.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 10.96s
+                           Time elapsed: 0:00:54
+                                    ETA: 1:53:20
+
+################################################################################
+[1m                            Learning iteration 4/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 245760 
+                       Steps per second: 4513 
+                        Collection time: 10.659s 
+                          Learning time: 0.230s 
+                        Mean value loss: 99.8569
+                    Mean surrogate loss: -0.0022
+                      Mean entropy loss: 3.9145
+                            Mean reward: -27.16
+                    Mean episode length: 25.36
+                        Mean action std: 0.89
+         Mean episode goal_per_1k_steps: 0.0203
+         Mean episode mean_dist_to_ball: 3.3728
+               Mean episode goals_total: 0.4583
+--------------------------------------------------------------------------------
+                         Iteration time: 10.89s
+                           Time elapsed: 0:01:05
+                                    ETA: 1:48:27
+
+################################################################################
+[1m                            Learning iteration 5/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 294912 
+                       Steps per second: 4512 
+                        Collection time: 10.662s 
+                          Learning time: 0.231s 
+                        Mean value loss: 89.0426
+                    Mean surrogate loss: -0.0035
+                      Mean entropy loss: 3.8259
+                            Mean reward: -23.74
+                    Mean episode length: 26.98
+                        Mean action std: 0.87
+         Mean episode goal_per_1k_steps: 0.0000
+         Mean episode mean_dist_to_ball: 3.3623
+               Mean episode goals_total: 1.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 10.89s
+                           Time elapsed: 0:01:16
+                                    ETA: 1:45:08
+
+################################################################################
+[1m                            Learning iteration 6/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 344064 
+                       Steps per second: 4533 
+                        Collection time: 10.612s 
+                          Learning time: 0.230s 
+                        Mean value loss: 83.8067
+                    Mean surrogate loss: -0.0035
+                      Mean entropy loss: 3.7644
+                            Mean reward: -22.26
+                    Mean episode length: 25.15
+                        Mean action std: 0.85
+         Mean episode goal_per_1k_steps: 0.0203
+         Mean episode mean_dist_to_ball: 3.3959
+               Mean episode goals_total: 1.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 10.84s
+                           Time elapsed: 0:01:27
+                                    ETA: 1:42:40
+
+################################################################################
+[1m                            Learning iteration 7/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 393216 
+                       Steps per second: 4542 
+                        Collection time: 10.593s 
+                          Learning time: 0.228s 
+                        Mean value loss: 73.8250
+                    Mean surrogate loss: -0.0036
+                      Mean entropy loss: 3.6970
+                            Mean reward: -24.97
+                    Mean episode length: 26.27
+                        Mean action std: 0.83
+         Mean episode goal_per_1k_steps: 0.0000
+         Mean episode mean_dist_to_ball: 3.4003
+               Mean episode goals_total: 1.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 10.82s
+                           Time elapsed: 0:01:38
+                                    ETA: 1:40:44
+
+################################################################################
+[1m                            Learning iteration 8/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 442368 
+                       Steps per second: 4525 
+                        Collection time: 10.630s 
+                          Learning time: 0.230s 
+                        Mean value loss: 66.1037
+                    Mean surrogate loss: -0.0036
+                      Mean entropy loss: 3.6118
+                            Mean reward: -23.36
+                    Mean episode length: 25.03
+                        Mean action std: 0.81
+         Mean episode goal_per_1k_steps: 0.0549
+         Mean episode mean_dist_to_ball: 3.4159
+               Mean episode goals_total: 1.2917
+--------------------------------------------------------------------------------
+                         Iteration time: 10.86s
+                           Time elapsed: 0:01:49
+                                    ETA: 1:39:14
+
+################################################################################
+[1m                            Learning iteration 9/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 491520 
+                       Steps per second: 4550 
+                        Collection time: 10.570s 
+                          Learning time: 0.230s 
+                        Mean value loss: 64.3695
+                    Mean surrogate loss: -0.0040
+                      Mean entropy loss: 3.5373
+                            Mean reward: -20.70
+                    Mean episode length: 27.53
+                        Mean action std: 0.79
+         Mean episode goal_per_1k_steps: 0.0061
+         Mean episode mean_dist_to_ball: 3.4336
+               Mean episode goals_total: 2.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 10.80s
+                           Time elapsed: 0:01:59
+                                    ETA: 1:37:57
+
+################################################################################
+[1m                           Learning iteration 10/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 540672 
+                       Steps per second: 4565 
+                        Collection time: 10.538s 
+                          Learning time: 0.228s 
+                        Mean value loss: 55.0970
+                    Mean surrogate loss: -0.0029
+                      Mean entropy loss: 3.4609
+                            Mean reward: -18.49
+                    Mean episode length: 27.88
+                        Mean action std: 0.77
+         Mean episode goal_per_1k_steps: 0.0000
+         Mean episode mean_dist_to_ball: 3.4278
+               Mean episode goals_total: 2.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 10.77s
+                           Time elapsed: 0:02:10
+                                    ETA: 1:36:50
+
+################################################################################
+[1m                           Learning iteration 11/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 589824 
+                       Steps per second: 4550 
+                        Collection time: 10.573s 
+                          Learning time: 0.228s 
+                        Mean value loss: 51.3073
+                    Mean surrogate loss: -0.0038
+                      Mean entropy loss: 3.3895
+                            Mean reward: -21.01
+                    Mean episode length: 27.19
+                        Mean action std: 0.75
+         Mean episode goal_per_1k_steps: 0.0203
+         Mean episode mean_dist_to_ball: 3.4228
+               Mean episode goals_total: 2.7917
+--------------------------------------------------------------------------------
+                         Iteration time: 10.80s
+                           Time elapsed: 0:02:21
+                                    ETA: 1:35:54
+
+################################################################################
+[1m                           Learning iteration 12/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 638976 
+                       Steps per second: 4543 
+                        Collection time: 10.590s 
+                          Learning time: 0.227s 
+                        Mean value loss: 46.1725
+                    Mean surrogate loss: -0.0033
+                      Mean entropy loss: 3.3245
+                            Mean reward: -21.81
+                    Mean episode length: 31.00
+                        Mean action std: 0.74
+         Mean episode goal_per_1k_steps: 0.0203
+         Mean episode mean_dist_to_ball: 3.3686
+               Mean episode goals_total: 3.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 10.82s
+                           Time elapsed: 0:02:32
+                                    ETA: 1:35:06
+
+################################################################################
+[1m                           Learning iteration 13/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 688128 
+                       Steps per second: 4569 
+                        Collection time: 10.527s 
+                          Learning time: 0.230s 
+                        Mean value loss: 44.4271
+                    Mean surrogate loss: -0.0044
+                      Mean entropy loss: 3.2503
+                            Mean reward: -16.39
+                    Mean episode length: 31.91
+                        Mean action std: 0.72
+         Mean episode goal_per_1k_steps: 0.0000
+         Mean episode mean_dist_to_ball: 3.3790
+               Mean episode goals_total: 3.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 10.76s
+                           Time elapsed: 0:02:43
+                                    ETA: 1:34:21
+
+################################################################################
+[1m                           Learning iteration 14/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 737280 
+                       Steps per second: 4559 
+                        Collection time: 10.550s 
+                          Learning time: 0.230s 
+                        Mean value loss: 42.6763
+                    Mean surrogate loss: -0.0029
+                      Mean entropy loss: 3.2061
+                            Mean reward: -20.57
+                    Mean episode length: 35.66
+                        Mean action std: 0.71
+         Mean episode goal_per_1k_steps: 0.0000
+         Mean episode mean_dist_to_ball: 3.3651
+               Mean episode goals_total: 3.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 10.78s
+                           Time elapsed: 0:02:53
+                                    ETA: 1:33:41
+
+################################################################################
+[1m                           Learning iteration 15/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 786432 
+                       Steps per second: 4568 
+                        Collection time: 10.528s 
+                          Learning time: 0.231s 
+                        Mean value loss: 39.2234
+                    Mean surrogate loss: -0.0020
+                      Mean entropy loss: 3.1576
+                            Mean reward: -19.41
+                    Mean episode length: 33.25
+                        Mean action std: 0.70
+         Mean episode goal_per_1k_steps: 0.0000
+         Mean episode mean_dist_to_ball: 3.3490
+               Mean episode goals_total: 3.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 10.76s
+                           Time elapsed: 0:03:04
+                                    ETA: 1:33:04
+
+################################################################################
+[1m                           Learning iteration 16/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 835584 
+                       Steps per second: 4552 
+                        Collection time: 10.570s 
+                          Learning time: 0.227s 
+                        Mean value loss: 37.9623
+                    Mean surrogate loss: -0.0021
+                      Mean entropy loss: 3.1113
+                            Mean reward: -16.88
+                    Mean episode length: 32.46
+                        Mean action std: 0.69
+         Mean episode goal_per_1k_steps: 0.0000
+         Mean episode mean_dist_to_ball: 3.2984
+               Mean episode goals_total: 3.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 10.80s
+                           Time elapsed: 0:03:15
+                                    ETA: 1:32:32
+
+################################################################################
+[1m                           Learning iteration 17/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 884736 
+                       Steps per second: 4579 
+                        Collection time: 10.505s 
+                          Learning time: 0.227s 
+                        Mean value loss: 35.1320
+                    Mean surrogate loss: -0.0031
+                      Mean entropy loss: 3.0523
+                            Mean reward: -15.79
+                    Mean episode length: 41.77
+                        Mean action std: 0.68
+         Mean episode goal_per_1k_steps: 0.0203
+         Mean episode mean_dist_to_ball: 3.2582
+               Mean episode goals_total: 3.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 10.73s
+                           Time elapsed: 0:03:26
+                                    ETA: 1:32:00
+
+################################################################################
+[1m                           Learning iteration 18/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 933888 
+                       Steps per second: 4568 
+                        Collection time: 10.531s 
+                          Learning time: 0.227s 
+                        Mean value loss: 33.9404
+                    Mean surrogate loss: -0.0032
+                      Mean entropy loss: 2.9850
+                            Mean reward: -17.53
+                    Mean episode length: 34.19
+                        Mean action std: 0.66
+         Mean episode goal_per_1k_steps: 0.0203
+         Mean episode mean_dist_to_ball: 3.2184
+               Mean episode goals_total: 3.7083
+--------------------------------------------------------------------------------
+                         Iteration time: 10.76s
+                           Time elapsed: 0:03:36
+                                    ETA: 1:31:31
+
+################################################################################
+[1m                           Learning iteration 19/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 983040 
+                       Steps per second: 4579 
+                        Collection time: 10.505s 
+                          Learning time: 0.227s 
+                        Mean value loss: 31.7105
+                    Mean surrogate loss: -0.0018
+                      Mean entropy loss: 2.9322
+                            Mean reward: -15.67
+                    Mean episode length: 33.56
+                        Mean action std: 0.65
+         Mean episode goal_per_1k_steps: 0.0000
+         Mean episode mean_dist_to_ball: 3.2105
+               Mean episode goals_total: 4.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 10.73s
+                           Time elapsed: 0:03:47
+                                    ETA: 1:31:03
+
+################################################################################
+[1m                           Learning iteration 20/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 1032192 
+                       Steps per second: 4547 
+                        Collection time: 10.578s 
+                          Learning time: 0.230s 
+                        Mean value loss: 28.0987
+                    Mean surrogate loss: -0.0023
+                      Mean entropy loss: 2.8660
+                            Mean reward: -13.33
+                    Mean episode length: 37.62
+                        Mean action std: 0.64
+         Mean episode goal_per_1k_steps: 0.0407
+         Mean episode mean_dist_to_ball: 3.1841
+               Mean episode goals_total: 4.6250
+--------------------------------------------------------------------------------
+                         Iteration time: 10.81s
+                           Time elapsed: 0:03:58
+                                    ETA: 1:30:39
+
+################################################################################
+[1m                           Learning iteration 21/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 1081344 
+                       Steps per second: 4526 
+                        Collection time: 10.630s 
+                          Learning time: 0.228s 
+                        Mean value loss: 29.4452
+                    Mean surrogate loss: -0.0019
+                      Mean entropy loss: 2.8094
+                            Mean reward: -17.45
+                    Mean episode length: 40.06
+                        Mean action std: 0.62
+         Mean episode goal_per_1k_steps: 0.0387
+         Mean episode mean_dist_to_ball: 3.2147
+               Mean episode goals_total: 5.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 10.86s
+                           Time elapsed: 0:04:09
+                                    ETA: 1:30:16
+
+################################################################################
+[1m                           Learning iteration 22/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 1130496 
+                       Steps per second: 4551 
+                        Collection time: 10.572s 
+                          Learning time: 0.227s 
+                        Mean value loss: 24.1946
+                    Mean surrogate loss: -0.0032
+                      Mean entropy loss: 2.7556
+                            Mean reward: -12.49
+                    Mean episode length: 46.89
+                        Mean action std: 0.61
+         Mean episode goal_per_1k_steps: 0.0692
+         Mean episode mean_dist_to_ball: 3.2357
+               Mean episode goals_total: 5.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 10.80s
+                           Time elapsed: 0:04:20
+                                    ETA: 1:29:54
+
+################################################################################
+[1m                           Learning iteration 23/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 1179648 
+                       Steps per second: 4595 
+                        Collection time: 10.469s 
+                          Learning time: 0.227s 
+                        Mean value loss: 25.0060
+                    Mean surrogate loss: -0.0031
+                      Mean entropy loss: 2.6742
+                            Mean reward: -14.82
+                    Mean episode length: 48.58
+                        Mean action std: 0.59
+         Mean episode goal_per_1k_steps: 0.0346
+         Mean episode mean_dist_to_ball: 3.2598
+               Mean episode goals_total: 5.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 10.70s
+                           Time elapsed: 0:04:30
+                                    ETA: 1:29:31
+
+################################################################################
+[1m                           Learning iteration 24/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 1228800 
+                       Steps per second: 4579 
+                        Collection time: 10.505s 
+                          Learning time: 0.228s 
+                        Mean value loss: 21.4538
+                    Mean surrogate loss: -0.0013
+                      Mean entropy loss: 2.5916
+                            Mean reward: -14.42
+                    Mean episode length: 40.46
+                        Mean action std: 0.58
+         Mean episode goal_per_1k_steps: 0.0631
+         Mean episode mean_dist_to_ball: 3.2685
+               Mean episode goals_total: 5.4583
+--------------------------------------------------------------------------------
+                         Iteration time: 10.73s
+                           Time elapsed: 0:04:41
+                                    ETA: 1:29:09
+
+################################################################################
+[1m                           Learning iteration 25/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 1277952 
+                       Steps per second: 4559 
+                        Collection time: 10.552s 
+                          Learning time: 0.229s 
+                        Mean value loss: 20.2813
+                    Mean surrogate loss: -0.0031
+                      Mean entropy loss: 2.5261
+                            Mean reward: -10.36
+                    Mean episode length: 43.06
+                        Mean action std: 0.57
+         Mean episode goal_per_1k_steps: 0.0692
+         Mean episode mean_dist_to_ball: 3.2767
+               Mean episode goals_total: 6.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 10.78s
+                           Time elapsed: 0:04:52
+                                    ETA: 1:28:49
+
+################################################################################
+[1m                           Learning iteration 26/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 1327104 
+                       Steps per second: 4580 
+                        Collection time: 10.500s 
+                          Learning time: 0.230s 
+                        Mean value loss: 18.0478
+                    Mean surrogate loss: -0.0040
+                      Mean entropy loss: 2.4606
+                            Mean reward: -13.13
+                    Mean episode length: 45.52
+                        Mean action std: 0.55
+         Mean episode goal_per_1k_steps: 0.0509
+         Mean episode mean_dist_to_ball: 3.2827
+               Mean episode goals_total: 6.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 10.73s
+                           Time elapsed: 0:05:03
+                                    ETA: 1:28:29
+
+################################################################################
+[1m                           Learning iteration 27/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 1376256 
+                       Steps per second: 4589 
+                        Collection time: 10.479s 
+                          Learning time: 0.230s 
+                        Mean value loss: 16.6011
+                    Mean surrogate loss: -0.0039
+                      Mean entropy loss: 2.3894
+                            Mean reward: -9.28
+                    Mean episode length: 57.11
+                        Mean action std: 0.54
+         Mean episode goal_per_1k_steps: 0.0203
+         Mean episode mean_dist_to_ball: 3.2157
+               Mean episode goals_total: 6.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 10.71s
+                           Time elapsed: 0:05:13
+                                    ETA: 1:28:09
+
+################################################################################
+[1m                           Learning iteration 28/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 1425408 
+                       Steps per second: 4576 
+                        Collection time: 10.510s 
+                          Learning time: 0.230s 
+                        Mean value loss: 16.1349
+                    Mean surrogate loss: -0.0028
+                      Mean entropy loss: 2.3415
+                            Mean reward: -9.16
+                    Mean episode length: 55.38
+                        Mean action std: 0.53
+         Mean episode goal_per_1k_steps: 0.0000
+         Mean episode mean_dist_to_ball: 3.1967
+               Mean episode goals_total: 6.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 10.74s
+                           Time elapsed: 0:05:24
+                                    ETA: 1:27:50
+
+################################################################################
+[1m                           Learning iteration 29/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 1474560 
+                       Steps per second: 4573 
+                        Collection time: 10.517s 
+                          Learning time: 0.230s 
+                        Mean value loss: 15.2466
+                    Mean surrogate loss: -0.0043
+                      Mean entropy loss: 2.2640
+                            Mean reward: -8.71
+                    Mean episode length: 56.47
+                        Mean action std: 0.52
+         Mean episode goal_per_1k_steps: 0.0407
+         Mean episode mean_dist_to_ball: 3.1654
+               Mean episode goals_total: 6.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 10.75s
+                           Time elapsed: 0:05:35
+                                    ETA: 1:27:32
+
+################################################################################
+[1m                           Learning iteration 30/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 1523712 
+                       Steps per second: 4595 
+                        Collection time: 10.465s 
+                          Learning time: 0.230s 
+                        Mean value loss: 15.9021
+                    Mean surrogate loss: -0.0024
+                      Mean entropy loss: 2.2093
+                            Mean reward: -9.76
+                    Mean episode length: 53.90
+                        Mean action std: 0.51
+         Mean episode goal_per_1k_steps: 0.0305
+         Mean episode mean_dist_to_ball: 3.0982
+               Mean episode goals_total: 6.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 10.70s
+                           Time elapsed: 0:05:45
+                                    ETA: 1:27:13
+
+################################################################################
+[1m                           Learning iteration 31/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 1572864 
+                       Steps per second: 4596 
+                        Collection time: 10.464s 
+                          Learning time: 0.230s 
+                        Mean value loss: 14.6170
+                    Mean surrogate loss: -0.0027
+                      Mean entropy loss: 2.1383
+                            Mean reward: -6.45
+                    Mean episode length: 71.58
+                        Mean action std: 0.49
+         Mean episode goal_per_1k_steps: 0.0854
+         Mean episode mean_dist_to_ball: 3.0710
+               Mean episode goals_total: 6.7917
+--------------------------------------------------------------------------------
+                         Iteration time: 10.69s
+                           Time elapsed: 0:05:56
+                                    ETA: 1:26:55
+
+################################################################################
+[1m                           Learning iteration 32/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 1622016 
+                       Steps per second: 4574 
+                        Collection time: 10.515s 
+                          Learning time: 0.230s 
+                        Mean value loss: 15.5807
+                    Mean surrogate loss: -0.0039
+                      Mean entropy loss: 2.0689
+                            Mean reward: -3.51
+                    Mean episode length: 76.02
+                        Mean action std: 0.48
+         Mean episode goal_per_1k_steps: 0.1261
+         Mean episode mean_dist_to_ball: 3.0712
+               Mean episode goals_total: 7.5417
+--------------------------------------------------------------------------------
+                         Iteration time: 10.74s
+                           Time elapsed: 0:06:07
+                                    ETA: 1:26:39
+
+################################################################################
+[1m                           Learning iteration 33/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 1671168 
+                       Steps per second: 4611 
+                        Collection time: 10.429s 
+                          Learning time: 0.230s 
+                        Mean value loss: 13.8442
+                    Mean surrogate loss: -0.0021
+                      Mean entropy loss: 1.9838
+                            Mean reward: 4.06
+                    Mean episode length: 105.22
+                        Mean action std: 0.47
+         Mean episode goal_per_1k_steps: 0.1729
+         Mean episode mean_dist_to_ball: 3.0175
+               Mean episode goals_total: 8.7083
+--------------------------------------------------------------------------------
+                         Iteration time: 10.66s
+                           Time elapsed: 0:06:18
+                                    ETA: 1:26:21
+
+################################################################################
+[1m                           Learning iteration 34/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 1720320 
+                       Steps per second: 4566 
+                        Collection time: 10.534s 
+                          Learning time: 0.229s 
+                        Mean value loss: 15.7312
+                    Mean surrogate loss: -0.0028
+                      Mean entropy loss: 1.8940
+                            Mean reward: 5.74
+                    Mean episode length: 108.02
+                        Mean action std: 0.45
+         Mean episode goal_per_1k_steps: 0.0488
+         Mean episode mean_dist_to_ball: 2.9385
+               Mean episode goals_total: 9.1250
+--------------------------------------------------------------------------------
+                         Iteration time: 10.76s
+                           Time elapsed: 0:06:28
+                                    ETA: 1:26:05
+
+################################################################################
+[1m                           Learning iteration 35/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 1769472 
+                       Steps per second: 4591 
+                        Collection time: 10.476s 
+                          Learning time: 0.229s 
+                        Mean value loss: 15.3661
+                    Mean surrogate loss: -0.0024
+                      Mean entropy loss: 1.8391
+                            Mean reward: 0.34
+                    Mean episode length: 95.46
+                        Mean action std: 0.44
+         Mean episode goal_per_1k_steps: 0.2380
+         Mean episode mean_dist_to_ball: 2.9446
+               Mean episode goals_total: 12.2083
+--------------------------------------------------------------------------------
+                         Iteration time: 10.71s
+                           Time elapsed: 0:06:39
+                                    ETA: 1:25:49
+
+################################################################################
+[1m                           Learning iteration 36/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 1818624 
+                       Steps per second: 4576 
+                        Collection time: 10.509s 
+                          Learning time: 0.230s 
+                        Mean value loss: 14.7176
+                    Mean surrogate loss: -0.0049
+                      Mean entropy loss: 1.6718
+                            Mean reward: 8.76
+                    Mean episode length: 102.42
+                        Mean action std: 0.42
+         Mean episode goal_per_1k_steps: 0.2808
+         Mean episode mean_dist_to_ball: 2.9611
+               Mean episode goals_total: 14.1250
+--------------------------------------------------------------------------------
+                         Iteration time: 10.74s
+                           Time elapsed: 0:06:50
+                                    ETA: 1:25:33
+
+################################################################################
+[1m                           Learning iteration 37/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 1867776 
+                       Steps per second: 4596 
+                        Collection time: 10.464s 
+                          Learning time: 0.230s 
+                        Mean value loss: 14.7504
+                    Mean surrogate loss: -0.0043
+                      Mean entropy loss: 1.6029
+                            Mean reward: 10.68
+                    Mean episode length: 105.67
+                        Mean action std: 0.41
+         Mean episode goal_per_1k_steps: 0.3886
+         Mean episode mean_dist_to_ball: 3.0245
+               Mean episode goals_total: 21.4583
+--------------------------------------------------------------------------------
+                         Iteration time: 10.69s
+                           Time elapsed: 0:07:00
+                                    ETA: 1:25:17
+
+################################################################################
+[1m                           Learning iteration 38/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 1916928 
+                       Steps per second: 4596 
+                        Collection time: 10.463s 
+                          Learning time: 0.230s 
+                        Mean value loss: 13.3316
+                    Mean surrogate loss: -0.0013
+                      Mean entropy loss: 1.5019
+                            Mean reward: 8.11
+                    Mean episode length: 106.96
+                        Mean action std: 0.40
+         Mean episode goal_per_1k_steps: 0.2726
+         Mean episode mean_dist_to_ball: 3.1133
+               Mean episode goals_total: 24.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 10.69s
+                           Time elapsed: 0:07:11
+                                    ETA: 1:25:02
+
+################################################################################
+[1m                           Learning iteration 39/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 1966080 
+                       Steps per second: 4618 
+                        Collection time: 10.413s 
+                          Learning time: 0.230s 
+                        Mean value loss: 14.4699
+                    Mean surrogate loss: -0.0027
+                      Mean entropy loss: 1.4186
+                            Mean reward: 15.44
+                    Mean episode length: 123.38
+                        Mean action std: 0.39
+         Mean episode goal_per_1k_steps: 0.3479
+         Mean episode mean_dist_to_ball: 3.1241
+               Mean episode goals_total: 28.7500
+--------------------------------------------------------------------------------
+                         Iteration time: 10.64s
+                           Time elapsed: 0:07:22
+                                    ETA: 1:24:46
+
+################################################################################
+[1m                           Learning iteration 40/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 2015232 
+                       Steps per second: 4615 
+                        Collection time: 10.419s 
+                          Learning time: 0.230s 
+                        Mean value loss: 12.4164
+                    Mean surrogate loss: -0.0013
+                      Mean entropy loss: 1.3601
+                            Mean reward: 23.01
+                    Mean episode length: 145.75
+                        Mean action std: 0.38
+         Mean episode goal_per_1k_steps: 0.5208
+         Mean episode mean_dist_to_ball: 3.1883
+               Mean episode goals_total: 36.4583
+--------------------------------------------------------------------------------
+                         Iteration time: 10.65s
+                           Time elapsed: 0:07:32
+                                    ETA: 1:24:30
+
+################################################################################
+[1m                           Learning iteration 41/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 2064384 
+                       Steps per second: 4608 
+                        Collection time: 10.435s 
+                          Learning time: 0.230s 
+                        Mean value loss: 14.1300
+                    Mean surrogate loss: -0.0006
+                      Mean entropy loss: 1.2816
+                            Mean reward: 23.65
+                    Mean episode length: 160.87
+                        Mean action std: 0.37
+         Mean episode goal_per_1k_steps: 0.5697
+         Mean episode mean_dist_to_ball: 3.2705
+               Mean episode goals_total: 40.7083
+--------------------------------------------------------------------------------
+                         Iteration time: 10.67s
+                           Time elapsed: 0:07:43
+                                    ETA: 1:24:15
+
+################################################################################
+[1m                           Learning iteration 42/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 2113536 
+                       Steps per second: 4609 
+                        Collection time: 10.434s 
+                          Learning time: 0.230s 
+                        Mean value loss: 13.6285
+                    Mean surrogate loss: -0.0042
+                      Mean entropy loss: 1.2254
+                            Mean reward: 22.24
+                    Mean episode length: 157.57
+                        Mean action std: 0.36
+         Mean episode goal_per_1k_steps: 0.4272
+         Mean episode mean_dist_to_ball: 3.2719
+               Mean episode goals_total: 44.3333
+--------------------------------------------------------------------------------
+                         Iteration time: 10.66s
+                           Time elapsed: 0:07:54
+                                    ETA: 1:24:00
+
+################################################################################
+[1m                           Learning iteration 43/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 2162688 
+                       Steps per second: 4584 
+                        Collection time: 10.491s 
+                          Learning time: 0.231s 
+                        Mean value loss: 12.6333
+                    Mean surrogate loss: -0.0013
+                      Mean entropy loss: 1.1707
+                            Mean reward: 24.25
+                    Mean episode length: 150.10
+                        Mean action std: 0.36
+         Mean episode goal_per_1k_steps: 0.4211
+         Mean episode mean_dist_to_ball: 3.2092
+               Mean episode goals_total: 49.4167
+--------------------------------------------------------------------------------
+                         Iteration time: 10.72s
+                           Time elapsed: 0:08:04
+                                    ETA: 1:23:46
+
+################################################################################
+[1m                           Learning iteration 44/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 2211840 
+                       Steps per second: 4599 
+                        Collection time: 10.455s 
+                          Learning time: 0.231s 
+                        Mean value loss: 11.8437
+                    Mean surrogate loss: -0.0037
+                      Mean entropy loss: 1.1091
+                            Mean reward: 32.51
+                    Mean episode length: 167.29
+                        Mean action std: 0.35
+         Mean episode goal_per_1k_steps: 0.5493
+         Mean episode mean_dist_to_ball: 3.1327
+               Mean episode goals_total: 55.9583
+--------------------------------------------------------------------------------
+                         Iteration time: 10.69s
+                           Time elapsed: 0:08:15
+                                    ETA: 1:23:31
+
+################################################################################
+[1m                           Learning iteration 45/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 2260992 
+                       Steps per second: 4595 
+                        Collection time: 10.466s 
+                          Learning time: 0.230s 
+                        Mean value loss: 12.1636
+                    Mean surrogate loss: -0.0021
+                      Mean entropy loss: 1.0620
+                            Mean reward: 28.71
+                    Mean episode length: 154.02
+                        Mean action std: 0.34
+         Mean episode goal_per_1k_steps: 0.5351
+         Mean episode mean_dist_to_ball: 3.0759
+               Mean episode goals_total: 62.9167
+--------------------------------------------------------------------------------
+                         Iteration time: 10.70s
+                           Time elapsed: 0:08:26
+                                    ETA: 1:23:17
+
+################################################################################
+[1m                           Learning iteration 46/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 2310144 
+                       Steps per second: 4600 
+                        Collection time: 10.454s 
+                          Learning time: 0.229s 
+                        Mean value loss: 13.1749
+                    Mean surrogate loss: -0.0002
+                      Mean entropy loss: 1.0199
+                            Mean reward: 32.20
+                    Mean episode length: 164.93
+                        Mean action std: 0.34
+         Mean episode goal_per_1k_steps: 0.5351
+         Mean episode mean_dist_to_ball: 3.0385
+               Mean episode goals_total: 69.1250
+--------------------------------------------------------------------------------
+                         Iteration time: 10.68s
+                           Time elapsed: 0:08:37
+                                    ETA: 1:23:03
+
+################################################################################
+[1m                           Learning iteration 47/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 2359296 
+                       Steps per second: 4593 
+                        Collection time: 10.471s 
+                          Learning time: 0.229s 
+                        Mean value loss: 11.6879
+                    Mean surrogate loss: -0.0015
+                      Mean entropy loss: 0.9655
+                            Mean reward: 32.24
+                    Mean episode length: 169.64
+                        Mean action std: 0.34
+         Mean episode goal_per_1k_steps: 0.4639
+         Mean episode mean_dist_to_ball: 3.0562
+               Mean episode goals_total: 77.9167
+--------------------------------------------------------------------------------
+                         Iteration time: 10.70s
+                           Time elapsed: 0:08:47
+                                    ETA: 1:22:49
+
+################################################################################
+[1m                           Learning iteration 48/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 2408448 
+                       Steps per second: 4591 
+                        Collection time: 10.477s 
+                          Learning time: 0.229s 
+                        Mean value loss: 11.6882
+                    Mean surrogate loss: -0.0010
+                      Mean entropy loss: 0.9414
+                            Mean reward: 34.96
+                    Mean episode length: 165.47
+                        Mean action std: 0.33
+         Mean episode goal_per_1k_steps: 0.6999
+         Mean episode mean_dist_to_ball: 3.0063
+               Mean episode goals_total: 86.8750
+--------------------------------------------------------------------------------
+                         Iteration time: 10.71s
+                           Time elapsed: 0:08:58
+                                    ETA: 1:22:35
+
+################################################################################
+[1m                           Learning iteration 49/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 2457600 
+                       Steps per second: 4609 
+                        Collection time: 10.434s 
+                          Learning time: 0.230s 
+                        Mean value loss: 12.0801
+                    Mean surrogate loss: -0.0042
+                      Mean entropy loss: 0.9048
+                            Mean reward: 37.51
+                    Mean episode length: 169.77
+                        Mean action std: 0.33
+         Mean episode goal_per_1k_steps: 0.5554
+         Mean episode mean_dist_to_ball: 2.9195
+               Mean episode goals_total: 97.3750
+--------------------------------------------------------------------------------
+                         Iteration time: 10.66s
+                           Time elapsed: 0:09:09
+                                    ETA: 1:22:22
+
+################################################################################
+[1m                           Learning iteration 50/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 2506752 
+                       Steps per second: 4590 
+                        Collection time: 10.477s 
+                          Learning time: 0.230s 
+                        Mean value loss: 11.7040
+                    Mean surrogate loss: 0.0039
+                      Mean entropy loss: 0.8703
+                            Mean reward: 33.39
+                    Mean episode length: 163.72
+                        Mean action std: 0.32
+         Mean episode goal_per_1k_steps: 0.8179
+         Mean episode mean_dist_to_ball: 2.9275
+               Mean episode goals_total: 106.4167
+--------------------------------------------------------------------------------
+                         Iteration time: 10.71s
+                           Time elapsed: 0:09:19
+                                    ETA: 1:22:08
+
+################################################################################
+[1m                           Learning iteration 51/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 2555904 
+                       Steps per second: 4578 
+                        Collection time: 10.505s 
+                          Learning time: 0.230s 
+                        Mean value loss: 11.9035
+                    Mean surrogate loss: -0.0019
+                      Mean entropy loss: 0.8461
+                            Mean reward: 38.62
+                    Mean episode length: 165.84
+                        Mean action std: 0.32
+         Mean episode goal_per_1k_steps: 0.8016
+         Mean episode mean_dist_to_ball: 2.9194
+               Mean episode goals_total: 118.0417
+--------------------------------------------------------------------------------
+                         Iteration time: 10.74s
+                           Time elapsed: 0:09:30
+                                    ETA: 1:21:55
+
+################################################################################
+[1m                           Learning iteration 52/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 2605056 
+                       Steps per second: 4582 
+                        Collection time: 10.498s 
+                          Learning time: 0.227s 
+                        Mean value loss: 12.0738
+                    Mean surrogate loss: -0.0032
+                      Mean entropy loss: 0.7540
+                            Mean reward: 39.34
+                    Mean episode length: 179.36
+                        Mean action std: 0.31
+         Mean episode goal_per_1k_steps: 0.8728
+         Mean episode mean_dist_to_ball: 2.9377
+               Mean episode goals_total: 129.0417
+--------------------------------------------------------------------------------
+                         Iteration time: 10.73s
+                           Time elapsed: 0:09:41
+                                    ETA: 1:21:42
+
+################################################################################
+[1m                           Learning iteration 53/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 2654208 
+                       Steps per second: 4592 
+                        Collection time: 10.473s 
+                          Learning time: 0.230s 
+                        Mean value loss: 11.7121
+                    Mean surrogate loss: -0.0033
+                      Mean entropy loss: 0.7205
+                            Mean reward: 36.86
+                    Mean episode length: 164.19
+                        Mean action std: 0.31
+         Mean episode goal_per_1k_steps: 0.6531
+         Mean episode mean_dist_to_ball: 3.0177
+               Mean episode goals_total: 139.7500
+--------------------------------------------------------------------------------
+                         Iteration time: 10.70s
+                           Time elapsed: 0:09:51
+                                    ETA: 1:21:29
+
+################################################################################
+[1m                           Learning iteration 54/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 2703360 
+                       Steps per second: 4588 
+                        Collection time: 10.482s 
+                          Learning time: 0.230s 
+                        Mean value loss: 11.8485
+                    Mean surrogate loss: -0.0037
+                      Mean entropy loss: 0.6643
+                            Mean reward: 39.86
+                    Mean episode length: 167.38
+                        Mean action std: 0.30
+         Mean episode goal_per_1k_steps: 0.6632
+         Mean episode mean_dist_to_ball: 3.0823
+               Mean episode goals_total: 153.7917
+--------------------------------------------------------------------------------
+                         Iteration time: 10.71s
+                           Time elapsed: 0:10:02
+                                    ETA: 1:21:16
+
+################################################################################
+[1m                           Learning iteration 55/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 2752512 
+                       Steps per second: 4593 
+                        Collection time: 10.472s 
+                          Learning time: 0.230s 
+                        Mean value loss: 12.3130
+                    Mean surrogate loss: -0.0021
+                      Mean entropy loss: 0.6341
+                            Mean reward: 38.90
+                    Mean episode length: 167.00
+                        Mean action std: 0.30
+         Mean episode goal_per_1k_steps: 0.6714
+         Mean episode mean_dist_to_ball: 3.2046
+               Mean episode goals_total: 164.1667
+--------------------------------------------------------------------------------
+                         Iteration time: 10.70s
+                           Time elapsed: 0:10:13
+                                    ETA: 1:21:03
+
+################################################################################
+[1m                           Learning iteration 56/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 2801664 
+                       Steps per second: 4582 
+                        Collection time: 10.497s 
+                          Learning time: 0.229s 
+                        Mean value loss: 12.2431
+                    Mean surrogate loss: -0.0005
+                      Mean entropy loss: 0.5905
+                            Mean reward: 42.88
+                    Mean episode length: 179.57
+                        Mean action std: 0.29
+         Mean episode goal_per_1k_steps: 0.6531
+         Mean episode mean_dist_to_ball: 3.2314
+               Mean episode goals_total: 177.0417
+--------------------------------------------------------------------------------
+                         Iteration time: 10.73s
+                           Time elapsed: 0:10:24
+                                    ETA: 1:20:50
+
+################################################################################
+[1m                           Learning iteration 57/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 2850816 
+                       Steps per second: 4556 
+                        Collection time: 10.557s 
+                          Learning time: 0.230s 
+                        Mean value loss: 13.3074
+                    Mean surrogate loss: -0.0044
+                      Mean entropy loss: 0.5428
+                            Mean reward: 37.30
+                    Mean episode length: 159.38
+                        Mean action std: 0.29
+         Mean episode goal_per_1k_steps: 0.8423
+         Mean episode mean_dist_to_ball: 3.2472
+               Mean episode goals_total: 188.5833
+--------------------------------------------------------------------------------
+                         Iteration time: 10.79s
+                           Time elapsed: 0:10:34
+                                    ETA: 1:20:38
+
+################################################################################
+[1m                           Learning iteration 58/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 2899968 
+                       Steps per second: 4561 
+                        Collection time: 10.547s 
+                          Learning time: 0.229s 
+                        Mean value loss: 12.0257
+                    Mean surrogate loss: -0.0017
+                      Mean entropy loss: 0.4874
+                            Mean reward: 40.50
+                    Mean episode length: 184.72
+                        Mean action std: 0.29
+         Mean episode goal_per_1k_steps: 1.0640
+         Mean episode mean_dist_to_ball: 3.2416
+               Mean episode goals_total: 198.7500
+--------------------------------------------------------------------------------
+                         Iteration time: 10.78s
+                           Time elapsed: 0:10:45
+                                    ETA: 1:20:26
+
+################################################################################
+[1m                           Learning iteration 59/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 2949120 
+                       Steps per second: 4545 
+                        Collection time: 10.583s 
+                          Learning time: 0.229s 
+                        Mean value loss: 13.3546
+                    Mean surrogate loss: 0.0030
+                      Mean entropy loss: 0.4779
+                            Mean reward: 41.06
+                    Mean episode length: 178.56
+                        Mean action std: 0.28
+         Mean episode goal_per_1k_steps: 0.8891
+         Mean episode mean_dist_to_ball: 3.1263
+               Mean episode goals_total: 210.9583
+--------------------------------------------------------------------------------
+                         Iteration time: 10.81s
+                           Time elapsed: 0:10:56
+                                    ETA: 1:20:14
+
+################################################################################
+[1m                           Learning iteration 60/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 2998272 
+                       Steps per second: 4422 
+                        Collection time: 10.884s 
+                          Learning time: 0.229s 
+                        Mean value loss: 12.0699
+                    Mean surrogate loss: -0.0021
+                      Mean entropy loss: 0.4492
+                            Mean reward: 38.28
+                    Mean episode length: 166.27
+                        Mean action std: 0.28
+         Mean episode goal_per_1k_steps: 1.0071
+         Mean episode mean_dist_to_ball: 2.9735
+               Mean episode goals_total: 222.5833
+--------------------------------------------------------------------------------
+                         Iteration time: 11.11s
+                           Time elapsed: 0:11:07
+                                    ETA: 1:20:04
+
+################################################################################
+[1m                           Learning iteration 61/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 3047424 
+                       Steps per second: 4398 
+                        Collection time: 10.944s 
+                          Learning time: 0.229s 
+                        Mean value loss: 12.4548
+                    Mean surrogate loss: -0.0034
+                      Mean entropy loss: 0.3641
+                            Mean reward: 41.17
+                    Mean episode length: 168.63
+                        Mean action std: 0.27
+         Mean episode goal_per_1k_steps: 0.7528
+         Mean episode mean_dist_to_ball: 2.8779
+               Mean episode goals_total: 231.4583
+--------------------------------------------------------------------------------
+                         Iteration time: 11.17s
+                           Time elapsed: 0:11:18
+                                    ETA: 1:19:55
+
+################################################################################
+[1m                           Learning iteration 62/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 3096576 
+                       Steps per second: 4370 
+                        Collection time: 11.016s 
+                          Learning time: 0.229s 
+                        Mean value loss: 10.4793
+                    Mean surrogate loss: -0.0031
+                      Mean entropy loss: 0.3161
+                            Mean reward: 47.52
+                    Mean episode length: 189.20
+                        Mean action std: 0.27
+         Mean episode goal_per_1k_steps: 0.7609
+         Mean episode mean_dist_to_ball: 2.8907
+               Mean episode goals_total: 241.2500
+--------------------------------------------------------------------------------
+                         Iteration time: 11.25s
+                           Time elapsed: 0:11:30
+                                    ETA: 1:19:46
+
+################################################################################
+[1m                           Learning iteration 63/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 3145728 
+                       Steps per second: 4338 
+                        Collection time: 11.100s 
+                          Learning time: 0.229s 
+                        Mean value loss: 11.2478
+                    Mean surrogate loss: -0.0029
+                      Mean entropy loss: 0.2897
+                            Mean reward: 49.58
+                    Mean episode length: 173.33
+                        Mean action std: 0.27
+         Mean episode goal_per_1k_steps: 0.8158
+         Mean episode mean_dist_to_ball: 2.9484
+               Mean episode goals_total: 248.5833
+--------------------------------------------------------------------------------
+                         Iteration time: 11.33s
+                           Time elapsed: 0:11:41
+                                    ETA: 1:19:38
+
+################################################################################
+[1m                           Learning iteration 64/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 3194880 
+                       Steps per second: 4332 
+                        Collection time: 11.114s 
+                          Learning time: 0.230s 
+                        Mean value loss: 9.9656
+                    Mean surrogate loss: -0.0014
+                      Mean entropy loss: 0.2356
+                            Mean reward: 48.95
+                    Mean episode length: 177.18
+                        Mean action std: 0.26
+         Mean episode goal_per_1k_steps: 1.2207
+         Mean episode mean_dist_to_ball: 2.9740
+               Mean episode goals_total: 266.0833
+--------------------------------------------------------------------------------
+                         Iteration time: 11.34s
+                           Time elapsed: 0:11:52
+                                    ETA: 1:19:29
+
+################################################################################
+[1m                           Learning iteration 65/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 3244032 
+                       Steps per second: 4321 
+                        Collection time: 11.143s 
+                          Learning time: 0.230s 
+                        Mean value loss: 11.7779
+                    Mean surrogate loss: -0.0005
+                      Mean entropy loss: 0.2224
+                            Mean reward: 47.45
+                    Mean episode length: 181.46
+                        Mean action std: 0.26
+         Mean episode goal_per_1k_steps: 0.9155
+         Mean episode mean_dist_to_ball: 2.9312
+               Mean episode goals_total: 280.7500
+--------------------------------------------------------------------------------
+                         Iteration time: 11.37s
+                           Time elapsed: 0:12:04
+                                    ETA: 1:19:21
+
+################################################################################
+[1m                           Learning iteration 66/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 3293184 
+                       Steps per second: 4347 
+                        Collection time: 11.074s 
+                          Learning time: 0.231s 
+                        Mean value loss: 12.6070
+                    Mean surrogate loss: -0.0011
+                      Mean entropy loss: 0.1973
+                            Mean reward: 47.79
+                    Mean episode length: 169.81
+                        Mean action std: 0.26
+         Mean episode goal_per_1k_steps: 0.9725
+         Mean episode mean_dist_to_ball: 2.8232
+               Mean episode goals_total: 290.8333
+--------------------------------------------------------------------------------
+                         Iteration time: 11.30s
+                           Time elapsed: 0:12:15
+                                    ETA: 1:19:12
+
+################################################################################
+[1m                           Learning iteration 67/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 3342336 
+                       Steps per second: 4343 
+                        Collection time: 11.086s 
+                          Learning time: 0.230s 
+                        Mean value loss: 10.5555
+                    Mean surrogate loss: -0.0031
+                      Mean entropy loss: 0.1599
+                            Mean reward: 48.58
+                    Mean episode length: 168.81
+                        Mean action std: 0.26
+         Mean episode goal_per_1k_steps: 1.0498
+         Mean episode mean_dist_to_ball: 2.7592
+               Mean episode goals_total: 304.7500
+--------------------------------------------------------------------------------
+                         Iteration time: 11.32s
+                           Time elapsed: 0:12:26
+                                    ETA: 1:19:03
+
+################################################################################
+[1m                           Learning iteration 68/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 3391488 
+                       Steps per second: 4312 
+                        Collection time: 11.166s 
+                          Learning time: 0.230s 
+                        Mean value loss: 10.5144
+                    Mean surrogate loss: -0.0019
+                      Mean entropy loss: 0.1445
+                            Mean reward: 47.73
+                    Mean episode length: 178.92
+                        Mean action std: 0.26
+         Mean episode goal_per_1k_steps: 0.8158
+         Mean episode mean_dist_to_ball: 2.7102
+               Mean episode goals_total: 318.9583
+--------------------------------------------------------------------------------
+                         Iteration time: 11.40s
+                           Time elapsed: 0:12:38
+                                    ETA: 1:18:55
+
+################################################################################
+[1m                           Learning iteration 69/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 3440640 
+                       Steps per second: 4330 
+                        Collection time: 11.119s 
+                          Learning time: 0.230s 
+                        Mean value loss: 9.9689
+                    Mean surrogate loss: -0.0007
+                      Mean entropy loss: 0.1118
+                            Mean reward: 52.32
+                    Mean episode length: 166.04
+                        Mean action std: 0.25
+         Mean episode goal_per_1k_steps: 0.7609
+         Mean episode mean_dist_to_ball: 2.6262
+               Mean episode goals_total: 329.2500
+--------------------------------------------------------------------------------
+                         Iteration time: 11.35s
+                           Time elapsed: 0:12:49
+                                    ETA: 1:18:46
+
+################################################################################
+[1m                           Learning iteration 70/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 3489792 
+                       Steps per second: 4329 
+                        Collection time: 11.124s 
+                          Learning time: 0.230s 
+                        Mean value loss: 10.0526
+                    Mean surrogate loss: -0.0022
+                      Mean entropy loss: 0.0828
+                            Mean reward: 52.58
+                    Mean episode length: 169.53
+                        Mean action std: 0.25
+         Mean episode goal_per_1k_steps: 0.9583
+         Mean episode mean_dist_to_ball: 2.5944
+               Mean episode goals_total: 339.7500
+--------------------------------------------------------------------------------
+                         Iteration time: 11.35s
+                           Time elapsed: 0:13:00
+                                    ETA: 1:18:37
+
+################################################################################
+[1m                           Learning iteration 71/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 3538944 
+                       Steps per second: 4348 
+                        Collection time: 11.073s 
+                          Learning time: 0.230s 
+                        Mean value loss: 9.3745
+                    Mean surrogate loss: -0.0031
+                      Mean entropy loss: 0.0499
+                            Mean reward: 52.24
+                    Mean episode length: 175.41
+                        Mean action std: 0.25
+         Mean episode goal_per_1k_steps: 1.0803
+         Mean episode mean_dist_to_ball: 2.6427
+               Mean episode goals_total: 354.6250
+--------------------------------------------------------------------------------
+                         Iteration time: 11.30s
+                           Time elapsed: 0:13:12
+                                    ETA: 1:18:28
+
+################################################################################
+[1m                           Learning iteration 72/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 3588096 
+                       Steps per second: 4334 
+                        Collection time: 11.111s 
+                          Learning time: 0.230s 
+                        Mean value loss: 11.0036
+                    Mean surrogate loss: -0.0009
+                      Mean entropy loss: 0.0518
+                            Mean reward: 44.98
+                    Mean episode length: 163.21
+                        Mean action std: 0.25
+         Mean episode goal_per_1k_steps: 0.7039
+         Mean episode mean_dist_to_ball: 2.5965
+               Mean episode goals_total: 361.8333
+--------------------------------------------------------------------------------
+                         Iteration time: 11.34s
+                           Time elapsed: 0:13:23
+                                    ETA: 1:18:19
+
+################################################################################
+[1m                           Learning iteration 73/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 3637248 
+                       Steps per second: 4336 
+                        Collection time: 11.105s 
+                          Learning time: 0.229s 
+                        Mean value loss: 10.5378
+                    Mean surrogate loss: -0.0010
+                      Mean entropy loss: 0.0136
+                            Mean reward: 54.18
+                    Mean episode length: 180.19
+                        Mean action std: 0.24
+         Mean episode goal_per_1k_steps: 0.7487
+         Mean episode mean_dist_to_ball: 2.5098
+               Mean episode goals_total: 368.7083
+--------------------------------------------------------------------------------
+                         Iteration time: 11.33s
+                           Time elapsed: 0:13:34
+                                    ETA: 1:18:10
+
+################################################################################
+[1m                           Learning iteration 74/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 3686400 
+                       Steps per second: 4301 
+                        Collection time: 11.196s 
+                          Learning time: 0.230s 
+                        Mean value loss: 8.9257
+                    Mean surrogate loss: -0.0021
+                      Mean entropy loss: -0.0178
+                            Mean reward: 51.78
+                    Mean episode length: 179.88
+                        Mean action std: 0.24
+         Mean episode goal_per_1k_steps: 1.0254
+         Mean episode mean_dist_to_ball: 2.5637
+               Mean episode goals_total: 376.1250
+--------------------------------------------------------------------------------
+                         Iteration time: 11.43s
+                           Time elapsed: 0:13:46
+                                    ETA: 1:18:01
+
+################################################################################
+[1m                           Learning iteration 75/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 3735552 
+                       Steps per second: 4290 
+                        Collection time: 11.225s 
+                          Learning time: 0.230s 
+                        Mean value loss: 8.6531
+                    Mean surrogate loss: -0.0028
+                      Mean entropy loss: -0.0510
+                            Mean reward: 57.41
+                    Mean episode length: 184.58
+                        Mean action std: 0.24
+         Mean episode goal_per_1k_steps: 0.8667
+         Mean episode mean_dist_to_ball: 2.5608
+               Mean episode goals_total: 386.8333
+--------------------------------------------------------------------------------
+                         Iteration time: 11.45s
+                           Time elapsed: 0:13:57
+                                    ETA: 1:17:53
+
+################################################################################
+[1m                           Learning iteration 76/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 3784704 
+                       Steps per second: 4300 
+                        Collection time: 11.201s 
+                          Learning time: 0.229s 
+                        Mean value loss: 8.6307
+                    Mean surrogate loss: -0.0022
+                      Mean entropy loss: -0.0806
+                            Mean reward: 47.07
+                    Mean episode length: 178.86
+                        Mean action std: 0.24
+         Mean episode goal_per_1k_steps: 0.8748
+         Mean episode mean_dist_to_ball: 2.5641
+               Mean episode goals_total: 397.3333
+--------------------------------------------------------------------------------
+                         Iteration time: 11.43s
+                           Time elapsed: 0:14:09
+                                    ETA: 1:17:44
+
+################################################################################
+[1m                           Learning iteration 77/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 3833856 
+                       Steps per second: 4303 
+                        Collection time: 11.192s 
+                          Learning time: 0.230s 
+                        Mean value loss: 8.3131
+                    Mean surrogate loss: 0.0007
+                      Mean entropy loss: -0.1014
+                            Mean reward: 53.41
+                    Mean episode length: 185.33
+                        Mean action std: 0.24
+         Mean episode goal_per_1k_steps: 0.5656
+         Mean episode mean_dist_to_ball: 2.5146
+               Mean episode goals_total: 404.5833
+--------------------------------------------------------------------------------
+                         Iteration time: 11.42s
+                           Time elapsed: 0:14:20
+                                    ETA: 1:17:35
+
+################################################################################
+[1m                           Learning iteration 78/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 3883008 
+                       Steps per second: 4286 
+                        Collection time: 11.235s 
+                          Learning time: 0.231s 
+                        Mean value loss: 7.7774
+                    Mean surrogate loss: -0.0040
+                      Mean entropy loss: -0.1345
+                            Mean reward: 61.52
+                    Mean episode length: 193.31
+                        Mean action std: 0.23
+         Mean episode goal_per_1k_steps: 0.5798
+         Mean episode mean_dist_to_ball: 2.4910
+               Mean episode goals_total: 410.7083
+--------------------------------------------------------------------------------
+                         Iteration time: 11.47s
+                           Time elapsed: 0:14:31
+                                    ETA: 1:17:26
+
+################################################################################
+[1m                           Learning iteration 79/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 3932160 
+                       Steps per second: 4275 
+                        Collection time: 11.267s 
+                          Learning time: 0.229s 
+                        Mean value loss: 8.1420
+                    Mean surrogate loss: -0.0027
+                      Mean entropy loss: -0.1623
+                            Mean reward: 54.30
+                    Mean episode length: 183.73
+                        Mean action std: 0.23
+         Mean episode goal_per_1k_steps: 0.7304
+         Mean episode mean_dist_to_ball: 2.4608
+               Mean episode goals_total: 419.4583
+--------------------------------------------------------------------------------
+                         Iteration time: 11.50s
+                           Time elapsed: 0:14:43
+                                    ETA: 1:17:18
+
+################################################################################
+[1m                           Learning iteration 80/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 3981312 
+                       Steps per second: 4256 
+                        Collection time: 11.317s 
+                          Learning time: 0.230s 
+                        Mean value loss: 8.0994
+                    Mean surrogate loss: -0.0019
+                      Mean entropy loss: -0.2142
+                            Mean reward: 59.31
+                    Mean episode length: 195.17
+                        Mean action std: 0.23
+         Mean episode goal_per_1k_steps: 0.8301
+         Mean episode mean_dist_to_ball: 2.4623
+               Mean episode goals_total: 428.9583
+--------------------------------------------------------------------------------
+                         Iteration time: 11.55s
+                           Time elapsed: 0:14:55
+                                    ETA: 1:17:09
+
+################################################################################
+[1m                           Learning iteration 81/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 4030464 
+                       Steps per second: 4250 
+                        Collection time: 11.332s 
+                          Learning time: 0.230s 
+                        Mean value loss: 7.9432
+                    Mean surrogate loss: -0.0037
+                      Mean entropy loss: -0.2420
+                            Mean reward: 61.98
+                    Mean episode length: 202.94
+                        Mean action std: 0.22
+         Mean episode goal_per_1k_steps: 0.6877
+         Mean episode mean_dist_to_ball: 2.4139
+               Mean episode goals_total: 435.0833
+--------------------------------------------------------------------------------
+                         Iteration time: 11.56s
+                           Time elapsed: 0:15:06
+                                    ETA: 1:17:01
+
+################################################################################
+[1m                           Learning iteration 82/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 4079616 
+                       Steps per second: 4269 
+                        Collection time: 11.282s 
+                          Learning time: 0.230s 
+                        Mean value loss: 7.9629
+                    Mean surrogate loss: -0.0006
+                      Mean entropy loss: -0.2752
+                            Mean reward: 60.33
+                    Mean episode length: 191.55
+                        Mean action std: 0.22
+         Mean episode goal_per_1k_steps: 0.7324
+         Mean episode mean_dist_to_ball: 2.3970
+               Mean episode goals_total: 444.1667
+--------------------------------------------------------------------------------
+                         Iteration time: 11.51s
+                           Time elapsed: 0:15:18
+                                    ETA: 1:16:52
+
+################################################################################
+[1m                           Learning iteration 83/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 4128768 
+                       Steps per second: 4264 
+                        Collection time: 11.297s 
+                          Learning time: 0.230s 
+                        Mean value loss: 8.2562
+                    Mean surrogate loss: -0.0008
+                      Mean entropy loss: -0.2931
+                            Mean reward: 58.01
+                    Mean episode length: 185.07
+                        Mean action std: 0.22
+         Mean episode goal_per_1k_steps: 0.8565
+         Mean episode mean_dist_to_ball: 2.3466
+               Mean episode goals_total: 458.4167
+--------------------------------------------------------------------------------
+                         Iteration time: 11.53s
+                           Time elapsed: 0:15:29
+                                    ETA: 1:16:43
+
+################################################################################
+[1m                           Learning iteration 84/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 4177920 
+                       Steps per second: 4273 
+                        Collection time: 11.272s 
+                          Learning time: 0.230s 
+                        Mean value loss: 8.1786
+                    Mean surrogate loss: -0.0013
+                      Mean entropy loss: -0.3212
+                            Mean reward: 61.98
+                    Mean episode length: 197.72
+                        Mean action std: 0.22
+         Mean episode goal_per_1k_steps: 0.7222
+         Mean episode mean_dist_to_ball: 2.3598
+               Mean episode goals_total: 468.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 11.50s
+                           Time elapsed: 0:15:41
+                                    ETA: 1:16:34
+
+################################################################################
+[1m                           Learning iteration 85/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 4227072 
+                       Steps per second: 4279 
+                        Collection time: 11.256s 
+                          Learning time: 0.230s 
+                        Mean value loss: 7.8640
+                    Mean surrogate loss: 0.0007
+                      Mean entropy loss: -0.3414
+                            Mean reward: 59.49
+                    Mean episode length: 191.53
+                        Mean action std: 0.22
+         Mean episode goal_per_1k_steps: 0.7446
+         Mean episode mean_dist_to_ball: 2.3228
+               Mean episode goals_total: 479.9583
+--------------------------------------------------------------------------------
+                         Iteration time: 11.49s
+                           Time elapsed: 0:15:52
+                                    ETA: 1:16:25
+
+################################################################################
+[1m                           Learning iteration 86/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 4276224 
+                       Steps per second: 4272 
+                        Collection time: 11.275s 
+                          Learning time: 0.230s 
+                        Mean value loss: 7.1370
+                    Mean surrogate loss: -0.0025
+                      Mean entropy loss: -0.3669
+                            Mean reward: 60.52
+                    Mean episode length: 197.48
+                        Mean action std: 0.22
+         Mean episode goal_per_1k_steps: 0.9155
+         Mean episode mean_dist_to_ball: 2.2638
+               Mean episode goals_total: 490.8333
+--------------------------------------------------------------------------------
+                         Iteration time: 11.51s
+                           Time elapsed: 0:16:04
+                                    ETA: 1:16:16
+
+################################################################################
+[1m                           Learning iteration 87/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 4325376 
+                       Steps per second: 4266 
+                        Collection time: 11.291s 
+                          Learning time: 0.230s 
+                        Mean value loss: 7.7061
+                    Mean surrogate loss: -0.0025
+                      Mean entropy loss: -0.3899
+                            Mean reward: 69.96
+                    Mean episode length: 213.30
+                        Mean action std: 0.21
+         Mean episode goal_per_1k_steps: 0.5493
+         Mean episode mean_dist_to_ball: 2.1996
+               Mean episode goals_total: 496.7083
+--------------------------------------------------------------------------------
+                         Iteration time: 11.52s
+                           Time elapsed: 0:16:15
+                                    ETA: 1:16:07
+
+################################################################################
+[1m                           Learning iteration 88/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 4374528 
+                       Steps per second: 4247 
+                        Collection time: 11.341s 
+                          Learning time: 0.230s 
+                        Mean value loss: 5.7895
+                    Mean surrogate loss: -0.0021
+                      Mean entropy loss: -0.4302
+                            Mean reward: 61.14
+                    Mean episode length: 200.17
+                        Mean action std: 0.21
+         Mean episode goal_per_1k_steps: 0.6897
+         Mean episode mean_dist_to_ball: 2.2053
+               Mean episode goals_total: 504.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 11.57s
+                           Time elapsed: 0:16:27
+                                    ETA: 1:15:58
+
+################################################################################
+[1m                           Learning iteration 89/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 4423680 
+                       Steps per second: 4246 
+                        Collection time: 11.344s 
+                          Learning time: 0.230s 
+                        Mean value loss: 7.4698
+                    Mean surrogate loss: -0.0041
+                      Mean entropy loss: -0.4624
+                            Mean reward: 63.15
+                    Mean episode length: 207.75
+                        Mean action std: 0.21
+         Mean episode goal_per_1k_steps: 0.5249
+         Mean episode mean_dist_to_ball: 2.2056
+               Mean episode goals_total: 510.1250
+--------------------------------------------------------------------------------
+                         Iteration time: 11.57s
+                           Time elapsed: 0:16:38
+                                    ETA: 1:15:50
+
+################################################################################
+[1m                           Learning iteration 90/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 4472832 
+                       Steps per second: 4258 
+                        Collection time: 11.313s 
+                          Learning time: 0.230s 
+                        Mean value loss: 7.3594
+                    Mean surrogate loss: -0.0043
+                      Mean entropy loss: -0.4922
+                            Mean reward: 65.73
+                    Mean episode length: 211.36
+                        Mean action std: 0.21
+         Mean episode goal_per_1k_steps: 0.4842
+         Mean episode mean_dist_to_ball: 2.2015
+               Mean episode goals_total: 515.8334
+--------------------------------------------------------------------------------
+                         Iteration time: 11.54s
+                           Time elapsed: 0:16:50
+                                    ETA: 1:15:40
+
+################################################################################
+[1m                           Learning iteration 91/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 4521984 
+                       Steps per second: 4254 
+                        Collection time: 11.324s 
+                          Learning time: 0.230s 
+                        Mean value loss: 6.3791
+                    Mean surrogate loss: -0.0014
+                      Mean entropy loss: -0.5260
+                            Mean reward: 63.11
+                    Mean episode length: 205.24
+                        Mean action std: 0.20
+         Mean episode goal_per_1k_steps: 0.4842
+         Mean episode mean_dist_to_ball: 2.1710
+               Mean episode goals_total: 518.1667
+--------------------------------------------------------------------------------
+                         Iteration time: 11.55s
+                           Time elapsed: 0:17:01
+                                    ETA: 1:15:31
+
+################################################################################
+[1m                           Learning iteration 92/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 4571136 
+                       Steps per second: 4244 
+                        Collection time: 11.351s 
+                          Learning time: 0.230s 
+                        Mean value loss: 5.6721
+                    Mean surrogate loss: -0.0015
+                      Mean entropy loss: -0.5638
+                            Mean reward: 63.13
+                    Mean episode length: 205.68
+                        Mean action std: 0.20
+         Mean episode goal_per_1k_steps: 0.6571
+         Mean episode mean_dist_to_ball: 2.1454
+               Mean episode goals_total: 523.3750
+--------------------------------------------------------------------------------
+                         Iteration time: 11.58s
+                           Time elapsed: 0:17:13
+                                    ETA: 1:15:22
+
+################################################################################
+[1m                           Learning iteration 93/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 4620288 
+                       Steps per second: 4254 
+                        Collection time: 11.324s 
+                          Learning time: 0.230s 
+                        Mean value loss: 6.0491
+                    Mean surrogate loss: -0.0018
+                      Mean entropy loss: -0.5954
+                            Mean reward: 64.27
+                    Mean episode length: 200.97
+                        Mean action std: 0.20
+         Mean episode goal_per_1k_steps: 0.3438
+         Mean episode mean_dist_to_ball: 2.0683
+               Mean episode goals_total: 524.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 11.55s
+                           Time elapsed: 0:17:25
+                                    ETA: 1:15:13
+
+################################################################################
+[1m                           Learning iteration 94/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 4669440 
+                       Steps per second: 4259 
+                        Collection time: 11.309s 
+                          Learning time: 0.229s 
+                        Mean value loss: 5.4675
+                    Mean surrogate loss: -0.0027
+                      Mean entropy loss: -0.6242
+                            Mean reward: 63.60
+                    Mean episode length: 206.99
+                        Mean action std: 0.20
+         Mean episode goal_per_1k_steps: 0.5066
+         Mean episode mean_dist_to_ball: 2.0381
+               Mean episode goals_total: 526.2500
+--------------------------------------------------------------------------------
+                         Iteration time: 11.54s
+                           Time elapsed: 0:17:36
+                                    ETA: 1:15:04
+
+################################################################################
+[1m                           Learning iteration 95/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 4718592 
+                       Steps per second: 4253 
+                        Collection time: 11.326s 
+                          Learning time: 0.229s 
+                        Mean value loss: 5.2567
+                    Mean surrogate loss: -0.0024
+                      Mean entropy loss: -0.6498
+                            Mean reward: 68.55
+                    Mean episode length: 215.79
+                        Mean action std: 0.20
+         Mean episode goal_per_1k_steps: 0.4801
+         Mean episode mean_dist_to_ball: 1.9868
+               Mean episode goals_total: 532.5834
+--------------------------------------------------------------------------------
+                         Iteration time: 11.56s
+                           Time elapsed: 0:17:48
+                                    ETA: 1:14:54
+
+################################################################################
+[1m                           Learning iteration 96/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 4767744 
+                       Steps per second: 4242 
+                        Collection time: 11.360s 
+                          Learning time: 0.227s 
+                        Mean value loss: 5.1141
+                    Mean surrogate loss: -0.0032
+                      Mean entropy loss: -0.6850
+                            Mean reward: 63.23
+                    Mean episode length: 198.68
+                        Mean action std: 0.19
+         Mean episode goal_per_1k_steps: 0.4781
+         Mean episode mean_dist_to_ball: 1.9451
+               Mean episode goals_total: 540.3334
+--------------------------------------------------------------------------------
+                         Iteration time: 11.59s
+                           Time elapsed: 0:17:59
+                                    ETA: 1:14:45
+
+################################################################################
+[1m                           Learning iteration 97/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 4816896 
+                       Steps per second: 4227 
+                        Collection time: 11.399s 
+                          Learning time: 0.227s 
+                        Mean value loss: 6.0579
+                    Mean surrogate loss: -0.0021
+                      Mean entropy loss: -0.7164
+                            Mean reward: 65.76
+                    Mean episode length: 206.21
+                        Mean action std: 0.19
+         Mean episode goal_per_1k_steps: 0.5086
+         Mean episode mean_dist_to_ball: 1.8586
+               Mean episode goals_total: 545.6667
+--------------------------------------------------------------------------------
+                         Iteration time: 11.63s
+                           Time elapsed: 0:18:11
+                                    ETA: 1:14:36
+
+################################################################################
+[1m                           Learning iteration 98/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 4866048 
+                       Steps per second: 4236 
+                        Collection time: 11.371s 
+                          Learning time: 0.230s 
+                        Mean value loss: 5.2362
+                    Mean surrogate loss: -0.0029
+                      Mean entropy loss: -0.7512
+                            Mean reward: 70.68
+                    Mean episode length: 210.67
+                        Mean action std: 0.19
+         Mean episode goal_per_1k_steps: 0.4130
+         Mean episode mean_dist_to_ball: 1.8025
+               Mean episode goals_total: 549.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 11.60s
+                           Time elapsed: 0:18:22
+                                    ETA: 1:14:27
+
+################################################################################
+[1m                           Learning iteration 99/500                            [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 4915200 
+                       Steps per second: 4228 
+                        Collection time: 11.393s 
+                          Learning time: 0.230s 
+                        Mean value loss: 4.7367
+                    Mean surrogate loss: -0.0037
+                      Mean entropy loss: -0.7650
+                            Mean reward: 71.18
+                    Mean episode length: 224.22
+                        Mean action std: 0.19
+         Mean episode goal_per_1k_steps: 0.4333
+         Mean episode mean_dist_to_ball: 1.8004
+               Mean episode goals_total: 551.4167
+--------------------------------------------------------------------------------
+                         Iteration time: 11.62s
+                           Time elapsed: 0:18:34
+                                    ETA: 1:14:18
+
+################################################################################
+[1m                           Learning iteration 100/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 4964352 
+                       Steps per second: 4230 
+                        Collection time: 11.388s 
+                          Learning time: 0.231s 
+                        Mean value loss: 3.8599
+                    Mean surrogate loss: -0.0018
+                      Mean entropy loss: -0.8148
+                            Mean reward: 71.46
+                    Mean episode length: 225.76
+                        Mean action std: 0.19
+         Mean episode goal_per_1k_steps: 0.2828
+         Mean episode mean_dist_to_ball: 1.7417
+               Mean episode goals_total: 554.6250
+--------------------------------------------------------------------------------
+                         Iteration time: 11.62s
+                           Time elapsed: 0:18:46
+                                    ETA: 1:14:08
+
+################################################################################
+[1m                           Learning iteration 101/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 5013504 
+                       Steps per second: 4215 
+                        Collection time: 11.426s 
+                          Learning time: 0.235s 
+                        Mean value loss: 3.5481
+                    Mean surrogate loss: -0.0015
+                      Mean entropy loss: -0.8388
+                            Mean reward: 69.22
+                    Mean episode length: 227.88
+                        Mean action std: 0.18
+         Mean episode goal_per_1k_steps: 0.1261
+         Mean episode mean_dist_to_ball: 1.7825
+               Mean episode goals_total: 555.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 11.66s
+                           Time elapsed: 0:18:57
+                                    ETA: 1:13:59
+
+################################################################################
+[1m                           Learning iteration 102/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 5062656 
+                       Steps per second: 4216 
+                        Collection time: 11.431s 
+                          Learning time: 0.227s 
+                        Mean value loss: 3.2402
+                    Mean surrogate loss: -0.0023
+                      Mean entropy loss: -0.8735
+                            Mean reward: 74.48
+                    Mean episode length: 215.01
+                        Mean action std: 0.18
+         Mean episode goal_per_1k_steps: 0.1973
+         Mean episode mean_dist_to_ball: 1.7517
+               Mean episode goals_total: 555.7917
+--------------------------------------------------------------------------------
+                         Iteration time: 11.66s
+                           Time elapsed: 0:19:09
+                                    ETA: 1:13:50
+
+################################################################################
+[1m                           Learning iteration 103/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 5111808 
+                       Steps per second: 4226 
+                        Collection time: 11.402s 
+                          Learning time: 0.227s 
+                        Mean value loss: 3.1970
+                    Mean surrogate loss: -0.0016
+                      Mean entropy loss: -0.8751
+                            Mean reward: 73.94
+                    Mean episode length: 231.26
+                        Mean action std: 0.18
+         Mean episode goal_per_1k_steps: 0.1912
+         Mean episode mean_dist_to_ball: 1.7487
+               Mean episode goals_total: 558.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 11.63s
+                           Time elapsed: 0:19:21
+                                    ETA: 1:13:41
+
+################################################################################
+[1m                           Learning iteration 104/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 5160960 
+                       Steps per second: 4241 
+                        Collection time: 11.361s 
+                          Learning time: 0.227s 
+                        Mean value loss: 3.0574
+                    Mean surrogate loss: -0.0023
+                      Mean entropy loss: -0.9321
+                            Mean reward: 70.95
+                    Mean episode length: 234.47
+                        Mean action std: 0.18
+         Mean episode goal_per_1k_steps: 0.1689
+         Mean episode mean_dist_to_ball: 1.7109
+               Mean episode goals_total: 558.8750
+--------------------------------------------------------------------------------
+                         Iteration time: 11.59s
+                           Time elapsed: 0:19:32
+                                    ETA: 1:13:31
+
+################################################################################
+[1m                           Learning iteration 105/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 5210112 
+                       Steps per second: 4237 
+                        Collection time: 11.372s 
+                          Learning time: 0.227s 
+                        Mean value loss: 3.5213
+                    Mean surrogate loss: -0.0022
+                      Mean entropy loss: -0.9537
+                            Mean reward: 74.33
+                    Mean episode length: 232.17
+                        Mean action std: 0.18
+         Mean episode goal_per_1k_steps: 0.0997
+         Mean episode mean_dist_to_ball: 1.6388
+               Mean episode goals_total: 559.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 11.60s
+                           Time elapsed: 0:19:44
+                                    ETA: 1:13:22
+
+################################################################################
+[1m                           Learning iteration 106/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 5259264 
+                       Steps per second: 4227 
+                        Collection time: 11.398s 
+                          Learning time: 0.227s 
+                        Mean value loss: 2.7130
+                    Mean surrogate loss: -0.0025
+                      Mean entropy loss: -1.0016
+                            Mean reward: 75.70
+                    Mean episode length: 227.22
+                        Mean action std: 0.17
+         Mean episode goal_per_1k_steps: 0.1180
+         Mean episode mean_dist_to_ball: 1.6227
+               Mean episode goals_total: 559.7917
+--------------------------------------------------------------------------------
+                         Iteration time: 11.63s
+                           Time elapsed: 0:19:55
+                                    ETA: 1:13:12
+
+################################################################################
+[1m                           Learning iteration 107/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 5308416 
+                       Steps per second: 4222 
+                        Collection time: 11.413s 
+                          Learning time: 0.227s 
+                        Mean value loss: 3.1113
+                    Mean surrogate loss: -0.0021
+                      Mean entropy loss: -1.0138
+                            Mean reward: 78.59
+                    Mean episode length: 234.29
+                        Mean action std: 0.17
+         Mean episode goal_per_1k_steps: 0.1099
+         Mean episode mean_dist_to_ball: 1.6155
+               Mean episode goals_total: 560.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 11.64s
+                           Time elapsed: 0:20:07
+                                    ETA: 1:13:03
+
+################################################################################
+[1m                           Learning iteration 108/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 5357568 
+                       Steps per second: 4217 
+                        Collection time: 11.426s 
+                          Learning time: 0.228s 
+                        Mean value loss: 3.4224
+                    Mean surrogate loss: -0.0024
+                      Mean entropy loss: -1.0489
+                            Mean reward: 74.17
+                    Mean episode length: 229.22
+                        Mean action std: 0.17
+         Mean episode goal_per_1k_steps: 0.1546
+         Mean episode mean_dist_to_ball: 1.6151
+               Mean episode goals_total: 560.2917
+--------------------------------------------------------------------------------
+                         Iteration time: 11.65s
+                           Time elapsed: 0:20:19
+                                    ETA: 1:12:53
+
+################################################################################
+[1m                           Learning iteration 109/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 5406720 
+                       Steps per second: 4223 
+                        Collection time: 11.409s 
+                          Learning time: 0.227s 
+                        Mean value loss: 2.7613
+                    Mean surrogate loss: -0.0009
+                      Mean entropy loss: -1.0760
+                            Mean reward: 80.30
+                    Mean episode length: 234.59
+                        Mean action std: 0.17
+         Mean episode goal_per_1k_steps: 0.1160
+         Mean episode mean_dist_to_ball: 1.5853
+               Mean episode goals_total: 561.8750
+--------------------------------------------------------------------------------
+                         Iteration time: 11.64s
+                           Time elapsed: 0:20:30
+                                    ETA: 1:12:43
+
+################################################################################
+[1m                           Learning iteration 110/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 5455872 
+                       Steps per second: 4216 
+                        Collection time: 11.430s 
+                          Learning time: 0.227s 
+                        Mean value loss: 2.6834
+                    Mean surrogate loss: -0.0007
+                      Mean entropy loss: -1.0940
+                            Mean reward: 75.68
+                    Mean episode length: 229.42
+                        Mean action std: 0.17
+         Mean episode goal_per_1k_steps: 0.2136
+         Mean episode mean_dist_to_ball: 1.5905
+               Mean episode goals_total: 563.0417
+--------------------------------------------------------------------------------
+                         Iteration time: 11.66s
+                           Time elapsed: 0:20:42
+                                    ETA: 1:12:34
+
+################################################################################
+[1m                           Learning iteration 111/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 5505024 
+                       Steps per second: 4208 
+                        Collection time: 11.450s 
+                          Learning time: 0.230s 
+                        Mean value loss: 2.7033
+                    Mean surrogate loss: -0.0031
+                      Mean entropy loss: -1.0772
+                            Mean reward: 78.79
+                    Mean episode length: 227.85
+                        Mean action std: 0.17
+         Mean episode goal_per_1k_steps: 0.2523
+         Mean episode mean_dist_to_ball: 1.5679
+               Mean episode goals_total: 565.3750
+--------------------------------------------------------------------------------
+                         Iteration time: 11.68s
+                           Time elapsed: 0:20:54
+                                    ETA: 1:12:24
+
+################################################################################
+[1m                           Learning iteration 112/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 5554176 
+                       Steps per second: 4208 
+                        Collection time: 11.450s 
+                          Learning time: 0.230s 
+                        Mean value loss: 2.8694
+                    Mean surrogate loss: -0.0020
+                      Mean entropy loss: -1.1287
+                            Mean reward: 72.33
+                    Mean episode length: 223.08
+                        Mean action std: 0.17
+         Mean episode goal_per_1k_steps: 0.1994
+         Mean episode mean_dist_to_ball: 1.5672
+               Mean episode goals_total: 566.1250
+--------------------------------------------------------------------------------
+                         Iteration time: 11.68s
+                           Time elapsed: 0:21:05
+                                    ETA: 1:12:15
+
+################################################################################
+[1m                           Learning iteration 113/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 5603328 
+                       Steps per second: 4211 
+                        Collection time: 11.442s 
+                          Learning time: 0.230s 
+                        Mean value loss: 2.9437
+                    Mean surrogate loss: -0.0034
+                      Mean entropy loss: -1.1540
+                            Mean reward: 73.71
+                    Mean episode length: 220.27
+                        Mean action std: 0.17
+         Mean episode goal_per_1k_steps: 0.1668
+         Mean episode mean_dist_to_ball: 1.5565
+               Mean episode goals_total: 568.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 11.67s
+                           Time elapsed: 0:21:17
+                                    ETA: 1:12:05
+
+################################################################################
+[1m                           Learning iteration 114/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 5652480 
+                       Steps per second: 4220 
+                        Collection time: 11.419s 
+                          Learning time: 0.228s 
+                        Mean value loss: 2.9337
+                    Mean surrogate loss: -0.0030
+                      Mean entropy loss: -1.1808
+                            Mean reward: 77.17
+                    Mean episode length: 224.68
+                        Mean action std: 0.16
+         Mean episode goal_per_1k_steps: 0.0834
+         Mean episode mean_dist_to_ball: 1.5460
+               Mean episode goals_total: 569.8750
+--------------------------------------------------------------------------------
+                         Iteration time: 11.65s
+                           Time elapsed: 0:21:29
+                                    ETA: 1:11:55
+
+################################################################################
+[1m                           Learning iteration 115/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 5701632 
+                       Steps per second: 4212 
+                        Collection time: 11.439s 
+                          Learning time: 0.228s 
+                        Mean value loss: 3.3159
+                    Mean surrogate loss: -0.0028
+                      Mean entropy loss: -1.1838
+                            Mean reward: 75.70
+                    Mean episode length: 224.72
+                        Mean action std: 0.16
+         Mean episode goal_per_1k_steps: 0.2950
+         Mean episode mean_dist_to_ball: 1.5534
+               Mean episode goals_total: 571.2500
+--------------------------------------------------------------------------------
+                         Iteration time: 11.67s
+                           Time elapsed: 0:21:40
+                                    ETA: 1:11:46
+
+################################################################################
+[1m                           Learning iteration 116/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 5750784 
+                       Steps per second: 4219 
+                        Collection time: 11.421s 
+                          Learning time: 0.227s 
+                        Mean value loss: 3.0731
+                    Mean surrogate loss: -0.0031
+                      Mean entropy loss: -1.2325
+                            Mean reward: 72.82
+                    Mean episode length: 221.90
+                        Mean action std: 0.16
+         Mean episode goal_per_1k_steps: 0.2014
+         Mean episode mean_dist_to_ball: 1.5636
+               Mean episode goals_total: 574.3750
+--------------------------------------------------------------------------------
+                         Iteration time: 11.65s
+                           Time elapsed: 0:21:52
+                                    ETA: 1:11:36
+
+################################################################################
+[1m                           Learning iteration 117/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 5799936 
+                       Steps per second: 4208 
+                        Collection time: 11.452s 
+                          Learning time: 0.227s 
+                        Mean value loss: 4.3097
+                    Mean surrogate loss: -0.0031
+                      Mean entropy loss: -1.2369
+                            Mean reward: 74.05
+                    Mean episode length: 220.10
+                        Mean action std: 0.16
+         Mean episode goal_per_1k_steps: 0.2482
+         Mean episode mean_dist_to_ball: 1.5934
+               Mean episode goals_total: 576.0417
+--------------------------------------------------------------------------------
+                         Iteration time: 11.68s
+                           Time elapsed: 0:22:04
+                                    ETA: 1:11:26
+
+################################################################################
+[1m                           Learning iteration 118/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 5849088 
+                       Steps per second: 4206 
+                        Collection time: 11.453s 
+                          Learning time: 0.230s 
+                        Mean value loss: 3.2192
+                    Mean surrogate loss: -0.0027
+                      Mean entropy loss: -1.2655
+                            Mean reward: 77.66
+                    Mean episode length: 225.12
+                        Mean action std: 0.16
+         Mean episode goal_per_1k_steps: 0.3133
+         Mean episode mean_dist_to_ball: 1.6277
+               Mean episode goals_total: 581.4167
+--------------------------------------------------------------------------------
+                         Iteration time: 11.68s
+                           Time elapsed: 0:22:15
+                                    ETA: 1:11:17
+
+################################################################################
+[1m                           Learning iteration 119/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 5898240 
+                       Steps per second: 4205 
+                        Collection time: 11.457s 
+                          Learning time: 0.230s 
+                        Mean value loss: 2.8487
+                    Mean surrogate loss: -0.0025
+                      Mean entropy loss: -1.2858
+                            Mean reward: 76.32
+                    Mean episode length: 227.31
+                        Mean action std: 0.16
+         Mean episode goal_per_1k_steps: 0.2848
+         Mean episode mean_dist_to_ball: 1.6594
+               Mean episode goals_total: 582.8750
+--------------------------------------------------------------------------------
+                         Iteration time: 11.69s
+                           Time elapsed: 0:22:27
+                                    ETA: 1:11:07
+
+################################################################################
+[1m                           Learning iteration 120/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 5947392 
+                       Steps per second: 4208 
+                        Collection time: 11.449s 
+                          Learning time: 0.230s 
+                        Mean value loss: 3.0185
+                    Mean surrogate loss: -0.0025
+                      Mean entropy loss: -1.3567
+                            Mean reward: 79.73
+                    Mean episode length: 228.50
+                        Mean action std: 0.15
+         Mean episode goal_per_1k_steps: 0.3052
+         Mean episode mean_dist_to_ball: 1.6700
+               Mean episode goals_total: 585.0834
+--------------------------------------------------------------------------------
+                         Iteration time: 11.68s
+                           Time elapsed: 0:22:39
+                                    ETA: 1:10:57
+
+################################################################################
+[1m                           Learning iteration 121/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 5996544 
+                       Steps per second: 4211 
+                        Collection time: 11.441s 
+                          Learning time: 0.230s 
+                        Mean value loss: 4.0847
+                    Mean surrogate loss: -0.0024
+                      Mean entropy loss: -1.3782
+                            Mean reward: 74.28
+                    Mean episode length: 222.06
+                        Mean action std: 0.15
+         Mean episode goal_per_1k_steps: 0.2645
+         Mean episode mean_dist_to_ball: 1.6538
+               Mean episode goals_total: 587.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 11.67s
+                           Time elapsed: 0:22:50
+                                    ETA: 1:10:47
+
+################################################################################
+[1m                           Learning iteration 122/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 6045696 
+                       Steps per second: 4221 
+                        Collection time: 11.413s 
+                          Learning time: 0.230s 
+                        Mean value loss: 2.7364
+                    Mean surrogate loss: -0.0026
+                      Mean entropy loss: -1.4055
+                            Mean reward: 76.72
+                    Mean episode length: 228.53
+                        Mean action std: 0.15
+         Mean episode goal_per_1k_steps: 0.2523
+         Mean episode mean_dist_to_ball: 1.6168
+               Mean episode goals_total: 588.7500
+--------------------------------------------------------------------------------
+                         Iteration time: 11.64s
+                           Time elapsed: 0:23:02
+                                    ETA: 1:10:37
+
+################################################################################
+[1m                           Learning iteration 123/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 6094848 
+                       Steps per second: 4207 
+                        Collection time: 11.454s 
+                          Learning time: 0.228s 
+                        Mean value loss: 2.2040
+                    Mean surrogate loss: -0.0008
+                      Mean entropy loss: -1.4035
+                            Mean reward: 77.24
+                    Mean episode length: 231.64
+                        Mean action std: 0.15
+         Mean episode goal_per_1k_steps: 0.1261
+         Mean episode mean_dist_to_ball: 1.5876
+               Mean episode goals_total: 591.7084
+--------------------------------------------------------------------------------
+                         Iteration time: 11.68s
+                           Time elapsed: 0:23:14
+                                    ETA: 1:10:27
+
+################################################################################
+[1m                           Learning iteration 124/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 6144000 
+                       Steps per second: 4208 
+                        Collection time: 11.450s 
+                          Learning time: 0.230s 
+                        Mean value loss: 2.2214
+                    Mean surrogate loss: -0.0019
+                      Mean entropy loss: -1.4136
+                            Mean reward: 78.56
+                    Mean episode length: 229.68
+                        Mean action std: 0.15
+         Mean episode goal_per_1k_steps: 0.2116
+         Mean episode mean_dist_to_ball: 1.5886
+               Mean episode goals_total: 592.9167
+--------------------------------------------------------------------------------
+                         Iteration time: 11.68s
+                           Time elapsed: 0:23:25
+                                    ETA: 1:10:17
+
+################################################################################
+[1m                           Learning iteration 125/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 6193152 
+                       Steps per second: 4213 
+                        Collection time: 11.437s 
+                          Learning time: 0.230s 
+                        Mean value loss: 3.5934
+                    Mean surrogate loss: -0.0035
+                      Mean entropy loss: -1.4392
+                            Mean reward: 77.18
+                    Mean episode length: 225.97
+                        Mean action std: 0.15
+         Mean episode goal_per_1k_steps: 0.2035
+         Mean episode mean_dist_to_ball: 1.6021
+               Mean episode goals_total: 594.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 11.67s
+                           Time elapsed: 0:23:37
+                                    ETA: 1:10:07
+
+################################################################################
+[1m                           Learning iteration 126/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 6242304 
+                       Steps per second: 4216 
+                        Collection time: 11.426s 
+                          Learning time: 0.230s 
+                        Mean value loss: 3.1804
+                    Mean surrogate loss: -0.0035
+                      Mean entropy loss: -1.4619
+                            Mean reward: 74.76
+                    Mean episode length: 220.97
+                        Mean action std: 0.15
+         Mean episode goal_per_1k_steps: 0.2055
+         Mean episode mean_dist_to_ball: 1.6220
+               Mean episode goals_total: 595.9584
+--------------------------------------------------------------------------------
+                         Iteration time: 11.66s
+                           Time elapsed: 0:23:49
+                                    ETA: 1:09:57
+
+################################################################################
+[1m                           Learning iteration 127/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 6291456 
+                       Steps per second: 4176 
+                        Collection time: 11.538s 
+                          Learning time: 0.230s 
+                        Mean value loss: 2.9915
+                    Mean surrogate loss: -0.0028
+                      Mean entropy loss: -1.4529
+                            Mean reward: 78.64
+                    Mean episode length: 222.78
+                        Mean action std: 0.15
+         Mean episode goal_per_1k_steps: 0.1770
+         Mean episode mean_dist_to_ball: 1.6308
+               Mean episode goals_total: 597.9584
+--------------------------------------------------------------------------------
+                         Iteration time: 11.77s
+                           Time elapsed: 0:24:01
+                                    ETA: 1:09:47
+
+################################################################################
+[1m                           Learning iteration 128/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 6340608 
+                       Steps per second: 4097 
+                        Collection time: 11.767s 
+                          Learning time: 0.230s 
+                        Mean value loss: 3.8050
+                    Mean surrogate loss: -0.0022
+                      Mean entropy loss: -1.4764
+                            Mean reward: 74.89
+                    Mean episode length: 219.37
+                        Mean action std: 0.15
+         Mean episode goal_per_1k_steps: 0.2136
+         Mean episode mean_dist_to_ball: 1.6266
+               Mean episode goals_total: 598.5834
+--------------------------------------------------------------------------------
+                         Iteration time: 12.00s
+                           Time elapsed: 0:24:12
+                                    ETA: 1:09:38
+
+################################################################################
+[1m                           Learning iteration 129/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 6389760 
+                       Steps per second: 4168 
+                        Collection time: 11.561s 
+                          Learning time: 0.231s 
+                        Mean value loss: 3.2075
+                    Mean surrogate loss: -0.0023
+                      Mean entropy loss: -1.5080
+                            Mean reward: 79.77
+                    Mean episode length: 235.44
+                        Mean action std: 0.15
+         Mean episode goal_per_1k_steps: 0.2930
+         Mean episode mean_dist_to_ball: 1.6102
+               Mean episode goals_total: 602.6667
+--------------------------------------------------------------------------------
+                         Iteration time: 11.79s
+                           Time elapsed: 0:24:24
+                                    ETA: 1:09:29
+
+################################################################################
+[1m                           Learning iteration 130/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 6438912 
+                       Steps per second: 4048 
+                        Collection time: 11.910s 
+                          Learning time: 0.229s 
+                        Mean value loss: 3.0394
+                    Mean surrogate loss: -0.0040
+                      Mean entropy loss: -1.5402
+                            Mean reward: 80.35
+                    Mean episode length: 225.31
+                        Mean action std: 0.14
+         Mean episode goal_per_1k_steps: 0.2706
+         Mean episode mean_dist_to_ball: 1.6114
+               Mean episode goals_total: 605.6667
+--------------------------------------------------------------------------------
+                         Iteration time: 12.14s
+                           Time elapsed: 0:24:36
+                                    ETA: 1:09:20
+
+################################################################################
+[1m                           Learning iteration 131/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 6488064 
+                       Steps per second: 4221 
+                        Collection time: 11.414s 
+                          Learning time: 0.230s 
+                        Mean value loss: 3.3371
+                    Mean surrogate loss: -0.0026
+                      Mean entropy loss: -1.5434
+                            Mean reward: 77.82
+                    Mean episode length: 231.93
+                        Mean action std: 0.14
+         Mean episode goal_per_1k_steps: 0.2035
+         Mean episode mean_dist_to_ball: 1.6308
+               Mean episode goals_total: 608.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 11.64s
+                           Time elapsed: 0:24:48
+                                    ETA: 1:09:09
+
+################################################################################
+[1m                           Learning iteration 132/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 6537216 
+                       Steps per second: 4200 
+                        Collection time: 11.471s 
+                          Learning time: 0.230s 
+                        Mean value loss: 4.0973
+                    Mean surrogate loss: -0.0031
+                      Mean entropy loss: -1.5603
+                            Mean reward: 73.21
+                    Mean episode length: 211.34
+                        Mean action std: 0.14
+         Mean episode goal_per_1k_steps: 0.3316
+         Mean episode mean_dist_to_ball: 1.6063
+               Mean episode goals_total: 609.6250
+--------------------------------------------------------------------------------
+                         Iteration time: 11.70s
+                           Time elapsed: 0:25:00
+                                    ETA: 1:08:59
+
+################################################################################
+[1m                           Learning iteration 133/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 6586368 
+                       Steps per second: 4226 
+                        Collection time: 11.400s 
+                          Learning time: 0.230s 
+                        Mean value loss: 2.7096
+                    Mean surrogate loss: -0.0023
+                      Mean entropy loss: -1.6062
+                            Mean reward: 77.43
+                    Mean episode length: 221.34
+                        Mean action std: 0.14
+         Mean episode goal_per_1k_steps: 0.1282
+         Mean episode mean_dist_to_ball: 1.5762
+               Mean episode goals_total: 611.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 11.63s
+                           Time elapsed: 0:25:11
+                                    ETA: 1:08:49
+
+################################################################################
+[1m                           Learning iteration 134/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 6635520 
+                       Steps per second: 4231 
+                        Collection time: 11.387s 
+                          Learning time: 0.230s 
+                        Mean value loss: 3.5561
+                    Mean surrogate loss: -0.0037
+                      Mean entropy loss: -1.6064
+                            Mean reward: 72.48
+                    Mean episode length: 209.78
+                        Mean action std: 0.14
+         Mean episode goal_per_1k_steps: 0.1506
+         Mean episode mean_dist_to_ball: 1.5525
+               Mean episode goals_total: 611.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 11.62s
+                           Time elapsed: 0:25:23
+                                    ETA: 1:08:39
+
+################################################################################
+[1m                           Learning iteration 135/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 6684672 
+                       Steps per second: 4221 
+                        Collection time: 11.415s 
+                          Learning time: 0.230s 
+                        Mean value loss: 2.1548
+                    Mean surrogate loss: -0.0021
+                      Mean entropy loss: -1.6506
+                            Mean reward: 75.28
+                    Mean episode length: 230.95
+                        Mean action std: 0.14
+         Mean episode goal_per_1k_steps: 0.2340
+         Mean episode mean_dist_to_ball: 1.5352
+               Mean episode goals_total: 612.2500
+--------------------------------------------------------------------------------
+                         Iteration time: 11.64s
+                           Time elapsed: 0:25:35
+                                    ETA: 1:08:28
+
+################################################################################
+[1m                           Learning iteration 136/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 6733824 
+                       Steps per second: 4219 
+                        Collection time: 11.418s 
+                          Learning time: 0.230s 
+                        Mean value loss: 2.5736
+                    Mean surrogate loss: -0.0034
+                      Mean entropy loss: -1.6640
+                            Mean reward: 76.03
+                    Mean episode length: 210.41
+                        Mean action std: 0.14
+         Mean episode goal_per_1k_steps: 0.2319
+         Mean episode mean_dist_to_ball: 1.5052
+               Mean episode goals_total: 614.9584
+--------------------------------------------------------------------------------
+                         Iteration time: 11.65s
+                           Time elapsed: 0:25:46
+                                    ETA: 1:08:18
+
+################################################################################
+[1m                           Learning iteration 137/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 6782976 
+                       Steps per second: 4236 
+                        Collection time: 11.373s 
+                          Learning time: 0.230s 
+                        Mean value loss: 2.0722
+                    Mean surrogate loss: -0.0022
+                      Mean entropy loss: -1.7250
+                            Mean reward: 80.16
+                    Mean episode length: 227.48
+                        Mean action std: 0.14
+         Mean episode goal_per_1k_steps: 0.0712
+         Mean episode mean_dist_to_ball: 1.4452
+               Mean episode goals_total: 616.1250
+--------------------------------------------------------------------------------
+                         Iteration time: 11.60s
+                           Time elapsed: 0:25:58
+                                    ETA: 1:08:08
+
+################################################################################
+[1m                           Learning iteration 138/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 6832128 
+                       Steps per second: 4217 
+                        Collection time: 11.425s 
+                          Learning time: 0.230s 
+                        Mean value loss: 2.9810
+                    Mean surrogate loss: -0.0028
+                      Mean entropy loss: -1.7596
+                            Mean reward: 80.38
+                    Mean episode length: 223.05
+                        Mean action std: 0.13
+         Mean episode goal_per_1k_steps: 0.1872
+         Mean episode mean_dist_to_ball: 1.4228
+               Mean episode goals_total: 618.4167
+--------------------------------------------------------------------------------
+                         Iteration time: 11.66s
+                           Time elapsed: 0:26:10
+                                    ETA: 1:07:57
+
+################################################################################
+[1m                           Learning iteration 139/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 6881280 
+                       Steps per second: 4219 
+                        Collection time: 11.420s 
+                          Learning time: 0.228s 
+                        Mean value loss: 2.6530
+                    Mean surrogate loss: -0.0030
+                      Mean entropy loss: -1.8206
+                            Mean reward: 80.93
+                    Mean episode length: 230.85
+                        Mean action std: 0.13
+         Mean episode goal_per_1k_steps: 0.1851
+         Mean episode mean_dist_to_ball: 1.4212
+               Mean episode goals_total: 619.0417
+--------------------------------------------------------------------------------
+                         Iteration time: 11.65s
+                           Time elapsed: 0:26:21
+                                    ETA: 1:07:47
+
+################################################################################
+[1m                           Learning iteration 140/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 6930432 
+                       Steps per second: 4220 
+                        Collection time: 11.419s 
+                          Learning time: 0.227s 
+                        Mean value loss: 2.4106
+                    Mean surrogate loss: -0.0030
+                      Mean entropy loss: -1.8302
+                            Mean reward: 79.92
+                    Mean episode length: 222.65
+                        Mean action std: 0.13
+         Mean episode goal_per_1k_steps: 0.1994
+         Mean episode mean_dist_to_ball: 1.4039
+               Mean episode goals_total: 620.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 11.65s
+                           Time elapsed: 0:26:33
+                                    ETA: 1:07:36
+
+################################################################################
+[1m                           Learning iteration 141/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 6979584 
+                       Steps per second: 4227 
+                        Collection time: 11.399s 
+                          Learning time: 0.228s 
+                        Mean value loss: 2.6913
+                    Mean surrogate loss: -0.0029
+                      Mean entropy loss: -1.8547
+                            Mean reward: 81.09
+                    Mean episode length: 226.07
+                        Mean action std: 0.13
+         Mean episode goal_per_1k_steps: 0.2360
+         Mean episode mean_dist_to_ball: 1.4135
+               Mean episode goals_total: 620.3750
+--------------------------------------------------------------------------------
+                         Iteration time: 11.63s
+                           Time elapsed: 0:26:44
+                                    ETA: 1:07:26
+
+################################################################################
+[1m                           Learning iteration 142/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 7028736 
+                       Steps per second: 4225 
+                        Collection time: 11.403s 
+                          Learning time: 0.230s 
+                        Mean value loss: 2.9547
+                    Mean surrogate loss: -0.0029
+                      Mean entropy loss: -1.8968
+                            Mean reward: 82.01
+                    Mean episode length: 226.52
+                        Mean action std: 0.13
+         Mean episode goal_per_1k_steps: 0.0854
+         Mean episode mean_dist_to_ball: 1.3935
+               Mean episode goals_total: 621.2500
+--------------------------------------------------------------------------------
+                         Iteration time: 11.63s
+                           Time elapsed: 0:26:56
+                                    ETA: 1:07:15
+
+################################################################################
+[1m                           Learning iteration 143/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 7077888 
+                       Steps per second: 4246 
+                        Collection time: 11.344s 
+                          Learning time: 0.231s 
+                        Mean value loss: 2.7642
+                    Mean surrogate loss: -0.0033
+                      Mean entropy loss: -1.9256
+                            Mean reward: 81.19
+                    Mean episode length: 231.54
+                        Mean action std: 0.13
+         Mean episode goal_per_1k_steps: 0.1811
+         Mean episode mean_dist_to_ball: 1.3573
+               Mean episode goals_total: 623.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 11.57s
+                           Time elapsed: 0:27:08
+                                    ETA: 1:07:05
+
+################################################################################
+[1m                           Learning iteration 144/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 7127040 
+                       Steps per second: 4250 
+                        Collection time: 11.334s 
+                          Learning time: 0.230s 
+                        Mean value loss: 2.5018
+                    Mean surrogate loss: -0.0016
+                      Mean entropy loss: -1.9468
+                            Mean reward: 86.40
+                    Mean episode length: 228.10
+                        Mean action std: 0.13
+         Mean episode goal_per_1k_steps: 0.2787
+         Mean episode mean_dist_to_ball: 1.3656
+               Mean episode goals_total: 624.4167
+--------------------------------------------------------------------------------
+                         Iteration time: 11.56s
+                           Time elapsed: 0:27:19
+                                    ETA: 1:06:54
+
+################################################################################
+[1m                           Learning iteration 145/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 7176192 
+                       Steps per second: 4243 
+                        Collection time: 11.354s 
+                          Learning time: 0.230s 
+                        Mean value loss: 2.3927
+                    Mean surrogate loss: -0.0022
+                      Mean entropy loss: -1.9659
+                            Mean reward: 84.28
+                    Mean episode length: 232.30
+                        Mean action std: 0.13
+         Mean episode goal_per_1k_steps: 0.2055
+         Mean episode mean_dist_to_ball: 1.3711
+               Mean episode goals_total: 627.8334
+--------------------------------------------------------------------------------
+                         Iteration time: 11.58s
+                           Time elapsed: 0:27:31
+                                    ETA: 1:06:43
+
+################################################################################
+[1m                           Learning iteration 146/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 7225344 
+                       Steps per second: 4235 
+                        Collection time: 11.374s 
+                          Learning time: 0.230s 
+                        Mean value loss: 2.8450
+                    Mean surrogate loss: -0.0032
+                      Mean entropy loss: -1.9702
+                            Mean reward: 80.97
+                    Mean episode length: 222.93
+                        Mean action std: 0.13
+         Mean episode goal_per_1k_steps: 0.2238
+         Mean episode mean_dist_to_ball: 1.3542
+               Mean episode goals_total: 629.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 11.60s
+                           Time elapsed: 0:27:42
+                                    ETA: 1:06:33
+
+################################################################################
+[1m                           Learning iteration 147/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 7274496 
+                       Steps per second: 4246 
+                        Collection time: 11.346s 
+                          Learning time: 0.227s 
+                        Mean value loss: 4.1226
+                    Mean surrogate loss: -0.0039
+                      Mean entropy loss: -2.0061
+                            Mean reward: 79.12
+                    Mean episode length: 216.58
+                        Mean action std: 0.12
+         Mean episode goal_per_1k_steps: 0.1770
+         Mean episode mean_dist_to_ball: 1.3273
+               Mean episode goals_total: 629.1250
+--------------------------------------------------------------------------------
+                         Iteration time: 11.57s
+                           Time elapsed: 0:27:54
+                                    ETA: 1:06:22
+
+################################################################################
+[1m                           Learning iteration 148/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 7323648 
+                       Steps per second: 4244 
+                        Collection time: 11.352s 
+                          Learning time: 0.228s 
+                        Mean value loss: 2.6829
+                    Mean surrogate loss: -0.0023
+                      Mean entropy loss: -1.9993
+                            Mean reward: 82.64
+                    Mean episode length: 233.75
+                        Mean action std: 0.12
+         Mean episode goal_per_1k_steps: 0.1404
+         Mean episode mean_dist_to_ball: 1.2969
+               Mean episode goals_total: 630.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 11.58s
+                           Time elapsed: 0:28:06
+                                    ETA: 1:06:11
+
+################################################################################
+[1m                           Learning iteration 149/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 7372800 
+                       Steps per second: 4242 
+                        Collection time: 11.357s 
+                          Learning time: 0.227s 
+                        Mean value loss: 3.1668
+                    Mean surrogate loss: -0.0024
+                      Mean entropy loss: -2.0187
+                            Mean reward: 81.10
+                    Mean episode length: 233.30
+                        Mean action std: 0.12
+         Mean episode goal_per_1k_steps: 0.1200
+         Mean episode mean_dist_to_ball: 1.2919
+               Mean episode goals_total: 631.3334
+--------------------------------------------------------------------------------
+                         Iteration time: 11.58s
+                           Time elapsed: 0:28:17
+                                    ETA: 1:06:01
+
+################################################################################
+[1m                           Learning iteration 150/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 7421952 
+                       Steps per second: 4251 
+                        Collection time: 11.333s 
+                          Learning time: 0.227s 
+                        Mean value loss: 2.5401
+                    Mean surrogate loss: -0.0029
+                      Mean entropy loss: -2.0103
+                            Mean reward: 83.18
+                    Mean episode length: 233.37
+                        Mean action std: 0.12
+         Mean episode goal_per_1k_steps: 0.0916
+         Mean episode mean_dist_to_ball: 1.2829
+               Mean episode goals_total: 632.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 11.56s
+                           Time elapsed: 0:28:29
+                                    ETA: 1:05:50
+
+################################################################################
+[1m                           Learning iteration 151/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 7471104 
+                       Steps per second: 4256 
+                        Collection time: 11.322s 
+                          Learning time: 0.227s 
+                        Mean value loss: 2.1793
+                    Mean surrogate loss: -0.0030
+                      Mean entropy loss: -2.0718
+                            Mean reward: 87.54
+                    Mean episode length: 236.05
+                        Mean action std: 0.12
+         Mean episode goal_per_1k_steps: 0.1261
+         Mean episode mean_dist_to_ball: 1.2925
+               Mean episode goals_total: 632.7917
+--------------------------------------------------------------------------------
+                         Iteration time: 11.55s
+                           Time elapsed: 0:28:40
+                                    ETA: 1:05:39
+
+################################################################################
+[1m                           Learning iteration 152/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 7520256 
+                       Steps per second: 4247 
+                        Collection time: 11.345s 
+                          Learning time: 0.227s 
+                        Mean value loss: 2.2306
+                    Mean surrogate loss: -0.0032
+                      Mean entropy loss: -2.1007
+                            Mean reward: 86.14
+                    Mean episode length: 227.36
+                        Mean action std: 0.12
+         Mean episode goal_per_1k_steps: 0.1241
+         Mean episode mean_dist_to_ball: 1.2837
+               Mean episode goals_total: 633.1250
+--------------------------------------------------------------------------------
+                         Iteration time: 11.57s
+                           Time elapsed: 0:28:52
+                                    ETA: 1:05:28
+
+################################################################################
+[1m                           Learning iteration 153/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 7569408 
+                       Steps per second: 4242 
+                        Collection time: 11.359s 
+                          Learning time: 0.228s 
+                        Mean value loss: 2.6416
+                    Mean surrogate loss: -0.0037
+                      Mean entropy loss: -2.1039
+                            Mean reward: 82.07
+                    Mean episode length: 226.80
+                        Mean action std: 0.12
+         Mean episode goal_per_1k_steps: 0.2767
+         Mean episode mean_dist_to_ball: 1.2605
+               Mean episode goals_total: 635.4167
+--------------------------------------------------------------------------------
+                         Iteration time: 11.59s
+                           Time elapsed: 0:29:03
+                                    ETA: 1:05:18
+
+################################################################################
+[1m                           Learning iteration 154/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 7618560 
+                       Steps per second: 4249 
+                        Collection time: 11.338s 
+                          Learning time: 0.228s 
+                        Mean value loss: 2.9344
+                    Mean surrogate loss: -0.0026
+                      Mean entropy loss: -2.1208
+                            Mean reward: 83.67
+                    Mean episode length: 229.71
+                        Mean action std: 0.12
+         Mean episode goal_per_1k_steps: 0.0793
+         Mean episode mean_dist_to_ball: 1.2351
+               Mean episode goals_total: 636.8750
+--------------------------------------------------------------------------------
+                         Iteration time: 11.57s
+                           Time elapsed: 0:29:15
+                                    ETA: 1:05:07
+
+################################################################################
+[1m                           Learning iteration 155/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 7667712 
+                       Steps per second: 4243 
+                        Collection time: 11.357s 
+                          Learning time: 0.227s 
+                        Mean value loss: 3.2568
+                    Mean surrogate loss: -0.0031
+                      Mean entropy loss: -2.0957
+                            Mean reward: 85.59
+                    Mean episode length: 226.51
+                        Mean action std: 0.12
+         Mean episode goal_per_1k_steps: 0.1363
+         Mean episode mean_dist_to_ball: 1.2464
+               Mean episode goals_total: 637.8334
+--------------------------------------------------------------------------------
+                         Iteration time: 11.58s
+                           Time elapsed: 0:29:27
+                                    ETA: 1:04:56
+
+################################################################################
+[1m                           Learning iteration 156/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 7716864 
+                       Steps per second: 4236 
+                        Collection time: 11.374s 
+                          Learning time: 0.227s 
+                        Mean value loss: 2.7042
+                    Mean surrogate loss: -0.0038
+                      Mean entropy loss: -2.1126
+                            Mean reward: 83.93
+                    Mean episode length: 226.50
+                        Mean action std: 0.12
+         Mean episode goal_per_1k_steps: 0.1567
+         Mean episode mean_dist_to_ball: 1.2633
+               Mean episode goals_total: 639.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 11.60s
+                           Time elapsed: 0:29:38
+                                    ETA: 1:04:45
+
+################################################################################
+[1m                           Learning iteration 157/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 7766016 
+                       Steps per second: 4249 
+                        Collection time: 11.338s 
+                          Learning time: 0.229s 
+                        Mean value loss: 3.9933
+                    Mean surrogate loss: -0.0020
+                      Mean entropy loss: -2.1014
+                            Mean reward: 81.10
+                    Mean episode length: 218.42
+                        Mean action std: 0.12
+         Mean episode goal_per_1k_steps: 0.1790
+         Mean episode mean_dist_to_ball: 1.2587
+               Mean episode goals_total: 639.9584
+--------------------------------------------------------------------------------
+                         Iteration time: 11.57s
+                           Time elapsed: 0:29:50
+                                    ETA: 1:04:35
+
+################################################################################
+[1m                           Learning iteration 158/500                           [0m 
+
+                               Run name: hierarchical_soccer_chase_hl
+                            Total steps: 7815168 
+                       Steps per second: 4240 
+                        Collection time: 11.364s 
+                          Learning time: 0.228s 
+                        Mean value loss: 3.0704
+                    Mean surrogate loss: -0.0032
+                      Mean entropy loss: -2.1367
+                            Mean reward: 86.84
+                    Mean episode length: 235.47
+                        Mean action std: 0.12
+         Mean episode goal_per_1k_steps: 0.1465
+         Mean episode mean_dist_to_ball: 1.2584
+               Mean episode goals_total: 640.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 11.59s
+                           Time elapsed: 0:30:01
+                                    ETA: 1:04:24
+

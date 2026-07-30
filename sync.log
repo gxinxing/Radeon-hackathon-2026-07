@@ -1,0 +1,17 @@
+[2026-07-31 07:19:39] === Local sync start ===
+Transfer starting: 12 files
+./
+benchmark/
+benchmark/gpu_samples.csv
+benchmark/module_e_comparison.json
+benchmark/module_f_benchmark.json
+runs/
+runs/hierarchical_soccer_chase_hl/
+runs/hierarchical_soccer_chase_hl/cfgs.pkl
+runs/hierarchical_soccer_chase_hl/events.out.tfevents.1785451714.u-9230-e9a5adc6.36267.0
+runs/hierarchical_soccer_chase_hl/git/
+training_logs/
+training_logs/train_v8.log
+
+sent 221 bytes  received 54628 bytes  548490000 bytes/sec
+total size is 343656  speedup is 6.27
