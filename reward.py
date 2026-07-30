@@ -43,10 +43,11 @@ def r_feet_slip(feet_pos, last_feet_pos, feet_contact, dt, episode_length_buf):
 
 
 def r_approach_ball(dist_to_ball, prev_dist):
-    # Clamp to >= 0: never punish the robot for knocking the ball away.
-    # Without this clamp, ball contact yields NEGATIVE reward (dist jumps up),
-    # so the policy learns to camp at ~0.25 m instead of playing the ball.
-    return torch.clamp(prev_dist - dist_to_ball, min=0.0)
+    # Soft clamp via tanh: preserves weak negative gradient when ball moves away
+    # (bad contact), while capping large spikes from ball bounces. This gives
+    # the policy a signal to prefer contact that pushes ball toward goal.
+    delta = prev_dist - dist_to_ball
+    return torch.tanh(delta)
 
 
 def r_ball_progress(ball_goal_dist, prev_ball_goal_dist):
@@ -58,6 +59,23 @@ def r_ball_progress(ball_goal_dist, prev_ball_goal_dist):
 def r_ball_contact(min_foot_dist, contact_radius=0.15):
     """Bonus while either foot is within contact radius of the ball."""
     return (min_foot_dist < contact_radius).float()
+
+
+def r_approach_angle(ball_rel_body, goal_dir_body):
+    """Reward approaching the ball from the side OPPOSITE the goal.
+
+    When the robot is between the ball and its own goal, it will push the ball
+    toward the attack goal on contact.  +1 = perfectly behind ball, -1 = in front.
+    """
+    ball_dir = ball_rel_body / (torch.norm(ball_rel_body, dim=-1, keepdim=True) + 1e-6)
+    return (ball_dir * goal_dir_body).sum(dim=-1)
+
+
+def r_directed_contact(min_foot_dist, ball_vel_to_goal, contact_radius=0.20):
+    """Bonus for foot-near-ball WHILE the ball is moving toward the goal."""
+    in_contact = (min_foot_dist < contact_radius).float()
+    good_direction = torch.clamp(ball_vel_to_goal, min=0.0)
+    return in_contact * good_direction
 
 
 def r_ball_control(dist_to_ball, radius):
@@ -183,8 +201,8 @@ TASK_TERMS = {
                 "fall", "recovery", "energy", "action_rate", "dof_acc"},
     # Hierarchical: frozen low-level handles gait; high-level outputs velocity commands.
     # Drops tracking/feet terms (low-level concern), keeps ball-focused + safety terms.
-    "chase_hl": {"upright", "alive", "approach_ball", "ball_control", "ball_progress", "ball_contact",
-                 "ball_to_goal", "goal_scored",
+    "chase_hl": {"upright", "alive", "approach_ball", "approach_angle", "ball_control", "ball_progress",
+                 "ball_contact", "directed_contact", "ball_to_goal", "goal_scored",
                  "lin_vel_z", "ang_vel_xy", "orientation",
                  "fall", "recovery", "action_rate"},
     "balance_hl": {"upright", "alive", "lin_vel_z", "ang_vel_xy", "orientation",
@@ -192,11 +210,11 @@ TASK_TERMS = {
     # 3v3 cooperative task: extends chase_hl with team-shaping terms. Only active
     # in multi-agent training (multiagent_obs on) and when the harness supplies
     # the team-geometry obs fields; otherwise these terms are inert.
-    "coop_hl": {"upright", "alive", "approach_ball", "ball_control", "ball_progress", "ball_contact",
-                "ball_to_goal", "goal_scored",
-                "defensive_position", "support_position", "coop_goal",
-                "lin_vel_z", "ang_vel_xy", "orientation",
-                "fall", "recovery", "action_rate"},
+    "coop_hl": {"upright", "alive", "approach_ball", "approach_angle", "ball_control", "ball_progress",
+                 "ball_contact", "directed_contact", "ball_to_goal", "goal_scored",
+                 "defensive_position", "support_position", "coop_goal",
+                 "lin_vel_z", "ang_vel_xy", "orientation",
+                 "fall", "recovery", "action_rate"},
 }
 
 
@@ -234,6 +252,13 @@ def compute_reward(obs: dict, action: torch.Tensor, w: dict, task: str) -> torch
         total += w["ball_progress"] * r_ball_progress(obs["ball_goal_dist"], obs["prev_ball_goal_dist"])
     if "ball_contact" in terms:
         total += w["ball_contact"] * r_ball_contact(obs["min_foot_dist"])
+    if "approach_angle" in terms:
+        total += w.get("approach_angle", 2.0) * r_approach_angle(
+            obs.get("ball_rel_body", torch.zeros_like(obs["torso_up"]).unsqueeze(1).expand(-1, 2)),
+            obs.get("goal_dir_body", torch.zeros_like(obs["torso_up"]).unsqueeze(1).expand(-1, 2)))
+    if "directed_contact" in terms:
+        total += w.get("directed_contact", 5.0) * r_directed_contact(
+            obs["min_foot_dist"], obs["ball_vel_to_goal"])
     if "ball_to_goal" in terms:
         total += w["ball_to_goal"] * r_ball_to_goal(obs["ball_vel_to_goal"])
     if "goal_scored" in terms:
