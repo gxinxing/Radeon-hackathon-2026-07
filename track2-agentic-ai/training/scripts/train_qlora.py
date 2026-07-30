@@ -50,13 +50,12 @@ def load_training_data(data_path: str) -> Dataset:
         for line in f:
             item = json.loads(line.strip())
             # Format as ChatML conversation
+            system_prompt = item.get("system", (
+                "You are a quantitative strategy DSL generator. "
+                "Generate valid, machine-readable strategies and conservative risk controls."
+            ))
             messages = [
-                {"role": "system", "content": (
-                    "You are an experienced crypto trading expert. "
-                    "You can analyze market conditions, generate trading "
-                    "strategies in YAML DSL format, evaluate risk, and "
-                    "provide trading recommendations based on technical analysis."
-                )},
+                {"role": "system", "content": system_prompt},
                 {"role": "user", "content": item["instruction"]},
                 {"role": "assistant", "content": item["output"]},
             ]

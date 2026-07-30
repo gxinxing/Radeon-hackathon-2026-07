@@ -14,6 +14,7 @@ import time
 from pathlib import Path
 
 import httpx
+import yaml
 
 
 INSTRUMENTS = [
@@ -77,6 +78,13 @@ def build_cases() -> list[dict]:
 
 
 def extract_json(text: str) -> dict | None:
+    cleaned = text.strip().removeprefix("```json").removeprefix("```yaml").removesuffix("```").strip()
+    try:
+        value = yaml.safe_load(cleaned)
+        if isinstance(value, dict):
+            return value
+    except yaml.YAMLError:
+        pass
     start, end = text.find("{"), text.rfind("}")
     if start < 0 or end < start:
         return None
