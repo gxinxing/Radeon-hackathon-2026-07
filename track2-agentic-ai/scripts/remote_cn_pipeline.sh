@@ -31,8 +31,8 @@ cd "$PROJECT"
   --output-path "$MERGED"
 
 echo "[$(date -Is)] starting domestic vLLM"
-nohup /opt/venv/bin/python -m vllm.entrypoints.openai.api_server \
-  --model "$MERGED" --served-model-name qwen-trader-cn-merged \
+nohup env VLLM_USE_TRITON_FLASH_ATTN=0 /opt/venv/bin/python -m vllm.entrypoints.openai.api_server \
+  --model "$MERGED" --served-model-name models/qwen-trader-merged \
   --port 8000 --max-model-len 4096 --gpu-memory-utilization 0.50 \
   --dtype float16 --trust-remote-code --enforce-eager \
   >/persistent/cn_vllm.log 2>&1 &
@@ -49,7 +49,7 @@ curl -fsS http://127.0.0.1:8000/v1/models >/dev/null
 echo "[$(date -Is)] evaluating domestic model"
 /opt/venv/bin/python scripts/eval_cn_market.py \
   --vllm-url http://127.0.0.1:8000/v1 \
-  --model qwen-trader-cn-merged \
+  --model models/qwen-trader-merged \
   --output /persistent/cn_market_eval_after.json \
   >/persistent/cn_market_eval_after.log 2>&1
 

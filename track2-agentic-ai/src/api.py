@@ -14,6 +14,8 @@ This single server exposes:
 
 from __future__ import annotations
 
+from typing import Any
+
 from fastapi import FastAPI
 from fastapi.responses import PlainTextResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -25,8 +27,8 @@ from .tools.paper_trade import router as paper_trade_router
 
 
 app = FastAPI(
-    title="Crypto Trading Agent API",
-    description="Full-stack API for LLM-powered crypto trading: DSL validation, backtesting, market data, and paper trading.",
+    title="AMD CN Market Quant Agent API",
+    description="Domestic stock and ETF strategy generation, validation and simulation API.",
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
@@ -49,7 +51,54 @@ app.include_router(paper_trade_router, prefix="/api")
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "service": "crypto-trading-agent"}
+    return {"status": "ok", "service": "cn-market-quant-agent", "mode": "simulation"}
+
+
+@app.post("/api/cn/backtest/report", response_class=PlainTextResponse)
+async def cn_backtest_report(payload: dict[str, Any]):
+    """Return an auditable Chinese report for a domestic-market DSL."""
+    from .backtest.cn_runner import run_cn_demo_backtest
+
+    strategy = payload.get("strategy", {})
+    market = strategy.get("market", {})
+    constraints = strategy.get("constraints", {})
+    risk = strategy.get("risk", {})
+    errors: list[str] = []
+    instrument = str(market.get("instrument", ""))
+    if market.get("exchange") != "cn_stock":
+        errors.append("exchange 必须为 cn_stock")
+    if not (instrument.endswith(".SH") or instrument.endswith(".SZ")):
+        errors.append("instrument 必须为 .SH 或 .SZ 证券代码")
+    if constraints.get("allow_short") is not False:
+        errors.append("国内现货演示禁止裸卖空")
+    if int(constraints.get("lot_size", 0) or 0) != 100:
+        errors.append("lot_size 必须为100股")
+    if float(risk.get("stop_loss", 0) or 0) >= 0:
+        errors.append("stop_loss 必须为负数")
+    if errors:
+        return "# AMD 国内市场策略报告\n\n- 结论：❌ REJECT\n- 原因：" + "；".join(errors)
+
+    result = run_cn_demo_backtest(payload, days=180, initial_balance=100000.0)
+    verdict = "⚠️ REVIEW" if result.max_drawdown < -0.15 or result.total_trades < 2 else "✅ PASS"
+    alpha = result.total_return - result.benchmark_return
+    return (
+        "# AMD 国内市场量化策略演示报告\n\n"
+        f"- 策略：{strategy.get('name', '未命名策略')}\n"
+        f"- 标的：{instrument}\n"
+        f"- 周期：{market.get('timeframe', '1d')}\n"
+        "- 运行模式：Paper Trading / 模拟回测\n"
+        "- 行情来源：确定性合成历史行情（仅用于系统闭环演示）\n"
+        "- 市场约束：T+1、100股整数手、禁止裸卖空、佣金、卖出印花税、滑点\n"
+        f"- 初始资金：¥{result.initial_balance:,.2f}\n"
+        f"- 最终资金：¥{result.final_balance:,.2f}\n"
+        f"- 总收益率：{result.total_return:.2%}\n"
+        f"- 最大回撤：{result.max_drawdown:.2%}\n"
+        f"- 完成交易：{result.total_trades} 笔\n"
+        f"- 胜率：{result.win_rate:.2%}\n"
+        f"- 相对演示基准 Alpha：{alpha:.2%}\n\n"
+        f"## 风控结论\n\n{verdict}\n\n"
+        "> 本结果只验证 AMD GPU Agent 的策略生成、校验与模拟执行闭环，不构成投资建议。"
+    )
 
 
 # Re-export backtest endpoints
@@ -85,8 +134,8 @@ async def walk_forward(req: BacktestRequest):
 @app.get("/api/knowledge")
 async def knowledge_retrieval(query: str = ""):
     """Retrieve trading knowledge from RAG knowledge base."""
-    from .knowledge_base.retriever import retrieve_knowledge
+    from .knowledge_base.cn_knowledge import retrieve_cn_knowledge
     if not query:
         return {"success": False, "error": "Query parameter 'query' is required"}
-    context = retrieve_knowledge(query, max_results=5)
+    context = retrieve_cn_knowledge(query)
     return {"success": True, "query": query, "context": context}
