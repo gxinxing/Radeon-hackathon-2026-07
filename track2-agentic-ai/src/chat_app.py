@@ -435,7 +435,6 @@ def create_app():
     """Create the Gradio chat interface."""
     with gr.Blocks(
         title="Crypto Trading Agent — AMD ROCm",
-        theme=gr.themes.Soft(),
     ) as app:
         gr.Markdown("""
 # 🤖 Crypto Trading Agent on AMD Radeon GPU
@@ -458,7 +457,6 @@ Powered by Qwen2.5-7B (QLoRA fine-tuned) on AMD ROCm GPU.
                         "MACD金叉策略，BTC/USDT 4小时线，止损5%",
                         "多指标共振策略：EMA金叉 + RSI超卖 + 放量确认",
                     ],
-                    type="messages",
                 )
             with gr.Column(scale=1):
                 gr.Markdown("""
@@ -492,4 +490,4 @@ LLM: 分析报告
 
 if __name__ == "__main__":
     app = create_app()
-    app.launch(server_name="0.0.0.0", server_port=7860)
+    app.launch(server_name="0.0.0.0", server_port=7860, theme=gr.themes.Soft())
