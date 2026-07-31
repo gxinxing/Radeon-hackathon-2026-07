@@ -35,8 +35,8 @@ humanoid robot policies can be trained without NVIDIA hardware.
 4. **Floating-base dynamics fix** — 5 critical bugs in Genesis URDF loading, state
    reading, and termination logic identified and fixed
 5. **Distributed multi-robot architecture** — Socket-coordinated multi-process system
-   bypassing Genesis ROCm multi-entity crash, enabling 3v3 matches with 6 concurrent
-   robots on a single AMD GPU
+   designed for 3v3 matches (6 robots) on a single AMD GPU. 1v1 and 2v2 matches
+   verified with ONNX inference.
 
 ### 1.3 Technical Stack
 
@@ -383,9 +383,9 @@ coordinator synchronizes state between processes at 50 Hz:
 ### 7.4 RL vs Rule-Based Behavior
 
 Team A (RL) robots showed autonomous ball-chasing behavior:
-- RL attacker moved 3.06m across the field toward the ball
+- RL attacker reached ball distance of 0.43m (verified in 2v2 match)
 - RL robots maintained balance (pitch < 7° throughout)
-- Ball was actively displaced to both sides of the field
+- Ball was actively displaced during 1v1 match (20m total displacement)
 
 Team B (rule-based) robots showed simpler chase behavior:
 - Rule attacker reached ball distance of 0.13m
@@ -543,7 +543,8 @@ approach_angle + directed_contact rewards, the robot learned to approach the bal
 the correct direction and make contact that pushes the ball toward the goal, achieving
 1,358 goals in 500 iterations (830% improvement over the previous best).
 
-The distributed multi-process architecture enabled 3v3 matches with 6 concurrent robots
-on a single AMD GPU, validating the trained policies in a multi-agent setting. All
-engineering deliverables — benchmark data, ONNX deployment model, demo videos, match
-logs, and reproducible code — are archived on GitHub.
+The distributed multi-process architecture was designed for 3v3 matches (6 robots) on a
+single AMD GPU. 1v1 and 2v2 matches were verified with ONNX inference (200 steps, ball
+displaced 20m in 1v1; 2v2 match with 1245 steps logged). 3v3 match with 6 robots at
+distinct positions is future work. All engineering deliverables — benchmark data, ONNX
+deployment model, demo videos, match logs, and reproducible code — are archived on GitHub.
