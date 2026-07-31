@@ -16,6 +16,7 @@ MSG_STATE = 1
 MSG_BALL = 2
 MSG_CMD = 3
 MSG_END = 4
+MSG_WORLD = 5  # Global perception: all robots + ball in one message
 
 DEFAULT_PORT = 9876
 N_STEPS = 200  # 20s at 10Hz (HL decimation=5, 50Hz physics)
@@ -63,6 +64,7 @@ class MatchWorker:
         self.team_id = team_id
         self.running = False
         self.opp_states = {}  # other robots' positions
+        self.all_robot_states = []  # list of {x,y,z,pitch,roll} for all robots
         self.ball_pos = np.array([0.0, 0.0, 0.11])
         self.ball_vel = np.array([0.0, 0.0, 0.0])
         self.collision_push = np.array([0.0, 0.0, 0.0])
@@ -117,36 +119,44 @@ class MatchWorker:
         step = 0
 
         while self.running and step < N_STEPS:
-            # Receive ONE set of messages (opp state + ball), then proceed
-            self.sock.settimeout(30.0)  # long timeout: wait for coordinator to start broadcasting
+            # Receive world state from coordinator
+            self.sock.settimeout(120.0)
             try:
-                # Read opp state
                 msg_type, data = recv_msg(self.sock)
                 if msg_type == MSG_END:
                     print(f'[{self.role}] Received END signal at step {step}')
                     self.running = False
                     break
-                elif msg_type == MSG_STATE and data:
-                    self.opp_states['opp'] = np.array(data[:3])
                 elif msg_type is None:
-                    # Connection truly lost (not timeout)
                     print(f'[{self.role}] Connection lost before step {step}')
                     self.running = False
                     break
-
-                # Read ball state (if sent)
-                msg_type, data = recv_msg(self.sock)
-                if msg_type == MSG_END:
-                    print(f'[{self.role}] Received END signal at step {step}')
-                    self.running = False
-                    break
-                elif msg_type == MSG_BALL and data:
+                elif msg_type == MSG_WORLD and data:
+                    # Parse world state: [n_robots * 5 (x,y,z,pitch,roll)] + [ball 6]
+                    n_robots = (len(data) - 6) // 5
+                    self.all_robot_states = []
+                    for i in range(n_robots):
+                        base = i * 5
+                        self.all_robot_states.append({
+                            'x': data[base], 'y': data[base+1], 'z': data[base+2],
+                            'pitch': data[base+3], 'roll': data[base+4]
+                        })
+                    # Ball is last 6 floats
+                    ball_start = n_robots * 5
                     if not self.has_ball:
-                        self.ball_pos = np.array(data[:3])
-                        self.ball_vel = np.array(data[3:6])
+                        self.ball_pos = np.array(data[ball_start:ball_start+3])
+                        self.ball_vel = np.array(data[ball_start+3:ball_start+6])
                 elif msg_type == MSG_CMD and data:
                     self.collision_push = np.array(data[:3])
-                elif msg_type is None:
+
+                # Read collision push (if sent separately)
+                msg_type2, data2 = recv_msg(self.sock)
+                if msg_type2 == MSG_END:
+                    self.running = False
+                    break
+                elif msg_type2 == MSG_CMD and data2:
+                    self.collision_push = np.array(data2[:3])
+                elif msg_type2 is None:
                     self.running = False
                     break
             except socket.timeout:

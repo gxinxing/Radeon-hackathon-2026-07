@@ -14,6 +14,7 @@ MSG_STATE = 1
 MSG_BALL = 2
 MSG_CMD = 3
 MSG_END = 4
+MSG_WORLD = 5  # Global perception: all robots + ball in one message
 
 DEFAULT_PORT = 9876
 MATCH_DURATION = 20.0
@@ -116,20 +117,27 @@ class MatchCoordinator:
                             collisions.append((client_names[i], client_names[j], dist, dx, dy))
 
             # Broadcast to all clients
-            for name, conn in self.clients.items():
-                # Send all other clients' states
-                for other_name, other_state in states_snapshot.items():
-                    if other_name != name and 'x' in other_state:
-                        self._safe_send(conn, MSG_STATE, [
-                            other_state.get('x', 0), other_state.get('y', 0),
-                            other_state.get('z', 0.7), other_state.get('pitch', 0),
-                            other_state.get('roll', 0)
-                        ])
-                # Send ball state
-                self._safe_send(conn, MSG_BALL, [
-                    ball_snapshot['x'], ball_snapshot['y'], ball_snapshot['z'],
-                    ball_snapshot['vx'], ball_snapshot['vy'], ball_snapshot['vz']
+            client_names = list(self.clients.keys())
+            n_robots = len(client_names)
+
+            # Build world state array: [n_robots * 5 (x,y,z,pitch,roll)] + [ball_x,ball_y,ball_z,ball_vx,ball_vy,ball_vz]
+            # Total floats = n_robots*5 + 6
+            world_data = []
+            for cn in client_names:
+                s = states_snapshot.get(cn, {})
+                world_data.extend([
+                    s.get('x', 0), s.get('y', 0), s.get('z', 0.7),
+                    s.get('pitch', 0), s.get('roll', 0)
                 ])
+            world_data.extend([
+                ball_snapshot['x'], ball_snapshot['y'], ball_snapshot['z'],
+                ball_snapshot['vx'], ball_snapshot['vy'], ball_snapshot['vz']
+            ])
+
+            for name, conn in self.clients.items():
+                # Send global world state (all robots + ball)
+                self._safe_send(conn, MSG_WORLD, world_data)
+
                 # Send collision push-back
                 push = [0, 0, 0]
                 for c in collisions:
