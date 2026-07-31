@@ -14,10 +14,7 @@ MSG_STATE = 1
 MSG_BALL = 2
 MSG_CMD = 3
 MSG_END = 4
-<<<<<<< HEAD
-=======
 MSG_WORLD = 5  # Global perception: all robots + ball in one message
->>>>>>> track3-honest
 
 DEFAULT_PORT = 9876
 MATCH_DURATION = 20.0
@@ -79,22 +76,6 @@ class MatchCoordinator:
         server.listen(self.n_teams * 3 + 2)
         print(f'[Coord] Listening on port {self.port}, expecting up to {self.n_teams*3} clients')
 
-<<<<<<< HEAD
-        # Accept clients — n_teams=1 means 1v1 (2 robots), n_teams=2 means 3v3 (6 robots)
-        expected = 2 if self.n_teams <= 1 else self.n_teams * 3
-        for i in range(expected):
-            server.settimeout(30)
-            try:
-                conn, addr = server.accept()
-            except socket.timeout:
-                print(f'[Coord] Timeout waiting for client {i}')
-                break
-            name = f'client_{i}'
-            self.clients[name] = conn
-            self.states[name] = {'x': 0, 'y': 0, 'z': 0.7, 'pitch': 0, 'roll': 0}
-            print(f'[Coord] {name} connected from {addr}')
-            threading.Thread(target=self._handle_client, args=(conn, name), daemon=True).start()
-=======
         # Accept clients with 600s total deadline (workers need time to compile Genesis kernels)
         expected = 2 if self.n_teams <= 1 else self.n_teams * 3
         accept_deadline = time.time() + 600
@@ -118,7 +99,6 @@ class MatchCoordinator:
         if connected < expected:
             print(f'[Coord] Warning: only {connected}/{expected} clients connected')
         print(f'[Coord] All clients connected, starting match')
->>>>>>> track3-honest
 
         server.settimeout(None)
         self.start_time = time.time()
@@ -146,23 +126,6 @@ class MatchCoordinator:
                             collisions.append((client_names[i], client_names[j], dist, dx, dy))
 
             # Broadcast to all clients
-<<<<<<< HEAD
-            for name, conn in self.clients.items():
-                # Send all other clients' states
-                for other_name, other_state in states_snapshot.items():
-                    if other_name != name and 'x' in other_state:
-                        self._safe_send(conn, MSG_STATE, [
-                            other_state.get('x', 0), other_state.get('y', 0),
-                            other_state.get('z', 0.7), other_state.get('pitch', 0),
-                            other_state.get('roll', 0)
-                        ])
-                # Send ball state
-                self._safe_send(conn, MSG_BALL, [
-                    ball_snapshot['x'], ball_snapshot['y'], ball_snapshot['z'],
-                    ball_snapshot['vx'], ball_snapshot['vy'], ball_snapshot['vz']
-                ])
-                # Send collision push-back
-=======
             client_names = list(self.clients.keys())
             n_robots = len(client_names)
 
@@ -186,7 +149,6 @@ class MatchCoordinator:
 
                 # Send collision push-back
                 # Always send collision push-back (even if zero, to keep protocol in sync)
->>>>>>> track3-honest
                 push = [0, 0, 0]
                 for c in collisions:
                     if name == c[0]:
@@ -195,12 +157,7 @@ class MatchCoordinator:
                     elif name == c[1]:
                         push[0] = -c[3] / c[2] * 0.1
                         push[1] = -c[4] / c[2] * 0.1
-<<<<<<< HEAD
-                if push != [0, 0, 0]:
-                    self._safe_send(conn, MSG_CMD, push)
-=======
                 self._safe_send(conn, MSG_CMD, push)
->>>>>>> track3-honest
 
             # Log match state
             log_entry = {

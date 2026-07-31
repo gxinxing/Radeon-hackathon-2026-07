@@ -24,18 +24,10 @@ env:
   episode_length_s: 24.0
   hl_clip_lin: 1.2       # HL linear velocity command limit (m/s); CLI --clip_lin overrides
   hl_clip_ang: 1.2       # HL angular velocity limit (rad/s); CLI --clip_ang overrides
-  multiagent_obs: false  # 3v3 only: append 5-dim teammate/opponent/possession to obs (19→24).
-                         # OFF keeps the v6 (19-dim) checkpoint valid. Turn ON for the next
-                         # multi-agent training run; the 3v3 harness must then feed
-                         # env.teammate_pos / env.opponent_pos each step.
-=======
-  hl_clip_lin: 1.2       # HL linear velocity command limit (m/s); CLI --clip_lin overrides
-  hl_clip_ang: 1.2       # HL angular velocity limit (rad/s); CLI --clip_ang overrides
   multiagent_obs: false  # 24-dim multi-agent obs NOT yet activated in training.
                          # coop_hl task uses cooperative reward terms but with 19-dim obs
                          # (teammate/opponent positions are zero). True 24-dim training
                          # requires the 3v3 harness to feed env.teammate_pos/opponent_pos.
->>>>>>> track3-honest
   dt: 0.02             # control dt = physics_dt(0.002) * decimation(10)
   substeps: 10
   action_scale: 0.25   # used by low-level (frozen model)

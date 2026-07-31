@@ -41,11 +41,10 @@
 
 | 指标 | 数值 | 说明 |
 |------|------|------|
-| 奖励提升 | **-24 → +112** | coop_hl 多智能体训练（24 维观测，500 轮迭代） |
-| 动作标准差（修复后） | **5.78 → 0.09** | entropy_coef 0.01→0.003 解决噪声爆炸 |
-| 回合长度 | **19 → 208 步** | 从立即摔倒到持续行走 |
-| 总进球数 | **2,058** | 相比 v7（146 球）提升 1,407% |
-| 最小球距 | **3.07m → 0.32m** | 多智能体协作训练，具备队友/对手感知 |
+| 奖励提升 | **-22 → +24** | P0/P1/P2 调参后（500 轮迭代） |
+| 动作标准差（修复后） | **5.78 → 0.07** | entropy_coef 0.01→0.003 解决噪声爆炸 |
+| 回合长度 | **18 → 225 步** | 从立即摔倒到持续行走 |
+| 最小球距 | **4.29m → 0.25m** | 机器人主动接近球 |
 | ONNX 推理速度 | **0.4 ms** | 19→3 维，实时可用（46,467 参数） |
 | 1v1 验证 | **200 步，球位移 20m** | ONNX 推理在 AMD Radeon GPU 上验证 |
 | 训练吞吐量 | **4,618 步/秒**（峰值） | 2048 并行环境，AMD Radeon (51 GB 显存) |
@@ -91,17 +90,10 @@ Booster Robotics 官方 RL 训练框架（Booster Gym / Booster Train）依赖 N
                            │
                            ▼
 ┌──────────────────────────────────────────────────────────┐
-<<<<<<< HEAD
-│                     部署 Pipeline                         │
-│                                                          │
-│  训练 .pt  ──▶  ONNX 导出  ──▶  Booster Studio           │
-│  检查点                         3v3 SoccerSim (Sim2Sim)   │
-=======
 │                     验证 Pipeline                         │
 │                                                          │
 │  训练 .pt  ──▶  ONNX 导出  ──▶  1v1 对抗验证               │
 │  检查点                         (ONNX Runtime, Genesis)    │
->>>>>>> track3-honest
 └──────────────────────────────────────────────────────────┘
 ```
 
@@ -325,25 +317,6 @@ ls runs/hierarchical_soccer_chase_hl/
     --output models/soccer_policy.onnx
 ```
 
-<<<<<<< HEAD
-### Booster Studio Sim2Sim 验证
-
-1. 在云实例上安装 Booster Studio：
-
-```bash
-bash install_booster_studio.sh
-```
-
-2. 通过 noVNC 访问 Booster Studio：
-
-```
-https://radeon-global.anruicloud.com/instances/<instance-id>/proxy/6080/vnc.html
-```
-
-3. 在 Booster Studio 的 3v3 SoccerSim 中加载 ONNX 模型
-4. 与官方 Booster AI 进行对抗
-
-=======
 ### 1v1 对抗验证（ONNX Runtime）
 
 ```bash
@@ -351,7 +324,6 @@ https://radeon-global.anruicloud.com/instances/<instance-id>/proxy/6080/vnc.html
 python match_1v1_onnx.py --onnx models/chase_v8_policy.onnx --steps 200
 ```
 
->>>>>>> track3-honest
 ### 3v3 对对抗评估
 
 ```bash
@@ -447,12 +419,6 @@ bash run_1v1.sh runs/hierarchical_soccer_chase_hl/model_1894.pt 25
 bash run_3v3.sh runs/hierarchical_soccer_chase_hl/model_1894.pt 25
 ```
 
-<<<<<<< HEAD
-**结果：**
-- 1v1：Agent 119 步，对手 112 步，零 GPU 崩溃
-- 3v3：6 个 worker 各 75-84 步，共记录 1240 步，零 GPU 崩溃
-- 比赛日志保存到 `match_logs/match_YYYYMMDD_HHMMSS.json`
-=======
 **1v1 验证结果：**
 - 200 步，10Hz（20 秒仿真）
 - 球速度非零：最大 1.46 m/s，平均 0.94 m/s
@@ -460,7 +426,6 @@ bash run_3v3.sh runs/hierarchical_soccer_chase_hl/model_1894.pt 25
 - 机器人高度稳定在 0.89-0.92m（无摔倒）
 - ONNX 推理：200 步，无错误
 - 比赛日志保存到 `match_logs/match_1v1.json`
->>>>>>> track3-honest
 
 ---
 
@@ -501,14 +466,8 @@ bash run_3v3.sh runs/hierarchical_soccer_chase_hl/model_1894.pt 25
 │   │   ├── roles.py               # 角色分配（前锋/后卫/守门员）
 │   │   ├── scene.py               # 比赛场景和状态定义
 │   │   └── result.py              # 比赛结果跟踪
-<<<<<<< HEAD
-│   └── booster_agent/            # Booster Studio Sim2Sim agent
-│       ├── src/main.py            # Agent 入口（ONNX 策略）
-│       └── src/rl_playbook.py    # RL 增强战术手册
-=======
 │   └── soccer_env/
 │       └── soccer_scene.py        # Genesis 足球场场景构建器
->>>>>>> track3-honest
 ├── scripts/
 │   └── match_eval_3v3.py         # 比赛评估脚本
 ├── tests/
@@ -535,11 +494,7 @@ bash run_3v3.sh runs/hierarchical_soccer_chase_hl/model_1894.pt 25
 | 深度学习 | PyTorch 2.9.1 (ROCm 6.2) | 通过 HIP/ROCm 支持 AMD GPU |
 | RL 算法 | rsl_rl 5.4.2 (PPO) | 轻量、成熟、兼容 Genesis |
 | 机器人平台 | Booster T1（人形，31 自由度） | RoboCup 足球标准平台 |
-<<<<<<< HEAD
-| Sim2Sim 验证 | Booster Studio 1.9.4 | 官方 3v3 足球模拟器 |
-=======
 | 对抗验证 | Genesis 1v1（ONNX Runtime） | 引擎内验证训练策略 |
->>>>>>> track3-honest
 | 云 GPU | 安睿云 AMD GPU (51 GB 显存) | AMD Radeon GPU + JupyterLab + VNC |
 
 ---
@@ -551,12 +506,8 @@ bash run_3v3.sh runs/hierarchical_soccer_chase_hl/model_1894.pt 25
    问题（VRAM 占用仅 0.9 GB / 51.5 GB）。
 
 2. **解决方案 — 分布式多进程架构**：每个机器人在独立的 Genesis 进程中运行（已验证 1 个
-<<<<<<< HEAD
-   机器人稳定）。通过 socket 协调器在进程间同步状态。已验证 6 个并发进程（3v3 对抗）。
-=======
    机器人稳定）。通过 socket 协调器在进程间同步状态。1v1 对抗已通过 ONNX 推理验证（200 步，
    球位移 20m）。3v3 分布式对抗（6 机器人）已设计但尚未在运行时完全验证。
->>>>>>> track3-honest
 
 3. **近距离控球**：当球距离 2 米以内时，速度指令接口无法表达控球所需的精细动作。
    需要残差关节级策略来实现带球和射门。
@@ -579,13 +530,8 @@ bash run_3v3.sh runs/hierarchical_soccer_chase_hl/model_1894.pt 25
 
 ## 👥 团队信息
 
-<<<<<<< HEAD
-- 队伍名称：[提交前填写]
-- 队员：[提交前填写]
-=======
 - 队伍名称：个人参赛
 - 队员：Simon
->>>>>>> track3-honest
 
 ---
 

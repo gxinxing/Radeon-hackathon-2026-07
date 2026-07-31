@@ -114,11 +114,7 @@ def r_defensive_position(self_xy, ball_xy, defend_goal_xy, in_possession,
     lateral = torch.norm(rel - proj * axis_u, dim=-1, keepdim=True)
     on_side = torch.sigmoid(proj / spread)              # 0..1
     tight = torch.exp(-torch.clamp(lateral - lateral_tol, min=0.0))
-<<<<<<< HEAD
-    return (on_side * tight).squeeze(-1) * (1.0 - in_possession)
-=======
     return (on_side * tight).squeeze(-1) * (1.0 - in_possession.squeeze(-1))
->>>>>>> track3-honest
 
 
 def r_support_position(self_xy, ball_xy, attack_goal_xy, in_possession,
@@ -135,11 +131,7 @@ def r_support_position(self_xy, ball_xy, attack_goal_xy, in_possession,
     lateral = torch.norm(rel - proj * axis_u, dim=-1, keepdim=True)
     advanced = torch.sigmoid((proj - push) / 1.0)
     not_crowding = torch.exp(-torch.clamp(crowd_tol - lateral, min=0.0) * 2.0)
-<<<<<<< HEAD
-    return (advanced * not_crowding).squeeze(-1) * in_possession
-=======
     return (advanced * not_crowding).squeeze(-1) * in_possession.squeeze(-1)
->>>>>>> track3-honest
 
 
 def r_coop_goal(scored, scored_my_team):
