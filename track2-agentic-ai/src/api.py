@@ -14,14 +14,10 @@ This single server exposes:
 
 from __future__ import annotations
 
-<<<<<<< HEAD
-from fastapi import FastAPI
-=======
 from typing import Any
 
 from fastapi import FastAPI
 from fastapi.responses import PlainTextResponse
->>>>>>> track3-honest
 from fastapi.middleware.cors import CORSMiddleware
 
 from .backtest.server import app as backtest_app, BacktestRequest, BacktestResponse
@@ -31,13 +27,8 @@ from .tools.paper_trade import router as paper_trade_router
 
 
 app = FastAPI(
-<<<<<<< HEAD
-    title="Crypto Trading Agent API",
-    description="Full-stack API for LLM-powered crypto trading: DSL validation, backtesting, market data, and paper trading.",
-=======
     title="AMD CN Market Quant Agent API",
     description="Domestic stock and ETF strategy generation, validation and simulation API.",
->>>>>>> track3-honest
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
@@ -60,9 +51,6 @@ app.include_router(paper_trade_router, prefix="/api")
 
 @app.get("/health")
 async def health():
-<<<<<<< HEAD
-    return {"status": "ok", "service": "crypto-trading-agent"}
-=======
     return {"status": "ok", "service": "cn-market-quant-agent", "mode": "simulation"}
 
 
@@ -111,7 +99,6 @@ async def cn_backtest_report(payload: dict[str, Any]):
         f"## 风控结论\n\n{verdict}\n\n"
         "> 本结果只验证 AMD GPU Agent 的策略生成、校验与模拟执行闭环，不构成投资建议。"
     )
->>>>>>> track3-honest
 
 
 # Re-export backtest endpoints
@@ -122,8 +109,6 @@ async def backtest(req: BacktestRequest):
     return await _backtest(req)
 
 
-<<<<<<< HEAD
-=======
 @app.post("/api/backtest/report", response_class=PlainTextResponse)
 async def backtest_report(req: BacktestRequest):
     """Run a strategy backtest and return a concise Chinese report."""
@@ -131,7 +116,6 @@ async def backtest_report(req: BacktestRequest):
     return await _backtest_report(req)
 
 
->>>>>>> track3-honest
 @app.post("/api/validate")
 async def validate(strategy: dict):
     """Validate a strategy DSL without running backtest."""
@@ -150,11 +134,10 @@ async def walk_forward(req: BacktestRequest):
 @app.get("/api/knowledge")
 async def knowledge_retrieval(query: str = ""):
     """Retrieve trading knowledge from RAG knowledge base."""
-<<<<<<< HEAD
-    from .knowledge_base.retriever import retrieve_knowledge
+    from .knowledge_base.cn_knowledge import retrieve_cn_knowledge
     if not query:
         return {"success": False, "error": "Query parameter 'query' is required"}
-    context = retrieve_knowledge(query, max_results=5)
+    context = retrieve_cn_knowledge(query)
     return {"success": True, "query": query, "context": context}
 =======
     from .knowledge_base.cn_knowledge import retrieve_cn_knowledge

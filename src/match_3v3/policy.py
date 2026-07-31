@@ -169,24 +169,6 @@ class RulePolicy:
 # ═══════════════════════════════════════════════════════════════════
 
 class SharedRLPolicy:
-<<<<<<< HEAD
-    """RL policy using separate walk and shoot checkpoints.
-
-    Architecture:
-        1. Role layer (RoleAssigner) decides role + target per player.
-        2. Rule layer computes velocity_cmd (same as RulePolicy).
-        3. Walk checkpoint (t1_walk.pt) converts velocity_cmd → joint targets.
-        4. Shoot checkpoint converts shoot trigger → kick motion.
-
-    The walk checkpoint handles locomotion only — it does NOT kick.
-    The shoot checkpoint handles kicking skill only — it does NOT walk.
-
-    Loading:
-        walk_checkpoint   — path to t1_walk.pt (TorchScript)
-        shoot_checkpoint  — path to shoot policy .pt (optional)
-
-    When torch or checkpoints are unavailable, falls back to RulePolicy.
-=======
     """RL policy using ONNX Runtime for real inference — no more stub.
 
     Replaces the previous stub that always fell back to RulePolicy.
@@ -204,43 +186,22 @@ class SharedRLPolicy:
     "observation wrapper = bridge between training and deployment" principle.
 
     When ONNX model is not available, falls back to RulePolicy.
->>>>>>> track3-honest
     """
 
     def __init__(
         self,
-<<<<<<< HEAD
-=======
         onnx_path: Optional[str] = None,
->>>>>>> track3-honest
         walk_checkpoint: Optional[str] = None,
         shoot_checkpoint: Optional[str] = None,
         field: Optional[FieldConstants] = None,
         action_scale: float = 0.25,
         obs_history_length: int = 10,
-<<<<<<< HEAD
-=======
         clip_lin: float = 1.2,
         clip_ang: float = 1.2,
->>>>>>> track3-honest
     ):
         self.field = field or DEFAULT_FIELD
         self.action_scale = action_scale
         self.obs_history_length = obs_history_length
-<<<<<<< HEAD
-        self.walk_model = None
-        self.shoot_model = None
-        self.torch_available = torch is not None
-        self.rule_fallback = RulePolicy(field=self.field)
-
-        self._load_checkpoints(walk_checkpoint, shoot_checkpoint)
-
-    def _load_checkpoints(self, walk_path: Optional[str], shoot_path: Optional[str]):
-        """Load TorchScript checkpoints if torch is available."""
-        if not self.torch_available:
-            return
-
-=======
         self.clip_lin = clip_lin
         self.clip_ang = clip_ang
         self.torch_available = torch is not None
@@ -275,16 +236,11 @@ class SharedRLPolicy:
         """Load TorchScript checkpoints (legacy, for joint-level control)."""
         if not self.torch_available:
             return
->>>>>>> track3-honest
         if walk_path and os.path.exists(walk_path):
             try:
                 self.walk_model = torch.jit.load(walk_path, map_location="cpu")
             except Exception:
                 self.walk_model = None
-<<<<<<< HEAD
-
-=======
->>>>>>> track3-honest
         if shoot_path and os.path.exists(shoot_path):
             try:
                 self.shoot_model = torch.jit.load(shoot_path, map_location="cpu")
@@ -292,13 +248,10 @@ class SharedRLPolicy:
                 self.shoot_model = None
 
     @property
-<<<<<<< HEAD
-=======
     def onnx_loaded(self) -> bool:
         return self.session is not None
 
     @property
->>>>>>> track3-honest
     def walk_loaded(self) -> bool:
         return self.walk_model is not None
 
@@ -308,98 +261,20 @@ class SharedRLPolicy:
 
     @property
     def mode(self) -> str:
-<<<<<<< HEAD
-        """Return the policy mode label for match output."""
-        if self.walk_loaded and self.shoot_loaded:
-            return "full_vs_rule"
-=======
         if self.onnx_loaded:
             return "onnx_vs_rule"
->>>>>>> track3-honest
         elif self.walk_loaded:
             return "rl_vs_rule"
         else:
             return "rule_vs_rule"
 
-<<<<<<< HEAD
-    def compute(self, player: PlayerState, ball: BallState) -> PolicyAction:
-        """Compute action using walk policy for locomotion + rule layer for decisions.
+    def _preprocess_obs(self, player: PlayerState, ball: BallState) -> np.ndarray:
+        """Build 19-dim observation vector from PlayerState + BallState.
 
-        The rule layer always runs (deciding role-based targets and kick triggers).
-        The walk model, if loaded, overrides the velocity_cmd → joint mapping.
-        The shoot model, if loaded, overrides the kick motion.
-        """
-        # Rule layer always provides the decision (targets, kick/shoot flags)
-        action = self.rule_fallback.compute(player, ball)
-
-        # If walk model is loaded, we could use it to translate velocity_cmd
-        # to joint targets. This requires the full observation buffer.
-        # For now, the walk model flag indicates capability, not execution.
-        # Actual joint control happens in the scene step loop.
-
-        return action
-
-    def get_walk_joint_targets(
-        self,
-        velocity_cmd: np.ndarray,
-        obs_history: Optional[np.ndarray] = None,
-    ) -> Optional[np.ndarray]:
-        """Convert velocity command to joint targets via walk checkpoint.
-
-        Returns 21-dim joint target array, or None if walk model not loaded.
-        This is called by the scene step loop, NOT by compute().
-        """
-        if not self.walk_loaded or not self.torch_available:
-            return None
-
-        # Build observation from history (if provided) or zeros
-        if obs_history is not None:
-            obs = torch.from_numpy(obs_history).float().unsqueeze(0)
-        else:
-            obs = torch.zeros(1, 720)
-
-        with torch.no_grad():
-            actions = self.walk_model(obs).squeeze(0).cpu().numpy()
-
-        # Scale: actions * action_scale + default_pos (handled by caller)
-        return actions
-
-    def get_shoot_joint_targets(
-        self,
-        shoot_dir: np.ndarray,
-        obs_history: Optional[np.ndarray] = None,
-    ) -> Optional[np.ndarray]:
-        """Get kick motion joint targets from shoot checkpoint.
-
-        Returns 21-dim joint target delta, or None if shoot model not loaded.
-        """
-        if not self.shoot_loaded or not self.torch_available:
-            return None
-
-        if obs_history is not None:
-            obs = torch.from_numpy(obs_history).float().unsqueeze(0)
-        else:
-            obs = torch.zeros(1, 720)
-
-        with torch.no_grad():
-            actions = self.shoot_model(obs).squeeze(0).cpu().numpy()
-
-        return actions
-=======
-    def _preprocess_obs(self, player: PlayerState, ball: BallState,
-                        teammates: list = None, opponents: list = None) -> np.ndarray:
-        """Build observation vector from PlayerState + BallState + teammates/opponents.
-
-        19-dim base (always built) + 5-dim multi-agent extension (when teammates/opponents given).
-        Must match training env's _update_observation() + _multiagent_extra() exactly.
-
-        Base 19 dims:
+        Must match training env's _update_observation() exactly:
           filtered_lin_vel(3) + filtered_ang_vel(3) + projected_gravity(2)
           + ball_rel_body(2) + ball_vel_body(2) + dist_to_ball(1)
-          + goal_dir(2) + goal_dist(1) + last_hl_actions(3)
-
-        Multi-agent 5 dims (appended when teammates/opponents provided):
-          nearest_teammate_rel_body(2) + nearest_opponent_rel_body(2) + possession_flag(1)
+          + goal_dir(2) + goal_dist(1) + last_hl_actions(3) = 19
         """
         cos_yaw = math.cos(player.yaw)
         sin_yaw = math.sin(player.yaw)
@@ -411,14 +286,8 @@ class SharedRLPolicy:
             player.vel[2],
         ], dtype=np.float32)
 
-        # 3-5: ang_vel in body frame (estimated from yaw change)
-        if not hasattr(self, '_prev_yaw'):
-            self._prev_yaw = player.yaw
-        yaw_delta = player.yaw - self._prev_yaw
-        self._prev_yaw = player.yaw
-        # Wrap to [-pi, pi]
-        yaw_delta = (yaw_delta + np.pi) % (2 * np.pi) - np.pi
-        ang_vel_body = np.array([0.0, 0.0, yaw_delta / 0.1], dtype=np.float32)  # 0.1 = HL dt
+        # 3-5: ang_vel in body frame (approximate)
+        ang_vel_body = np.zeros(3, dtype=np.float32)
 
         # 6-7: projected_gravity xy from quaternion
         w, x, y, z = player.quat
@@ -457,61 +326,11 @@ class SharedRLPolicy:
         goal_dist = np.array([goal_dist_val], dtype=np.float32)
 
         # 16-18: last high-level actions
-        base_obs = np.concatenate([
+        return np.concatenate([
             lin_vel_body, ang_vel_body, grav_xy,
             ball_rel_body, ball_vel_body, dist_to_ball,
             goal_dir, goal_dist, self.last_actions,
         ]).astype(np.float32)
-
-        # If no teammates/opponents given (None or empty), return 19-dim (chase_hl compatible)
-        if not teammates or not opponents:
-            return base_obs
-
-        # 19-23: multi-agent extension (matches _multiagent_extra in training env)
-        # Nearest teammate relative position (body frame, xy)
-        if len(teammates) > 0:
-            tm_rels = []
-            for tm_pos in teammates:
-                tm_rel = np.array(tm_pos[:2]) - player.pos[:2]
-                tm_body = np.array([
-                    cos_yaw * tm_rel[0] + sin_yaw * tm_rel[1],
-                    -sin_yaw * tm_rel[0] + cos_yaw * tm_rel[1],
-                ])
-                tm_rels.append((np.linalg.norm(tm_body), tm_body))
-            tm_rels.sort(key=lambda t: t[0])
-            tm_nearest = tm_rels[0][1].astype(np.float32)
-        else:
-            tm_nearest = np.zeros(2, dtype=np.float32)
-
-        # Nearest opponent relative position (body frame, xy)
-        if len(opponents) > 0:
-            opp_rels = []
-            for opp_pos in opponents:
-                opp_rel = np.array(opp_pos[:2]) - player.pos[:2]
-                opp_body = np.array([
-                    cos_yaw * opp_rel[0] + sin_yaw * opp_rel[1],
-                    -sin_yaw * opp_rel[0] + cos_yaw * opp_rel[1],
-                ])
-                opp_rels.append((np.linalg.norm(opp_body), opp_body))
-            opp_rels.sort(key=lambda t: t[0])
-            opp_nearest = opp_rels[0][1].astype(np.float32)
-        else:
-            opp_nearest = np.zeros(2, dtype=np.float32)
-
-        # Possession flag: +1 if my team closest to ball, -1 if opponents closer
-        self_ball_dist = float(np.linalg.norm(ball_rel))
-        tm_min_dist = min((np.linalg.norm(np.array(tm[:2]) - ball.pos[:2])
-                          for tm in teammates), default=float('inf'))
-        opp_min_dist = min((np.linalg.norm(np.array(opp[:2]) - ball.pos[:2])
-                           for opp in opponents), default=float('inf'))
-        team_min = min(self_ball_dist, tm_min_dist)
-        if team_min <= opp_min_dist:
-            possession = 1.0 if self_ball_dist <= tm_min_dist else 0.0
-        else:
-            possession = -1.0
-        possession_flag = np.array([possession], dtype=np.float32)
-
-        return np.concatenate([base_obs, tm_nearest, opp_nearest, possession_flag]).astype(np.float32)
 
     def _infer(self, obs: np.ndarray) -> Optional[np.ndarray]:
         """Run ONNX Runtime forward pass: 19-dim obs → 3-dim raw action."""
@@ -530,20 +349,12 @@ class SharedRLPolicy:
         cmd[np.abs(cmd) < 0.05] = 0.0
         return cmd
 
-    def compute(self, player: PlayerState, ball: BallState,
-                teammates: list = None, opponents: list = None) -> PolicyAction:
-        """Compute action using ONNX model, with rule fallback.
-
-        Args:
-            player: this robot's state
-            ball: ball state
-            teammates: list of [x,y,z] positions for teammates (for 24-dim model)
-            opponents: list of [x,y,z] positions for opponents (for 24-dim model)
-        """
+    def compute(self, player: PlayerState, ball: BallState) -> PolicyAction:
+        """Compute action using ONNX model, with rule fallback."""
         if self.session is None:
             return self.rule_fallback.compute(player, ball)
 
-        obs = self._preprocess_obs(player, ball, teammates, opponents)
+        obs = self._preprocess_obs(player, ball)
         action_raw = self._infer(obs)
         if action_raw is None:
             return self.rule_fallback.compute(player, ball)
@@ -574,19 +385,6 @@ class SharedRLPolicy:
         obs = torch.from_numpy(obs_history).float().unsqueeze(0) if obs_history is not None else torch.zeros(1, 720)
         with torch.no_grad():
             return self.shoot_model(obs).squeeze(0).cpu().numpy()
-
-    def close(self):
-        """Release ONNX Runtime session and model resources."""
-        if self.session is not None:
-            del self.session
-            self.session = None
-        if self.walk_model is not None:
-            del self.walk_model
-            self.walk_model = None
-        if self.shoot_model is not None:
-            del self.shoot_model
-            self.shoot_model = None
->>>>>>> track3-honest
 
 
 def team_side_positive(goal_x: float) -> bool:

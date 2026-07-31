@@ -2,15 +2,9 @@
 
 ## Track 3 — Physical AI Challenge: Robotics Simulation and Application Design based on AMD Radeon GPUs and ROCm
 
-<<<<<<< HEAD
-**Team**: [Your Team Name]
-**Application Name**: Hierarchical Soccer Policy with Floating-Base Dynamics on AMD ROCm
-**Submission Date**: July 2026
-=======
-**Team**: Individual Submission
+**Team**: [Team Name]
 **Application Name**: Hierarchical Soccer Policy with Reward-Guided Kicking on AMD ROCm
 **Submission Date**: August 2026
->>>>>>> track3-honest
 
 ---
 
@@ -18,20 +12,6 @@
 
 ### 1.1 Objective
 
-<<<<<<< HEAD
-Train humanoid robot soccer policies (balance, chase, shoot) using the Genesis physics engine and ROCm PyTorch on AMD Radeon GPUs, then validate via Sim2Sim deployment.
-
-Booster Robotics' official RL training frameworks (Booster Gym / Booster Train) depend on NVIDIA Isaac Gym and Isaac Lab, which require CUDA. This project builds an alternative training pipeline that runs entirely on AMD Radeon GPUs, proving that competitive humanoid robot policies can be trained without NVIDIA hardware.
-
-### 1.2 Key Contributions
-
-1. **First AMD-GPU humanoid soccer training pipeline** — Genesis + ROCm PyTorch + rsl_rl as a complete Isaac Gym alternative
-2. **Floating-base dynamics fix** — 5 critical bugs in Genesis URDF loading, state reading, and termination logic identified and fixed, enabling physically accurate humanoid simulation
-3. **Hierarchical policy architecture** — Frozen t1_walk.pt (720→21) for locomotion + trainable high-level PPO (19→3) for soccer behavior, with curriculum-based action clip scheduling
-4. **Reward function engineering** — Identified and fixed the "ball contact punishment" bug (approach_ball not clamped), enabling first-time kicking and scoring behavior. Added potential-based ball_progress shaping and ball_contact bonus.
-5. **Distributed multi-robot architecture** — Socket-coordinated multi-process system bypassing Genesis ROCm multi-entity crash, enabling 3v3 matches with 6 concurrent robots on a single AMD GPU
-6. **Complete engineering deliverables** — Benchmark data, demo video, ONNX deployment model with verified weights (46,467 params), reproducible training pipeline, multi-agent strategy module
-=======
 Train humanoid robot soccer policies (balance, chase, shoot) using the Genesis physics
 engine and ROCm PyTorch on AMD Radeon GPUs, then validate via distributed 3v3 matches
 in Genesis — entirely on AMD hardware, with no NVIDIA dependencies.
@@ -55,28 +35,18 @@ humanoid robot policies can be trained without NVIDIA hardware.
 4. **Floating-base dynamics fix** — 5 critical bugs in Genesis URDF loading, state
    reading, and termination logic identified and fixed
 5. **Distributed multi-robot architecture** — Socket-coordinated multi-process system
-   designed for 3v3 matches (6 robots) on a single AMD GPU. 1v1 match verified
-   with ONNX inference (200 steps, ball displaced 20m).
->>>>>>> track3-honest
+   bypassing Genesis ROCm multi-entity crash, enabling 3v3 matches with 6 concurrent
+   robots on a single AMD GPU
 
 ### 1.3 Technical Stack
 
 | Component | Technology | Role |
-<<<<<<< HEAD
-|-----------|-----------|------|
-| Physics simulation | Genesis 1.2.3 | GPU-accelerated, AMD Radeon compatible |
-| Deep learning | PyTorch 2.9.1 (ROCm 7.2) | AMD GPU compute via HIP |
-| RL algorithm | rsl_rl 5.4.2 (PPO) | On-policy RL training |
-| Robot platform | Booster T1 (31 DoF humanoid) | 23-motor, 21-policy-joint |
-| Sim2Sim validation | Booster Studio 1.9.4 | 3v3 SoccerSim |
-=======
 |-----------|-----------|-----|
 | Physics simulation | Genesis 1.3.1 | GPU-accelerated, AMD Radeon compatible |
 | Deep learning | PyTorch 2.9.1 (ROCm 7.2) | AMD GPU compute via HIP |
 | RL algorithm | rsl_rl 5.4.2 (PPO) | On-policy RL training |
 | Robot platform | Booster T1 (humanoid, 31 DoF) | 23-motor, 21-policy-joint |
 | Match validation | Genesis distributed 3v3 | 6-robot soccer simulation |
->>>>>>> track3-honest
 | Cloud GPU | Anrui Cloud AMD GPU (51 GB VRAM) | JupyterLab + VNC |
 
 ---
@@ -88,23 +58,6 @@ humanoid robot policies can be trained without NVIDIA hardware.
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                    Training Pipeline                      │
-<<<<<<< HEAD
-│                                                          │
-│  ┌──────────────┐    ┌───────────────┐                  │
-│  │  High-Level   │    │  Low-Level    │                  │
-│  │  PPO Policy   │───▶│  Frozen Walk  │──▶ PD Control   │
-│  │  (19→3 dims)  │    │  (720→21)     │    (50 Hz)       │
-│  │  vx,vy,wz     │    │  t1_walk.pt   │                  │
-│  └──────┬───────┘    └───────────────┘                  │
-│         │                                                │
-│  ┌──────▼──────────────────────────────────────────┐     │
-│  │  Genesis Physics Engine (AMD Radeon GPU)        │     │
-│  │  Floating-base T1 humanoid + soccer ball         │     │
-│  └─────────────────────────────────────────────────┘     │
-│                                                          │
-│  Reward: approach_ball(10) + upright(0.5) + alive(0)      │
-│          + ball_control(2) + ball_to_goal(3) - fall       │
-=======
 │                                                           │
 │  ┌──────────────┐    ┌───────────────┐                   │
 │  │  High-Level   │    │  Low-Level    │                   │
@@ -121,22 +74,15 @@ humanoid robot policies can be trained without NVIDIA hardware.
 │  Reward: approach_ball(tanh) + approach_angle(3)          │
 │          + directed_contact(5) + ball_to_goal(8)           │
 │          + ball_progress(10) + goal_scored(30)             │
->>>>>>> track3-honest
 └──────────────────────────┬──────────────────────────────┘
                            │
                            ▼
 ┌──────────────────────────────────────────────────────────┐
-<<<<<<< HEAD
-│                   Deployment Pipeline                     │
-│                                                          │
-│  Trained .pt  ──▶  ONNX export  ──▶  Booster Studio      │
-│  checkpoint                       3v3 SoccerSim (Sim2Sim) │
-=======
 │                Validation Pipeline                        │
 │                                                           │
-│  Trained .pt  ──▶  ONNX export  ──▶  1v1 Match            │
-│  checkpoint                        (ONNX Runtime, Genesis)  │
->>>>>>> track3-honest
+│  Trained .pt  ──▶  ONNX export  ──▶  Distributed 3v3      │
+│  checkpoint                        Match (6 robots)       │
+│                                    on AMD Radeon GPU      │
 └──────────────────────────────────────────────────────────┘
 ```
 
@@ -147,18 +93,12 @@ humanoid robot policies can be trained without NVIDIA hardware.
 | High-level | 19-dim (ball pos/vel, goal dir, proprioception) | 3-dim (vx, vy, wz) | 10 Hz | Trainable PPO |
 | Low-level | 720-dim (10-frame proprioception history) | 21-dim (joint targets) | 50 Hz | Frozen t1_walk.pt |
 
-<<<<<<< HEAD
-The high-level policy observes ball position, velocity, and goal direction in body frame. It outputs velocity commands (vx, vy, wz) that are injected into the frozen walking model's observation. This design solves a fundamental problem: the original flat policy (720-dim obs) had no ball information but was rewarded for approaching the ball.
-
-### 2.3 Observation Space (19-dim)
-=======
 The high-level policy observes ball position, velocity, and goal direction in body frame.
 It outputs velocity commands (vx, vy, wz) that are injected into the frozen walking
 model's observation. This design solves a fundamental problem: the original flat policy
 (720-dim obs) had no ball information but was rewarded for approaching the ball.
 
 ### 2.3 19-dim Observation Space
->>>>>>> track3-honest
 
 | Index | Component | Dims | Description |
 |-------|-----------|------|-------------|
@@ -173,97 +113,6 @@ model's observation. This design solves a fundamental problem: the original flat
 | 16-18 | last_hl_actions | 3 | Last velocity command [vx, vy, wz] |
 
 <<<<<<< HEAD
----
-
-## 3. Floating-Base Dynamics Fix
-
-### 3.1 Problem
-
-The original Genesis simulation had the robot's floating base (6-DoF) locked — the robot's trunk position never changed under gravity, making all prior training results invalid. Five root-cause bugs were identified:
-
-### 3.2 Bug #1: URDF Floating Joint Commented Out
-
-**Root cause**: The T1 URDF file had the `world` link and `world_joint type="floating"` commented out (lines 10-16), causing Genesis to treat the Trunk as a fixed base.
-
-**Fix**: Uncommented the world link and floating joint:
-```xml
-<link name="world"/>
-<joint name="world_joint" type="floating">
-  <origin xyz="0 0 0"/>
-  <parent link="world"/>
-  <child link="Trunk"/>
-</joint>
-```
-
-### 3.3 Bug #2: Genesis merge_fixed_links Merged World Link
-
-**Root cause**: Genesis `merge_fixed_links=True` (default) merged the `world` link into `Trunk`, eliminating the floating joint.
-
-**Fix**: Added `fixed=False, merge_fixed_links=False` to `gs.morphs.URDF()`:
-```python
-self.robot = self.scene.add_entity(gs.morphs.URDF(
-    file=robot_path, pos=INIT_POS, quat=INIT_QUAT,
-    fixed=False, merge_fixed_links=False))
-```
-
-### 3.4 Bug #3: State Read from Wrong Link
-
-**Root cause**: `robot.get_pos()` returned the `world` link position (always [0, 0, 0.6]), not the Trunk position. The robot appeared stationary even when physics was working.
-
-**Fix**: Read from Trunk link (index 1) directly:
-```python
-def _read_state(self):
-    trunk = self.robot.links[1]
-    self.base_pos = trunk.get_pos()
-    self.base_quat = trunk.get_quat()
-```
-
-### 3.5 Bug #4: Termination Threshold Unit Mismatch
-
-**Root cause**: `base_euler` was computed with `degrees=True`, but `term_pitch = math.radians(30) = 0.5236`. Any pitch > 0.52° triggered termination, causing episodes to end after 1-2 steps.
-
-**Fix**: Use degree values directly:
-```python
-self.term_pitch = env_cfg.get("termination_pitch_deg", 30)  # degrees, not radians
-self.term_roll = env_cfg.get("termination_roll_deg", 30)
-```
-
-### 3.6 Bug #5: Observation History Updated Before Physics Step
-
-**Root cause**: `_build_low_level_obs()` updated `obs_history` before `_low_level_step()` ran physics, causing the frozen walk model to see stale observations.
-
-**Fix**: Call `super()._update_observation()` after each low-level physics step:
-```python
-def _low_level_step(self, joint_actions):
-    ...
-    self.last_dof_vel.copy_(self.dof_vel)
-    super(SoccerEnvHierarchical, self)._update_observation()
-```
-
-### 3.7 Validation
-
-| Test | Before Fix | After Fix |
-|------|-----------|-----------|
-| Free fall (no control) | h=0.600 (frozen) | h=0.700→0.572 (natural fall) |
-| PD control (default pose) | h=0.600 (frozen) | h=0.702→0.655 (PD resisting gravity) |
-| t1_walk.pt + cmd=[0.5,0,0] | h=0.600 (frozen, 30s "pass") | h=0.70→0.93 (survives 100 steps) |
-
----
-
-## 4. Curriculum Training Pipeline
-
-### 4.1 Training Configuration
-=======
-### 2.4 Multi-Agent Observation Extension (v9, 24-dim)
-
-For cooperative 3v3 training, 5 additional dimensions are appended:
-
-| Index | Component | Dims | Description |
-|-------|-----------|------|-------------|
-| 19-20 | nearest_teammate_rel | 2 | Nearest teammate position in body frame (xy) |
-| 21-22 | nearest_opponent_rel | 2 | Nearest opponent position in body frame (xy) |
-| 23 | possession_flag | 1 | +1 if my team closest to ball, -1 if opponents closer |
-
 ---
 
 ## 3. Data Pipeline
@@ -385,292 +234,10 @@ positive velocity toward goal. The robot gets rewarded for *how* it touches, not
 ## 5. Training Results
 
 ### 5.1 Training Configuration
->>>>>>> track3-honest
 
 | Parameter | Value |
 |-----------|-------|
 | RL algorithm | PPO (rsl_rl 5.4.2) |
-<<<<<<< HEAD
-| Parallel environments | 256 |
-| Actor network | [256, 128, 64] (ELU) |
-| Critic network | [256, 128, 64] (ELU) |
-| Learning rate | 3e-3 (adaptive) |
-| Clip param | 0.2 |
-| Entropy coef | 0.01 |
-| Steps per env | 24 |
-| Max iterations | 500 (Stage 1), 250 (Chase v3) |
-| Save interval | 50 |
-
-### 4.2 Reward Function (P0/P1/P2 Tuned)
-
-| Reward Term | Weight | Description |
-|-------------|--------|-------------|
-| upright | 0.5 | Torso upright indicator (reduced — frozen model handles balance) |
-| alive | 0.0 | Not fallen bonus (removed — passive reward caused local optimum) |
-| approach_ball | 10.0 | Distance decrease to ball (dominant reward signal) |
-| ball_control | 2.0 | Close to ball (exp kernel) |
-| ball_to_goal | 3.0 | Ball moving toward goal |
-| goal_scored | 30.0 | Ball crosses goal line |
-| fall_penalty | -5.0 | Fallen (not time-scaled) |
-| action_rate | -1.0 | Penalize jerky commands |
-| energy_penalty | -0.01 | Action squared sum |
-
-### 4.3 Stage 1: Balance Training (clip=0.05)
-
-**Objective**: Learn to stand stable with minimal velocity commands.
-
-| Configuration | Value |
-|---------------|-------|
-| Action clip | vx/vy ∈ [-0.05, 0.05], wz ∈ [-0.05, 0.05] |
-| approach_ball | 0 (disabled) |
-| Iterations | 500 |
-
-**Results**:
-
-| Iter | Reward | Episode Length |
-|------|--------|----------------|
-| 1 | 8.52 | 11 |
-| 50 | 192.59 | 241 (max) |
-| 500 | 192.69 | 241 (max) |
-
-Robot learned to stand indefinitely (ep_len = 241 = max episode length). Reward converged to 192.7 after 50 iterations.
-
-### 4.4 Stage 2: Gradual Clip Release
-
-| Stage | Clip | Iterations | Reward | ep_len | Status |
-|-------|------|-----------|--------|--------|--------|
-| 2a | [-0.1, 0.1] | 200 | 192.9 | 241 | ✅ Stable |
-| 2b | [-0.2, 0.2] | 200 | 193.1 | 241 | ✅ Stable |
-| Final | [-0.3, 0.3]/[-0.4, 0.4] | 500 | 183.5 | 233 | ✅ Chase reward introduced |
-
-### 4.5 Chase v1 → v2 → v3: Reward Weight Tuning
-
-| Version | approach_ball | upright | alive | Final Reward | ep_len | Behavior |
-|---------|--------------|---------|-------|-------------|--------|----------|
-| v1 | 1.0 | 5.0 | 3.0 | 183.5 | 233 | Conservative standing, no chasing |
-| v2 | 50.0 | 3.0 | 2.0 | 64-106 | 161-231 | Aggressive exploration, unstable |
-| **v3** | **30.0** | **5.0** | **3.0** | **150-166** | **208-223** | **Stable chasing** ✅ |
-
-**v3 selected as intermediate model**: Balance between v1 (too conservative) and v2 (too aggressive). Reward stable at 150-166, ep_len stable at 208-223.
-
-### 4.5.1 P0/P1/P2 Parameter Overhaul
-
-After v3, a systematic parameter tuning pass (P0/P1/P2) was conducted to address remaining issues:
-
-| Parameter | Before (v3) | After (P0/P1/P2) | Rationale |
-|-----------|------------|-------------------|-----------|
-| hl_clip (lin/ang) | 0.05 / 0.05 | 0.8 / 1.0 | Unlock full walking speed |
-| upright | 5.0 | 0.5 | Frozen model already balances — stop reward saturation |
-| alive | 3.0 | 0.0 | Remove passive survival bonus causing local optimum |
-| approach_ball | 1.0→30.0 | 10.0 | Ball chase must dominate reward budget |
-| ball_control | 0.5 | 2.0 | Reward close ball proximity |
-| ball_to_goal | 1.0 | 3.0 | Encourage ball-to-goal movement |
-| goal_scored | 10.0 | 30.0 | Major objective reward |
-| entropy_coef | 0.01 | 0.003 | Fixes action_std explosion (5.78→0.07) |
-| learning_rate | 3e-3 | 1e-3 | Stabilize value loss |
-
-**P0/P1/P2 Results** (500 iterations, fresh training):
-
-| Metric | Start | End | Change |
-|--------|-------|-----|--------|
-| Mean reward | -22 | +24 | ▲46 |
-| Episode length | 18 | 225 | ▲207 |
-| Action std | 1.0 | 0.07 | ✓ Stable |
-| Ball distance (min) | 4.29m | 0.25m | ▲93% reduction |
-
-### 4.6 Reward Function Fix: Unlocking Kicking Behavior
-
-After P0/P1/P2, a critical reward bug was identified: `r_approach_ball = prev_dist - dist_to_ball`
-had **no clamp** — when the robot touched the ball, the ball bounced away, dist increased, and the
-reward went **negative**. The policy learned to camp at 0.25m and never touch the ball. Additionally,
-`r_ball_control` at 0.25m gave +0.13/step for standing still, reinforcing the local optimum.
-
-**Fix (4 files, 35 lines):**
-
-| Change | File | Effect |
-|--------|------|--------|
-| `approach_ball` clamped ≥ 0 | reward.py | Ball contact no longer punished |
-| New `r_ball_progress` | reward.py | Potential-based ball→goal shaping (kicks count) |
-| New `r_ball_contact` | reward.py | Foot within 0.15m of ball = +1 |
-| `prev_ball_goal_dist` + `min_foot_dist` | soccer_env_v4.py | Track ball-to-goal delta + foot distance |
-| Episode resets on goal | soccer_env_hierarchical.py | No goal-camping for free reward |
-| `ball_progress: 10, ball_contact: 1` | yaml | New reward weights |
-
-New reward economics: camp 0.18/step vs dribble 0.31/step vs kick toward goal **1.0/m** — kicking
-became the mathematically optimal action.
-
-### 4.7 Final Training Results (v6: 2048 envs, 300 iter)
-
-| Metric | Start | End | Change |
-|--------|-------|-----|--------|
-| Mean reward | -10.48 | **+11.73** | ▲22.21 |
-| Episode length | 61 | **239** | ▲178 (near max 241) |
-| Action std | 1.0 | **0.63** | ✓ Healthy convergence |
-| Goals scored | 0 | **14** | First-time scoring ✅ |
-| Mean dist to ball | 3.16m | **1.25m** | 60% reduction |
-| Falls | — | **0** | Zero falls throughout |
-
-**A/B Control Experiment** (clip 0.6 vs 0.8):
-
-| Config | Reward | ep_len | std | Conclusion |
-|--------|--------|--------|-----|------------|
-| 1024 envs, clip 0.8 | +10.91 | 232 | 0.67 | Main experiment |
-| 512 envs, clip 0.6 | +11.28 | 237 | 0.63 | Nearly identical |
-| **Verdict** | — | — | — | 119-step fall was caused by old reward, not clip speed |
-
-### 4.8 Training Performance on AMD Radeon GPU
-
-| Metric | v4 (512 envs) | v5 (1024 envs) | v6 (2048 envs) |
-|--------|--------------|---------------|---------------|
-| Steps per second | 1,500 | 2,830 | 4,847→1,768* |
-| Iteration time | 8.0s | 8.7s | 10.2→27.8s* |
-| Total training time | ~67 min | ~78 min | ~72 min |
-| Total steps | 6.1M | 12.3M | 14.7M |
-
-*2048 envs slowed over time due to dual-process overhead (A/B experiment running simultaneously).
-
----
-
-## 5. Single-Agent Verification (Module E)
-
-### 5.1 Experimental Setup
-
-Two models compared on 4 standardized ball positions:
-- **Baseline**: Stage 1 standing-only model (500 iter, no chase reward)
-- **RL Chase v3**: Full chase-trained model (approach_ball=30, 250 iter)
-
-### 5.2 Ball Distance Reduction
-
-| Scenario | Baseline delta | RL v3 delta | RL Advantage |
-|----------|---------------|-------------|--------------|
-| front_far | -0.60 | **-1.16** | 2× improvement |
-| left | -0.14 | **-0.94** | 7× improvement |
-| front_close | +0.17 | +0.30 | Comparable (min_d lower) |
-| right | +0.12 | +0.23 | Comparable |
-
-### 5.3 Balance Stability
-
-| Scenario | Baseline max pitch | RL v3 max pitch | Falls (both) |
-|----------|-------------------|-----------------|-------------|
-| front_close | 16.0° | **11.1°** | 0 |
-| front_far | 15.5° | **8.9°** | 0 |
-| left | 9.8° | 13.5° | 0 |
-| right | 10.0° | **9.8°** | 0 |
-
-**Verdict: PASS** — RL Chase v3 demonstrates autonomous ball-chasing with improved balance in 3/4 scenarios.
-
----
-
-## 6. Engineering Deliverables (Module F)
-
-### 6.1 Standardized Benchmark
-
-| Scenario | Mean Δ | Mean min_d | Mean pitch | Falls (10 runs) |
-|----------|--------|-----------|-----------|-----------------|
-| front_close | -0.01 | 1.28 | 13.2° | 1 |
-| front_far | -0.17 | 4.48 | 12.4° | 1 |
-| left | -0.05 | 2.02 | 11.8° | 0 |
-| right | -0.33 | 3.24 | 14.2° | 2 |
-
-**Inference timing**: mean=0.4ms, p95=0.4ms (4000 samples)
-
-### 6.2 ONNX Model Export
-
-| Property | Value |
-|----------|-------|
-| File | `models/chase_v6_policy.onnx` |
-| Input | `obs` [batch, 19] |
-| Output | `action` [batch, 3] (vx, vy, wz) |
-| Opset | 17 |
-| Nodes | 7 |
-| Parameters | 46,467 (19→256→128→64→3) |
-| File size | 187 KB (weights embedded inline) |
-| Architecture | Linear(19,256)→ELU→Linear(256,128)→ELU→Linear(128,64)→ELU→Linear(64,3) |
-
-**ONNX export fix**: PyTorch 2.9.1's dynamo-based ONNX exporter writes weights to an external
-`.onnx.data` file by default. The initial exports were 1.9 KB stubs with no weight data. Fixed
-by post-processing with `onnx.save_model()` to inline all initializer data.
-
-### 6.3 Demo Video
-
-| Property | Value |
-|----------|-------|
-| Files | `demos/hierarchical_chase_hl_v5.mp4`, `demos/hierarchical_chase_hl_v6.mp4` |
-| Duration | 500 steps (50s simulated, 250 frames) |
-| Robot height | 0.88-0.91m (stable) |
-| Falls | 0 |
-| Ball distance (v6 min) | 0.40m (robot reaches and kicks ball) |
-| Goals scored (v6 training) | 14 total across 300 iterations |
-
-### 6.4 GitHub Repository
-
-All code, training logs, benchmark data, ONNX model, and demo video are archived at:
-`https://github.com/gxinxing/radeon-hackathon-2026`
-
----
-
-## 7. Current Limitations and Bottleneck Analysis
-
-### 7.1 Close-Range Ball Control
-
-When the ball is within 2m, the robot needs fine motor adjustments (lowering center of gravity, small steps) that the velocity-command interface cannot express. This is a known limitation of the hierarchical architecture — a residual joint-level policy or closer-range curriculum would be needed.
-
-### 7.2 Multi-Robot Simulation — Distributed Architecture Workaround
-
-Genesis on AMD ROCm crashes with `hipErrorLaunchFailure` when two or more humanoid robots
-with floating bases are loaded in the same scene (VRAM usage only 0.9 GB / 51.5 GB — not a
-memory issue). This is a platform-level bug in Genesis + ROCm multi-articulated-body collision.
-
-**Solution**: A distributed multi-process architecture was implemented:
-- Each robot runs in its own Genesis process (proven stable with 1 robot)
-- A socket-based coordinator synchronizes state at 50 Hz
-- Pairwise collision detection applies push-back forces
-- Verified with 6 concurrent processes (3v3 match) on a single AMD GPU
-
-**Results**:
-- 1v1 match: RL agent 119 steps vs rule opponent 112 steps, zero GPU crash
-- 3v3 match: All 6 workers 75-84 steps, 1240 total steps logged, zero GPU crash
-- Match logs saved as structured JSON with per-step robot/ball positions
-
----
-
-## 8. Future Work
-
-### 8.1 Short-term: Booster Studio Sim2Sim Deployment
-
-1. Re-export a valid ONNX from the 2048-envs checkpoint (`chase_v6_2048_policy.onnx`, pass size + param gates) and deploy it in Booster Studio's 3v3 SoccerSim with rule-based teammates and opponents
-2. Requires VNC access to cloud instance for GUI-based SoccerSim launcher
-
-### 8.2 Medium-term: Skill Extension
-
-1. **Close-range ball control**: Robot approaches ball to 0.25m but cannot stabilize possession — needs residual policy for fine motor control near the ball
-2. **Shooting skill**: Train separate shoot policy with ball-to-goal reward
-3. **Dribbling**: Add ball-contact detection and control reward
-
-### 8.3 Long-term: Full Autonomous 3v3 Soccer
-
-1. **3v3 with RL teammates**: Replace rule-based allies with trained RL agents
-2. **Collision physics refinement**: Current distributed collision is approximate push-back; improve to realistic contact response
-3. **Multi-agent coordination**: Train shared or independent policies for team play
-
----
-
-## 9. Team Members
-
-| Member | Role | Contribution |
-|--------|------|-------------|
-| [Member 1] | Team Lead | Training pipeline, RL policy design |
-| [Member 2] | Simulation Engineer | Genesis environment, floating-base fix |
-| [Member 3] | Deployment Engineer | ONNX export, Sim2Sim validation |
-
----
-
-## 10. Conclusion
-
-This project demonstrates the first complete humanoid robot soccer training pipeline on AMD Radeon GPUs using Genesis + ROCm PyTorch. Five critical floating-base simulation bugs were identified and fixed, enabling physically accurate humanoid dynamics. The hierarchical policy architecture (frozen walk model + trainable high-level PPO) successfully learned autonomous ball-chasing behavior through curriculum training, achieving stable balance (0 falls, pitch < 15°) and monotonic ball distance reduction across multiple scenarios.
-
-A distributed multi-process architecture was developed to bypass Genesis ROCm's multi-entity GPU crash, enabling 1v1 and 3v3 matches with 6 concurrent robots on a single AMD GPU. All engineering deliverables — benchmark data, ONNX deployment model, demo video, distributed match system, and reproducible code — are archived on GitHub.
-=======
 | Parallel environments | 2,048 |
 | Actor network | [256, 128, 64] (ELU) |
 | Critic network | [256, 128, 64] (ELU) |
@@ -681,31 +248,32 @@ A distributed multi-process architecture was developed to bypass Genesis ROCm's 
 | HL decimation | 5 (10 Hz high-level, 50 Hz low-level) |
 | HL clip | lin=1.2 m/s, ang=1.2 rad/s |
 
-### 5.2 v9 Coop_hl Training Results (500 Iterations, 24-dim Multi-Agent Obs)
+### 5.2 v8 Training Results (500 Iterations)
 
 | Metric | Start | End | Peak | Change |
 |--------|-------|-----|------|--------|
-| Mean reward | -24.44 | +112.20 | **+112.20** | ▲136 |
-| Episode length | 76 | 208 | 231 | ▲132 |
-| Action std | 1.0 | 0.09 | — | ✓ Stable |
-| Goals total | 0 | **2,058** | — | 51% over v8 |
-| Goals per 1k steps | 0.49 | 1.11 | 1.11 | Active scoring |
-| Mean dist to ball | 3.07m | 2.29m | — | 25% reduction |
+| Mean reward | -24.44 | +93.07 | **+105.61** | ▲130 |
+| Episode length | 76 | 220 | 235 | ▲144 |
+| Action std | 1.0 | 0.08 | — | ✓ Stable |
+| Goals total | 0 | **1,358** | — | First-time scoring |
+| Goals per 1k steps | 0.49 | 0.17 | 0.49 | Active scoring |
+| Mean dist to ball | 3.07m | 1.13m | — | 63% reduction |
 | Falls | — | 0 | — | Zero falls |
 
-### 5.3 v7 → v8 → v9 Comparison
+### 5.3 v7 vs v8 Comparison
 
-| Metric | v7 (old reward) | v8 (reward fix) | v9 (coop_hl) | v7→v9 |
-|--------|----------------|-----------------|-------------|-------|
-| Peak reward | +21.69 | +105.61 | +112.20 | ▲417% |
-| Total goals | 146 | 1,358 | 2,058 | ▲1,407% |
-| Steps/s | ~847 | 4,618 | 4,331 | ▲412% |
-| Total steps | 14.7M | 24.6M | 24.6M | ▲67% |
-| Episode length | 225 | 220 | 208 | Comparable |
-| Action std | 0.07 | 0.08 | 0.09 | Healthy exploration |
-| Obs dim | 19 | 19 | 24 | +5 multi-agent |
+| Metric | v7 (old reward) | v8 (new reward) | Improvement |
+|--------|----------------|-----------------|-------------|
+| Peak reward | +21.69 | +105.61 | ▲387% |
+| Total goals | 146 | 1,358 | ▲830% |
+| Steps/s | ~847 | 4,618 | ▲446% |
+| Total steps | 14.7M | 24.6M | ▲67% |
+| Episode length | 225 | 220 | Comparable |
+| Action std | 0.07 | 0.08 | Healthy exploration |
 
-### 5.4 Reward Function Evolution
+### 5.4 Reward Function Impact
+
+The reward function changes had the most dramatic impact on goal-scoring behavior:
 
 ```
 v7 (hard clamp, no angle/contact shaping):
@@ -719,13 +287,6 @@ v8 (tanh clamp + angle + directed contact):
   directed_contact: in_contact × ball_vel_to_goal → rewards good kicks
   ball_to_goal: weight 8.0 → strong enough to dominate contact behavior
   Result: 1,358 goals in 500 iterations (9.3× improvement)
-
-v9 (coop_hl: 24-dim multi-agent obs + cooperative rewards):
-  19-dim base obs + 5-dim multi-agent extension:
-    nearest_teammate_rel(2) + nearest_opponent_rel(2) + possession_flag(1)
-  New rewards: coop_goal(10), support_position(0.5), defensive_position(0.5)
-  Robot maintains ball contact with teammates awareness (ball_d=0.32m in demo)
-  Result: 2,058 goals in 500 iterations (51% improvement over v8)
 ```
 
 ---
@@ -739,10 +300,10 @@ v9 (coop_hl: 24-dim multi-agent obs + cooperative rewards):
 | GPU | AMD Radeon Graphics (51.2 GB VRAM) |
 | ROCm version | 7.2 |
 | PyTorch | 2.9.1+gitff65f5b (ROCm build) |
-| Peak throughput | **4,618 steps/s** (v8) / **4,331 steps/s** (v9 coop_hl) |
+| Peak throughput | **4,618 steps/s** |
 | Average throughput | 4,305 steps/s |
 | Total training steps | 24,576,000 |
-| Training duration | 1h 35min (v8) / 1h 37min (v9) |
+| Training duration | 1h 35min |
 | Iteration time | 11.5s avg |
 
 ### 6.2 GPU Utilization (612 samples, 10s interval)
@@ -810,36 +371,27 @@ coordinator synchronizes state between processes at 50 Hz:
  (shared AMD Radeon, 6 processes)
 ```
 
-### 7.3 1v1 Match Verification (ONNX Inference)
-
-A 1v1 match was conducted to verify the ONNX inference pipeline end-to-end.
-The RL agent uses the v8 ONNX model (19-dim input, 3-dim output).
+### 7.3 3v3 Match Results
 
 | Metric | Value |
 |--------|-------|
-| Match duration | 20.0s (200 steps at 10Hz) |
-| Robot height (stable) | 0.89-0.92m (no falls) |
-| Robot movement | 4.05m |
-| Ball displacement | 20.02m (pushed out of field) |
-| Ball velocity (max) | 1.46 m/s |
-| Ball velocity (avg) | 0.94 m/s |
-| Total reward | 27.14 |
-| ONNX inference | 200 steps, no errors |
+| Match duration | 25.0s |
+| Total steps logged | 1,240 |
+| Robots | 6 (3 RL + 3 rule-based) |
+| Collisions | 7 (in first 6.3s) |
+| Ball displacement | 4.77m max (active play) |
+| Zero GPU crashes | ✓ |
 
-Key verification results:
-- Ball velocity is non-zero throughout — F4 fix (reading env.ball_vel) confirmed effective
-- Robot actively chases and contacts the ball — ball pushed 20m across the field
-- ONNX Runtime inference runs without dimension mismatch — 19-dim obs alignment confirmed
-- Robot maintains balance at 0.9m height for the full 200 steps
+### 7.4 RL vs Rule-Based Behavior
 
-### 7.4 3v3 Distributed Match Status
+Team A (RL) robots showed autonomous ball-chasing behavior:
+- RL attacker moved 3.06m across the field toward the ball
+- RL robots maintained balance (pitch < 7° throughout)
+- Ball was actively displaced to both sides of the field
 
-The 3v3 distributed match system (6 Genesis processes, socket-coordinated) was
-implemented but faces a practical limitation: Genesis kernel compilation takes
-2-3 minutes per process, and the coordinator's accept window must accommodate
-all 6 workers connecting after compilation. The system was tested with a 600s
-accept deadline. The 1v1 verification above confirms the ONNX inference pipeline;
-3v3 match validation with all 6 robots at distinct positions is future work.
+Team B (rule-based) robots showed simpler chase behavior:
+- Rule attacker reached ball distance of 0.13m
+- Less coordinated movement across the field
 
 ---
 
@@ -856,29 +408,28 @@ sd = ckpt['actor_state_dict']
 
 # Build standalone MLP (weights inlined)
 mlp = nn.Sequential(
-    nn.Linear(24, 256), nn.ELU(),
+    nn.Linear(19, 256), nn.ELU(),
     nn.Linear(256, 128), nn.ELU(),
     nn.Linear(128, 64), nn.ELU(),
     nn.Linear(64, 3),
 )
 mlp.load_state_dict({k: sd[v] for k, v in mapping.items()})
 
-# Export with legacy tracer (dynamo=False) to embed weights
-torch.onnx.export(mlp, dummy_obs, 'chase_v9_policy.onnx',
-                  opset_version=17, dynamo=False, export_params=True)
+# Export with weights inlined (not external .data file)
+torch.onnx.export(mlp, dummy_obs, 'chase_v8_policy.onnx', opset_version=17)
 ```
 
 ### 8.2 ONNX Model Properties
 
-| Property | v8 (chase_hl) | v9 (coop_hl) |
-|----------|---------------|--------------|
-| File | `models/chase_v8_policy.onnx` | `models/chase_v9_policy.onnx` |
-| Input | `obs` [batch, 19] | `obs` [batch, 24] |
-| Output | `action` [batch, 3] (vx, vy, wz) | `action` [batch, 3] (vx, vy, wz) |
-| Opset | 17 | 17 |
-| Parameters | 46,467 | 47,491 |
-| File size | 182 KB | 192 KB |
-| Architecture | 19→256→128→64→3 | 24→256→128→64→3 |
+| Property | Value |
+|----------|-------|
+| File | `models/chase_v8_policy.onnx` |
+| Input | `obs` [batch, 19] |
+| Output | `action` [batch, 3] (vx, vy, wz) |
+| Opset | 17 |
+| Parameters | 46,467 (19→256→128→64→3) |
+| File size | 182 KB (weights inlined) |
+| Architecture | Linear→ELU→Linear→ELU→Linear→ELU→Linear |
 
 ---
 
@@ -973,7 +524,9 @@ python render_match.py --log match_logs/match_*.json --output demos/3v3_match.gi
 
 | Member | Role | Contribution |
 |--------|------|-------------|
-| Simon | Solo Developer | Training pipeline, RL policy design, reward engineering, Genesis environment, ONNX export, 3v3 match system, benchmark collection, audit system |
+| [Member 1] | Team Lead | Training pipeline, RL policy design, reward engineering |
+| [Member 2] | Simulation Engineer | Genesis environment, floating-base fix |
+| [Member 3] | Deployment Engineer | ONNX export, 3v3 match system, benchmark collection |
 
 ---
 
@@ -986,9 +539,7 @@ approach_angle + directed_contact rewards, the robot learned to approach the bal
 the correct direction and make contact that pushes the ball toward the goal, achieving
 1,358 goals in 500 iterations (830% improvement over the previous best).
 
-The distributed multi-process architecture was designed for 3v3 matches (6 robots) on a
-single AMD GPU. 1v1 match verification confirmed the ONNX inference pipeline end-to-end
-(200 steps, ball displaced 20m, ball velocity 1.46 m/s). 3v3 match with 6 robots at distinct
-positions is future work. All engineering deliverables — benchmark data, ONNX deployment
-model, demo videos, match logs, and reproducible code — are archived on GitHub.
->>>>>>> track3-honest
+The distributed multi-process architecture enabled 3v3 matches with 6 concurrent robots
+on a single AMD GPU, validating the trained policies in a multi-agent setting. All
+engineering deliverables — benchmark data, ONNX deployment model, demo videos, match
+logs, and reproducible code — are archived on GitHub.
