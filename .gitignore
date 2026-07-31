@@ -47,3 +47,4 @@ demo/
 # Large mesh files
 amd-physical-ai-soccer/assets/t1/meshes/
 models/pretrained/
+track3-data/runs/hierarchical_soccer_chase_hl/model_*.pt
