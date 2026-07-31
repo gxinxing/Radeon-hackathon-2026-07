@@ -67,6 +67,10 @@ class _Position:
     entry_index: int
     entry_timestamp: Any
     side: str = "long"  # "long" or "short"
+<<<<<<< HEAD
+=======
+    margin: float = 0.0  # For shorts: notional tracked as margin for sanity checks
+>>>>>>> track3-honest
 
 
 # Timeframe → minutes mapping for annualization
@@ -207,7 +211,12 @@ def _simulate_trades(
     Both long and short positions are supported.
     """
     result = BacktestResult()
+<<<<<<< HEAD
     balance = float(initial_balance)
+=======
+    cash = float(initial_balance)       # Available cash for new positions
+    short_margin = 0.0                  # Total notional of open short positions
+>>>>>>> track3-honest
     open_positions: list[_Position] = []
     trades: list[dict] = []
 
@@ -268,7 +277,11 @@ def _simulate_trades(
                 proceeds = pos.amount * exec_price * (1 - fee)
                 cost_basis = pos.amount * pos.entry_price * (1 + fee)
                 profit = proceeds - cost_basis
+<<<<<<< HEAD
                 balance += proceeds
+=======
+                cash += proceeds  # Add back to available cash
+>>>>>>> track3-honest
             else:
                 # Short: buy back at slightly worse price
                 exec_price = current_price * (1 + slippage)
@@ -276,7 +289,12 @@ def _simulate_trades(
                 # Short proceeds were credited at entry; profit = entry_credit - buy_cost
                 entry_credit = pos.amount * pos.entry_price * (1 - fee)
                 profit = entry_credit - buy_cost
+<<<<<<< HEAD
                 balance -= buy_cost
+=======
+                cash -= buy_cost  # Pay to buy back
+                short_margin -= pos.margin  # Release tracked margin
+>>>>>>> track3-honest
 
             trades.append({
                 "type": "sell" if pos.side == "long" else "cover",
@@ -296,16 +314,27 @@ def _simulate_trades(
             row.get("enter_long", False)
             and len(open_positions) < max_open_trades
             and current_price > 0
+<<<<<<< HEAD
             and balance > 0  # Prevent opening positions with negative balance
         ):
             pos_capital = balance * per_trade_pct / max(1, max_open_trades - len(open_positions))
             pos_capital = min(pos_capital, balance * 0.90)
+=======
+            and cash > 0  # Prevent opening positions with insufficient cash
+        ):
+            pos_capital = cash * per_trade_pct / max(1, max_open_trades - len(open_positions))
+            pos_capital = min(pos_capital, cash * 0.90)
+>>>>>>> track3-honest
 
             if pos_capital > 0:
                 exec_price = current_price * (1 + slippage)
                 amount = pos_capital / exec_price
                 cost = pos_capital + pos_capital * fee
+<<<<<<< HEAD
                 balance -= cost
+=======
+                cash -= cost  # Deduct from available cash
+>>>>>>> track3-honest
 
                 open_positions.append(_Position(
                     entry_price=exec_price,
@@ -330,16 +359,30 @@ def _simulate_trades(
             row.get("enter_short", False)
             and len(open_positions) < max_open_trades
             and current_price > 0
+<<<<<<< HEAD
         ):
             pos_capital = balance * per_trade_pct / max(1, max_open_trades - len(open_positions))
             pos_capital = min(pos_capital, balance * 0.90)
+=======
+            and cash > 0  # Prevent opening positions with insufficient cash
+        ):
+            pos_capital = cash * per_trade_pct / max(1, max_open_trades - len(open_positions))
+            pos_capital = min(pos_capital, cash * 0.90)
+>>>>>>> track3-honest
 
             if pos_capital > 0:
                 exec_price = current_price * (1 - slippage)
                 amount = pos_capital / exec_price
+<<<<<<< HEAD
                 # Credit balance with short proceeds
                 proceeds = pos_capital * (1 - fee)
                 balance += proceeds
+=======
+                # Credit cash with short proceeds
+                entry_credit = pos_capital * (1 - fee)
+                cash += entry_credit
+                short_margin += pos_capital  # Track margin for sanity check
+>>>>>>> track3-honest
 
                 open_positions.append(_Position(
                     entry_price=exec_price,
@@ -347,6 +390,10 @@ def _simulate_trades(
                     entry_index=i,
                     entry_timestamp=timestamp,
                     side="short",
+<<<<<<< HEAD
+=======
+                    margin=pos_capital,
+>>>>>>> track3-honest
                 ))
                 trades.append({
                     "type": "sell_short",
@@ -366,7 +413,11 @@ def _simulate_trades(
                 unrealized += p.amount * current_price
             else:
                 unrealized -= p.amount * current_price
+<<<<<<< HEAD
         equity = balance + unrealized
+=======
+        equity = cash + unrealized
+>>>>>>> track3-honest
         equity_curve.append(round(equity, 2))
         dates.append(str(timestamp))
 
@@ -378,13 +429,22 @@ def _simulate_trades(
             proceeds = pos.amount * exec_price * (1 - fee)
             cost_basis = pos.amount * pos.entry_price * (1 + fee)
             profit = proceeds - cost_basis
+<<<<<<< HEAD
             balance += proceeds
+=======
+            cash += proceeds
+>>>>>>> track3-honest
         else:
             exec_price = last_price * (1 + slippage)
             buy_cost = pos.amount * exec_price * (1 + fee)
             entry_credit = pos.amount * pos.entry_price * (1 - fee)
             profit = entry_credit - buy_cost
+<<<<<<< HEAD
             balance -= buy_cost
+=======
+            cash -= buy_cost
+            short_margin -= pos.margin
+>>>>>>> track3-honest
         trades.append({
             "type": "sell" if pos.side == "long" else "cover",
             "side": pos.side,
@@ -400,8 +460,16 @@ def _simulate_trades(
     open_positions.clear()
 
     # --- Calculate metrics ---
+<<<<<<< HEAD
     result.final_balance = round(max(balance, 0), 2)  # Floor at 0
     result.total_return = round(max((balance - initial_balance) / initial_balance, -1.0), 4)  # Cap at -100%
+=======
+    final_equity = cash
+    if equity_curve:
+        equity_curve[-1] = round(final_equity, 2)  # Update last point with final closing
+    result.final_balance = round(final_equity, 2)
+    result.total_return = round((final_equity - initial_balance) / initial_balance, 4)
+>>>>>>> track3-honest
     result.equity_curve = equity_curve
     result.dates = dates
     result.trades = trades
@@ -478,9 +546,19 @@ def _simulate_trades(
 
     # --- Backtest sanity check ---
     # Detect invalid backtests caused by cash constraint violations
+<<<<<<< HEAD
     if balance < 0:
         result.is_valid = False
         result.error = "Backtest INVALID: cash went negative — strategy opened positions with insufficient funds"
+=======
+    min_equity = min(equity_curve) if equity_curve else final_equity
+    if cash < 0:
+        result.is_valid = False
+        result.error = "Backtest INVALID: cash went negative — strategy opened positions with insufficient funds"
+    elif min_equity < 0:
+        result.is_valid = False
+        result.error = "Backtest INVALID: equity went negative — total capital wipeout during backtest"
+>>>>>>> track3-honest
     elif result.max_drawdown <= -1.0:
         result.is_valid = False
         result.error = "Backtest INVALID: max drawdown = -100% — total capital wipeout"

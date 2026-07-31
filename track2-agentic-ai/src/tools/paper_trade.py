@@ -16,6 +16,7 @@ from __future__ import annotations
 import os
 import time
 import json
+import threading
 from datetime import datetime, timezone
 from typing import Any
 
@@ -32,11 +33,12 @@ MAX_POSITION_USD = 5000.0      # Max total position in USDT
 DAILY_MAX_LOSS_PCT = 0.10      # Max daily loss (10% of starting balance)
 DEFAULT_STAKE = 0.001           # Default BTC amount for demo
 
-# --- State tracking (in-memory, per session) ---
+# --- State tracking (in-memory, per session) — protected by lock ---
 _position_tracker: dict[str, float] = {}  # pair -> amount held
 _order_log: list[dict] = []
 _daily_pnl: float = 0.0
 _daily_reset_time: float = time.time()
+_state_lock = threading.Lock()
 
 _testnet_exchange: ccxt.Exchange | None = None
 
@@ -64,9 +66,10 @@ def _is_dry_run() -> bool:
 
 def _check_daily_reset():
     global _daily_pnl, _daily_reset_time
-    if time.time() - _daily_reset_time > 86400:  # 24h
-        _daily_pnl = 0.0
-        _daily_reset_time = time.time()
+    with _state_lock:
+        if time.time() - _daily_reset_time > 86400:  # 24h
+            _daily_pnl = 0.0
+            _daily_reset_time = time.time()
 
 
 def _log_order(action: str, pair: str, amount: float, price: float, success: bool, details: dict, mode: str):
@@ -81,7 +84,8 @@ def _log_order(action: str, pair: str, amount: float, price: float, success: boo
         "success": success,
         "details": details,
     }
-    _order_log.append(entry)
+    with _state_lock:
+        _order_log.append(entry)
     return entry
 
 
@@ -116,6 +120,12 @@ async def execute_paper_trade(req: PaperTradeRequest):
     - Only Binance Testnet, never real exchange
     """
     dry_run = _is_dry_run() if req.dry_run is None else req.dry_run
+    # Security: never allow real exchange trades via API without explicit env config
+    if not dry_run and not os.environ.get("ENABLE_TESTNET_TRADING", "false").lower() in ("true", "1", "yes"):
+        return PaperTradeResponse(
+            success=False, action=req.action, pair=req.pair, mode="dry_run",
+            error="Testnet trading is disabled. Set ENABLE_TESTNET_TRADING=true to enable.",
+        )
     mode = "dry_run" if dry_run else "testnet"
 
     _check_daily_reset()

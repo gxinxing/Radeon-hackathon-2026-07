@@ -90,7 +90,11 @@ def main():
             output_names=["action"],
             dynamic_axes={"obs": {0: "batch"}, "action": {0: "batch"}},
             opset_version=17,
+<<<<<<< HEAD
             export_params=True,           # embed weights in the ONNX file
+=======
+            export_params=True, dynamo=False,           # embed weights in the ONNX file
+>>>>>>> track3-honest
             do_constant_folding=True,
         )
 

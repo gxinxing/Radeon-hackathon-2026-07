@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Python
 __pycache__/
 *.py[cod]
@@ -46,3 +47,24 @@ demo/
 
 # Large mesh files
 amd-physical-ai-soccer/assets/t1/meshes/
+=======
+*.pt
+*.safetensors
+*.gif
+demos/*.gif
+models/pretrained/
+track3-data/runs/hierarchical_soccer_chase_hl/model_*.pt
+match_logs/match_20260731_004742.json
+match_logs/match_20260731_032656.json
+__pycache__/
+*.pyc
+track2-agentic-ai/dify/
+track2-agentic-ai/.venv/
+*.bin
+sync.log
+sync_from_remote.sh
+.DS_Store
+.codely-cli/
+.codely/
+
+>>>>>>> track3-honest

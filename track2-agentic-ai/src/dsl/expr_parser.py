@@ -2,8 +2,13 @@
 
 Uses Python's ast module to parse, validate, and evaluate DSL
 entry/exit expressions against a strict whitelist of allowed
+<<<<<<< HEAD
 nodes. This replaces the previous string-replace + eval() approach
 with proper AST-level validation.
+=======
+nodes. This replaces the previous eval()-based approach with
+a direct AST evaluator — no eval() is used at all.
+>>>>>>> track3-honest
 
 Supported DSL syntax:
     - Identifiers: indicator names (e.g. ema_fast, rsi)
@@ -15,13 +20,22 @@ Supported DSL syntax:
     - Parentheses for grouping
 
 The parser translates DSL expressions into Python AST, validates
+<<<<<<< HEAD
 all nodes against a whitelist, then evaluates against a pandas
 DataFrame namespace.
+=======
+all nodes against a whitelist, then evaluates directly by walking
+the AST tree — no eval() or compile() is used.
+>>>>>>> track3-honest
 """
 
 from __future__ import annotations
 
 import ast
+<<<<<<< HEAD
+=======
+import operator
+>>>>>>> track3-honest
 import re
 from typing import Any
 
@@ -35,7 +49,11 @@ def _translate_dsl_operators(expr: str) -> str:
     """Translate DSL boolean operators to Python equivalents.
 
     Keeps Python and/or/not keywords for proper operator precedence.
+<<<<<<< HEAD
     Element-wise evaluation is handled at eval time via a Series wrapper.
+=======
+    Element-wise evaluation is handled by the AST evaluator.
+>>>>>>> track3-honest
     """
     result = expr
     result = re.sub(r'\bAND\b', 'and', result, flags=re.IGNORECASE)
@@ -61,9 +79,14 @@ _ALLOWED_NODES: set[type] = {
     ast.Load,
     # Operators
     ast.Add, ast.Sub, ast.Mult, ast.Div, ast.Mod,
+<<<<<<< HEAD
     ast.BitAnd, ast.BitOr, ast.Invert,  # & | ~ for boolean logic on Series
     ast.Gt, ast.Lt, ast.GtE, ast.LtE, ast.Eq, ast.NotEq,
     ast.And, ast.Or, ast.Not,  # Keep for whitelist compatibility
+=======
+    ast.Gt, ast.Lt, ast.GtE, ast.LtE, ast.Eq, ast.NotEq,
+    ast.And, ast.Or, ast.Not,
+>>>>>>> track3-honest
     ast.USub, ast.UAdd,  # unary - / +
 }
 
@@ -73,6 +96,27 @@ _BUILTIN_COLUMNS = {"open", "high", "low", "close", "volume"}
 # Python keywords that may appear in expressions
 _PY_KEYWORDS = {"and", "or", "not", "True", "False", "None"}
 
+<<<<<<< HEAD
+=======
+# Operator mapping for direct AST evaluation (no eval needed)
+_BIN_OPS: dict[type, Any] = {
+    ast.Add: operator.add,
+    ast.Sub: operator.sub,
+    ast.Mult: operator.mul,
+    ast.Div: operator.truediv,
+    ast.Mod: operator.mod,
+}
+
+_CMP_OPS: dict[type, Any] = {
+    ast.Gt: operator.gt,
+    ast.Lt: operator.lt,
+    ast.GtE: operator.ge,
+    ast.LtE: operator.le,
+    ast.Eq: operator.eq,
+    ast.NotEq: operator.ne,
+}
+
+>>>>>>> track3-honest
 
 def parse_expression(expr: str) -> ast.AST:
     """Parse a DSL expression into a validated AST.
@@ -156,8 +200,14 @@ def evaluate_expression(
 ) -> pd.Series:
     """Parse and safely evaluate a DSL expression against a DataFrame.
 
+<<<<<<< HEAD
     Uses AST transformation to convert Python and/or/not operators
     into element-wise &/|/~ for correct pandas Series behavior.
+=======
+    Uses direct AST evaluation — no eval() or compile() is used.
+    The AST is walked node by node, applying operations via the
+    operator module against the DataFrame namespace.
+>>>>>>> track3-honest
 
     Args:
         df: DataFrame with OHLCV + indicator columns.
@@ -169,6 +219,7 @@ def evaluate_expression(
     """
     try:
         tree = parse_expression(expr)
+<<<<<<< HEAD
     except ValueError:
         return pd.Series(False, index=df.index)
 
@@ -176,14 +227,25 @@ def evaluate_expression(
     tree = _ElementWiseTransformer().visit(tree)
     tree = ast.fix_missing_locations(tree)
 
+=======
+    except (ValueError, SyntaxError, TypeError):
+        return pd.Series(False, index=df.index)
+
+>>>>>>> track3-honest
     # Build namespace from DataFrame columns
     namespace: dict[str, Any] = {col: df[col] for col in df.columns}
     if extra_columns:
         namespace.update(extra_columns)
+<<<<<<< HEAD
     namespace["np"] = np
 
     try:
         result = eval(compile(tree, "<dsl_expr>", "eval"), {"__builtins__": {}}, namespace)
+=======
+
+    try:
+        result = _eval_ast_node(tree.body, namespace)
+>>>>>>> track3-honest
         if isinstance(result, pd.Series):
             return result.astype(bool).fillna(False)
         elif isinstance(result, (bool, np.bool_)):
@@ -194,6 +256,7 @@ def evaluate_expression(
         return pd.Series(False, index=df.index)
 
 
+<<<<<<< HEAD
 class _ElementWiseTransformer(ast.NodeTransformer):
     """Transform Python and/or/not AST nodes to element-wise &/|/~.
 
@@ -224,6 +287,81 @@ class _ElementWiseTransformer(ast.NodeTransformer):
         if isinstance(node.op, ast.Not):
             return ast.UnaryOp(op=ast.Invert(), operand=node.operand)
         return node
+=======
+def _eval_ast_node(node: ast.AST, ns: dict[str, Any]) -> Any:
+    """Recursively evaluate an AST node without eval().
+
+    Only whitelisted node types are handled — anything else raises
+    ValueError, which is caught by the caller.
+    """
+    # Literals
+    if isinstance(node, ast.Constant):
+        return node.value
+    if isinstance(node, ast.Num):  # Python <3.8 compat
+        return node.n
+
+    # Variable references
+    if isinstance(node, ast.Name):
+        name = node.id
+        if name in _PY_KEYWORDS:
+            if name == "True":
+                return True
+            elif name == "False":
+                return False
+            elif name == "None":
+                return None
+        if name not in ns:
+            raise ValueError(f"Undefined identifier: {name}")
+        return ns[name]
+
+    # Unary operations (-x, +x)
+    if isinstance(node, ast.UnaryOp):
+        operand = _eval_ast_node(node.operand, ns)
+        if isinstance(node.op, ast.USub):
+            return -operand
+        elif isinstance(node.op, ast.UAdd):
+            return +operand
+        elif isinstance(node.op, ast.Not):
+            return ~operand  # Element-wise NOT for pandas Series
+        else:
+            raise ValueError(f"Unsupported unary op: {type(node.op).__name__}")
+
+    # Binary operations (+, -, *, /, %)
+    if isinstance(node, ast.BinOp):
+        left = _eval_ast_node(node.left, ns)
+        right = _eval_ast_node(node.right, ns)
+        op_func = _BIN_OPS.get(type(node.op))
+        if op_func is None:
+            raise ValueError(f"Unsupported binary op: {type(node.op).__name__}")
+        return op_func(left, right)
+
+    # Comparisons (>, <, >=, <=, ==, !=)
+    if isinstance(node, ast.Compare):
+        left = _eval_ast_node(node.left, ns)
+        for op, comparator in zip(node.ops, node.comparators):
+            right = _eval_ast_node(comparator, ns)
+            op_func = _CMP_OPS.get(type(op))
+            if op_func is None:
+                raise ValueError(f"Unsupported comparison: {type(op).__name__}")
+            left = op_func(left, right)
+        return left
+
+    # Boolean operations (and → &, or → |) — element-wise for Series
+    if isinstance(node, ast.BoolOp):
+        values = [_eval_ast_node(v, ns) for v in node.values]
+        if isinstance(node.op, ast.And):
+            result = values[0]
+            for v in values[1:]:
+                result = result & v  # Element-wise AND
+            return result
+        elif isinstance(node.op, ast.Or):
+            result = values[0]
+            for v in values[1:]:
+                result = result | v  # Element-wise OR
+            return result
+
+    raise ValueError(f"Unsupported AST node: {type(node).__name__}")
+>>>>>>> track3-honest
 
 
 def validate_expression(expr: str, defined_indicators: set[str]) -> list[str]:
