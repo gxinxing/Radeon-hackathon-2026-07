@@ -214,6 +214,15 @@ def _canonicalize_risk(risk: dict, repairs: list[Repair], errors: list[str]) -> 
                 repairs.append(Repair("strategy.risk.stake_amount", raw, 0.1,
                                       "default_fill", f"Could not parse '{raw}', set to 0.1"))
 
+    # Strip unknown risk fields (schema uses additionalProperties: false)
+    _ALLOWED_RISK = {'stop_loss', 'take_profit', 'trailing_stop', 'trailing_stop_positive',
+                     'trailing_stop_positive_offset', 'max_open_trades', 'stake_amount', 'time_in_trade'}
+    for k in list(risk.keys()):
+        if k not in _ALLOWED_RISK:
+            repairs.append(Repair(f'strategy.risk.{k}', risk[k], None,
+                                'strip_unknown', f'Removed unknown risk field: {k}'))
+            del risk[k]
+
     # take_profit (optional)
     if "take_profit" in risk:
         risk["take_profit"] = _coerce_float(risk["take_profit"],
