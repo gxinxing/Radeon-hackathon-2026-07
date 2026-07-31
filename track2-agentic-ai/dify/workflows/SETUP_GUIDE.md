@@ -319,3 +319,70 @@ Expected flow:
 - **Model name mismatch**: vLLM registers model as `models/qwen-trader-merged` (with path prefix). Use this exact name in Dify.
 - **Backtest returns error**: Check that Trading API is running (`curl http://localhost:8080/health`).
 - **Paper trade fails**: Binance Testnet keys must be set as environment variables on the API server.
+
+---
+
+## Multi-Agent Chatflow (Recommended)
+
+Instead of building a 12-node linear Chatflow manually, you can use the
+**`runMultiAgent`** tool to invoke the full Retrieval → Reasoning → Risk
+pipeline in a single HTTP call. This is the recommended setup for Dify.
+
+### Quick Setup
+
+1. **Import the updated OpenAPI spec** (`dify/tools/trading_api_openapi.yml`)
+   — now includes `runMultiAgent` and `computeReward` operations.
+2. **Create a new Chatflow** with just 3 nodes:
+
+### Node 1: Start
+- **Input**: `user_message` (string)
+
+### Node 2: Tool — runMultiAgent
+- **Tool**: `runMultiAgent` (from imported OpenAPI spec)
+- **Parameters**:
+  - `message`: `{{#start.user_message#}}`
+  - `asset`: `BTC-USDT` (or let user specify)
+  - `timeframe`: `1h`
+
+This single call runs the entire pipeline:
+- Retrieval Agent (multi-path RAG + confidence gating)
+- Reasoning Agent (LoRA + RAG → trading intent JSON)
+- Risk Agent (hard rule validation + veto power)
+
+Returns: `retrieval`, `reasoning`, `risk`, `report`
+
+### Node 3: End
+- **Output**: `{{#tool.report#}}`
+
+### Why This Is Better
+
+| Approach | Nodes | Maintenance | Multi-Agent | RL Reward |
+|----------|-------|-------------|-------------|-----------|
+| Linear Chatflow (12 nodes) | 12 | High (each node manually configured) | ❌ | ❌ |
+| `runMultiAgent` (3 nodes) | 3 | Low (Python handles logic) | ✅ | ✅ |
+
+### Advanced: Custom Report Node
+
+If you want the LLM to rephrase the report, add an LLM node between
+Node 2 and Node 3:
+
+### Node 2b: LLM (Report Enhancement)
+- **Model**: `models/qwen-trader-merged`
+- **System Prompt**: You are a trading analyst. Rephrase the following
+  multi-agent decision report in a friendly tone for the user.
+- **User Message**: `{{#tool.report#}}`
+
+### Advanced: RL Reward Feedback
+
+After a backtest, call `computeReward` to get an RL reward score:
+
+### Node 2c: Tool — computeReward
+- **Tool**: `computeReward`
+- **Parameters**:
+  - `metrics`: `{{#tool.reasoning.payload.metrics#}}` (from backtest)
+  - `walkforward`: (optional, from walk-forward analysis)
+
+Returns: `reward.total` [-1, +1], `reward.grade` (A+/A/B/C/D/F), `reward.feedback`
+
+This reward is automatically stored in the agent's semantic memory and
+used to improve future strategy generation.

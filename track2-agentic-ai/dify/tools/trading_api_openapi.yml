@@ -229,3 +229,165 @@ paths:
                   error:
                     type: string
                     nullable: true
+
+  /api/agent/run:
+    post:
+      operationId: runMultiAgent
+      summary: Run the full multi-agent pipeline (Retrieval → Reasoning → Risk)
+      description: >
+        Executes the complete multi-agent trading analysis pipeline in a single
+        request. The Retrieval Agent fetches RAG knowledge with confidence
+        gating, the Reasoning Agent generates a trading intent (view,
+        confidence, position ratio, stop loss), and the Risk Agent validates
+        against hard rules with veto power. Returns the full decision chain.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - message
+              properties:
+                message:
+                  type: string
+                  description: User's natural language trading request
+                  example: "BTC放量突破前高，帮我做一个EMA突破策略，止损3%"
+                asset:
+                  type: string
+                  default: BTC-USDT
+                  description: Trading asset identifier
+                timeframe:
+                  type: string
+                  default: 1h
+                  enum: [15m, 1h, 4h, 1d]
+      responses:
+        '200':
+          description: Multi-agent decision result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  retrieval:
+                    type: object
+                    description: Retrieval agent output (reference_docs, has_valid_docs)
+                    properties:
+                      has_valid_docs:
+                        type: boolean
+                      max_confidence_score:
+                        type: number
+                      reference_docs:
+                        type: array
+                        items:
+                          type: object
+                  reasoning:
+                    type: object
+                    description: Reasoning agent output (trading intent)
+                    properties:
+                      view:
+                        type: string
+                        enum: [long, short, neutral]
+                      confidence:
+                        type: number
+                      suggest_position_ratio:
+                        type: number
+                      stop_loss_price:
+                        type: number
+                        nullable: true
+                      reason:
+                        type: string
+                  risk:
+                    type: object
+                    description: Risk agent output (final decision with veto power)
+                    properties:
+                      allow_execute:
+                        type: boolean
+                      final_position_ratio:
+                        type: number
+                      audit_note:
+                        type: string
+                      checks_passed:
+                        type: array
+                        items:
+                          type: string
+                      checks_failed:
+                        type: array
+                        items:
+                          type: string
+                  report:
+                    type: string
+                    description: Formatted markdown report of the full decision
+
+  /api/agent/reward:
+    post:
+      operationId: computeReward
+      summary: Compute RL reward for a strategy based on backtest metrics
+      description: >
+        Calculates a normalized reward score [-1, +1] from backtest metrics
+        including return, Sharpe, drawdown, alpha, and walk-forward robustness.
+        Used by the RL feedback loop for strategy optimization.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - metrics
+              properties:
+                metrics:
+                  type: object
+                  description: BacktestResult metrics dict
+                  properties:
+                    total_return:
+                      type: number
+                    sharpe_ratio:
+                      type: number
+                    max_drawdown:
+                      type: number
+                    alpha:
+                      type: number
+                    sortino_ratio:
+                      type: number
+                    calmar_ratio:
+                      type: number
+                    max_consecutive_losses:
+                      type: integer
+                    win_rate:
+                      type: number
+                walkforward:
+                  type: object
+                  nullable: true
+                  properties:
+                    is_robust:
+                      type: boolean
+                    overfitting_score:
+                      type: number
+      responses:
+        '200':
+          description: Reward computation result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  reward:
+                    type: object
+                    properties:
+                      total:
+                        type: number
+                        description: Normalized reward score [-1, +1]
+                      grade:
+                        type: string
+                        enum: [A+, A, B, C, D, F]
+                      feedback:
+                        type: string
+                        description: Natural language feedback
+                      components:
+                        type: object
+                        description: Per-component reward breakdown

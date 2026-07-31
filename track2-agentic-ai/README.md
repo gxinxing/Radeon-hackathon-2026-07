@@ -39,12 +39,17 @@ Users describe strategies in natural language; the agent generates a formal stra
 backtests it on historical crypto data, evaluates risk, and optionally executes paper trades.
 
 **Key differentiators:**
-- **LLM fine-tuned on trading knowledge** — Qwen2.5-7B with QLoRA on AMD ROCm GPU, trained on
-  FNSPID financial news + FinGPT instructions + custom NL→DSL pairs
+- **ReAct Agent Loop** — LLM autonomously reasons, plans, selects tools, and iterates
+  until the user's goal is met (not a fixed linear pipeline)
+- **5 Agent Capabilities** — Reasoning (Thought before Action), Planning (dynamic tool
+  sequencing), Tool Use (8 registered tools), Memory Management (conversation + tool
+  call history), Task Execution (real backtests + paper trading)
+- **LLM fine-tuned on trading knowledge** — Qwen2.5-7B with LoRA on AMD ROCm GPU, trained
+  on 2,000 NL→DSL instruction pairs with Chain-of-Thought reasoning traces
 - **Full-chain automation** — NL input → DSL generation → schema validation → backtest →
-  risk assessment → paper trading → natural language report
+  walk-forward analysis → paper trading → natural language report
 - **100% AMD GPU** — LLM inference via vLLM on ROCm, no NVIDIA dependency
-- **Gradio-powered agent** — Chat UI with LLM nodes, code validation, and tool calls
+- **Gradio-powered agent** — Chat UI with real-time reasoning trace, tool call display
 
 ---
 
@@ -96,9 +101,21 @@ backtests it on historical crypto data, evaluates risk, and optionally executes 
 
 ---
 
-## 🔗 Pipeline: NL → DSL → Backtest → Trade
+## 🔗 Pipeline: Multi-Agent + RL Reward
 
-```
+### Mode 1: ReAct Agent Loop (default)
+
+
+
+### Mode 2: Multi-Agent Pipeline (MULTI_AGENT_MODE=true or /api/agent/run)
+
+
+
+### Mode 3: Dify Chatflow (3 nodes)
+
+
+
+Single HTTP call runs the full multi-agent pipeline. No 12-node manual Chatflow needed.```
 ① NL Input          "BTC突破前高，放量确认，做个突破策略"
     │
     ▼
@@ -126,6 +143,7 @@ backtests it on historical crypto data, evaluates risk, and optionally executes 
 
 | Component | Technology | Purpose |
 |-----------|-----------|---------|
+| Agent architecture | ReAct loop + 3-agent pipeline | Reasoning, planning, tool use, memory, execution |
 | Base model | Qwen2.5-7B-Instruct | Chinese-capable LLM, ROCm-friendly |
 | Fine-tuning | QLoRA (4-bit) via PEFT | Inject trading knowledge without full retrain |
 | Inference | vLLM (ROCm, V1 engine) | High-throughput local LLM serving |
@@ -333,8 +351,8 @@ The Gradio chat interface (`src/chat_app.py`) chains multiple steps:
 
 | Criterion | Points | How We Address It |
 |-----------|--------|-------------------|
-| Functional completeness & application value | 60 | Full-chain: NL→DSL→Backtest→Paper Trade; real crypto market data; working chat UI |
-| AMD Radeon GPU / ROCm optimization | 40 | vLLM inference on ROCm; QLoRA fine-tuning on ROCm; benchmark vs CPU inference |
+| Functional completeness & application value | 60 | ReAct agent (8 tools); 3-agent pipeline (Retrieval→Reasoning→Risk); 3-tier memory; RL reward system; multi-path RAG; Dify integration; intent routing + personality |
+| AMD Radeon GPU / ROCm optimization | 40 | vLLM inference on ROCm; LoRA fine-tuning on ROCm; DPO training on ROCm; 6.2x batch scaling; RL reward computed from backtest on AMD GPU |
 
 ---
 

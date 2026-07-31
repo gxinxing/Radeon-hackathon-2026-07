@@ -3,6 +3,10 @@
 Replaces Dify with a lightweight Python web UI that connects to
 vLLM (OpenAI-compatible API) and the backtest microservice.
 
+Supports two modes:
+- AGENT_MODE=true (default): ReAct agent loop (reasoning + tool use + memory)
+- AGENT_MODE=false: Legacy linear pipeline (NL → DSL → backtest → report)
+
 Run:
     /opt/venv/bin/python src/chat_app.py
 
@@ -36,7 +40,23 @@ try:
     HAS_RAG = True
 except ImportError:
     HAS_RAG = False
-import yaml
+
+# Agent mode (ReAct loop)
+try:
+    from .agent.core import run_agent_loop
+    HAS_AGENT = True
+except ImportError:
+    HAS_AGENT = False
+
+AGENT_MODE = os.environ.get("AGENT_MODE", "true").lower() in ("true", "1", "yes")
+MULTI_AGENT_MODE = os.environ.get("MULTI_AGENT_MODE", "false").lower() in ("true", "1", "yes")
+
+# Multi-agent mode (Retrieval → Reasoning → Risk)
+try:
+    from .agent.orchestrator import run_multi_agent
+    HAS_MULTI_AGENT = True
+except ImportError:
+    HAS_MULTI_AGENT = False
 
 # --- Configuration ---
 VLLM_BASE_URL = os.environ.get("VLLM_BASE_URL", "http://localhost:8000/v1")
@@ -299,7 +319,21 @@ def get_market_context(pair: str = "BTC/USDT") -> str:
 
 
 def process_user_message(message: str, history: list) -> str:
-    """Full pipeline: NL → DSL → Backtest → Report."""
+    """Process user message — routes to Agent loop or linear pipeline.
+
+    AGENT_MODE=true (default): ReAct agent with reasoning, planning,
+    tool use, memory management, and task execution.
+    AGENT_MODE=false: Legacy linear pipeline (NL → DSL → backtest → report).
+    """
+    if MULTI_AGENT_MODE and HAS_MULTI_AGENT:
+        yield from run_multi_agent(message, history)
+        return
+
+    if AGENT_MODE and HAS_AGENT:
+        yield from run_agent_loop(message, history)
+        return
+
+    # ── Legacy linear pipeline (fallback) ──────────────────────────
     yield "🔄 正在获取市场数据..."
 
     # Fetch market context for better strategy generation
@@ -441,8 +475,10 @@ def create_app():
 
 **AMD AI DevMaster Hackathon 2026 — Track 2: Agentic AI**
 
-用自然语言描述交易策略，AI自动生成策略DSL → 回测 → 分析报告。
-Powered by Qwen2.5-7B (QLoRA fine-tuned) on AMD ROCm GPU.
+用自然语言描述交易策略，AI Agent 自主推理 → 调用工具 → 回测分析 → 输出报告。
+Powered by Qwen2.5-7B (LoRA fine-tuned) on AMD ROCm GPU.
+
+**Agent Capabilities**: 推理 (ReAct) · 规划 (多步决策) · 工具调用 (8个工具) · 记忆管理 (对话+工具历史) · 任务执行 (回测+模拟交易)
 """)
 
         with gr.Row():
@@ -460,22 +496,30 @@ Powered by Qwen2.5-7B (QLoRA fine-tuned) on AMD ROCm GPU.
                 )
             with gr.Column(scale=1):
                 gr.Markdown("""
-### 🏗 架构
+### 🏗 Agent 架构 (ReAct)
 
 ```
 用户输入 (NL)
     ↓
-LLM: Qwen2.5-7B
-  (vLLM/ROCm GPU)
+┌─ Agent Loop ─────────────┐
+│ Thought: 推理下一步        │
+│ Action: 选择并调用工具      │
+│ Observe: 接收工具结果       │
+│ → 循环直到完成目标          │
+└──────────────────────────┘
     ↓
-策略DSL (YAML)
-    ↓
-JSON Schema 校验
-    ↓
-回测 (CCXT + TA-Lib)
-    ↓
-LLM: 分析报告
-```
+最终分析报告
+
+### 🛠 可用工具 (8个)
+
+1. get_market_data — 实时行情
+2. generate_strategy_dsl — 策略生成
+3. validate_dsl — DSL校验
+4. run_backtest — 历史回测
+5. walk_forward_analysis — 过拟合检测
+6. paper_trade — 模拟交易
+7. retrieve_knowledge — 知识检索
+8. final_answer — 输出报告
 
 ### 📊 评审对标
 

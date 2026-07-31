@@ -16,39 +16,58 @@ quantitative trading.
 
 ## 2. Overall System Architecture
 
+The agent uses a **ReAct (Reasoning + Acting) loop** — the LLM autonomously
+decides which tools to call, observes the results, and iterates until the
+user's goal is met. This replaces a fixed linear pipeline with an adaptive,
+LLM-driven workflow that demonstrates all five required agent capabilities:
+reasoning, planning, tool use, memory management, and task execution.
+
 ```
 ┌──────────────────────────────────────────────────────────────────┐
 │                      Gradio Chat UI (port 7860)                   │
-│  User natural language input → Agent response with analysis       │
+│  User NL input → Agent reasoning trace → Final analysis report    │
 └──────────────────────────┬────────────────────────────────────────┘
                            │
 ┌──────────────────────────▼────────────────────────────────────────┐
-│                   Pipeline Orchestrator                            │
+│                   ReAct Agent Loop (src/agent/)                    │
 │                                                                    │
-│  ① LLM: NL→DSL  →  ② Schema Validate  →  ③ HTTP: Backtest        │
-│     (vLLM/ROCm)      (JSON Schema)        (FastAPI + CCXT)        │
+│  ┌─ Thought: LLM reasons about next step ──────────────┐         │
+│  │  Action: LLM selects a tool to call                  │         │
+│  │  Observe: Tool result stored in ConversationMemory   │         │
+│  └─ Repeat until Final Answer or max iterations ───────┘         │
 │                                                                    │
-│  ④ LLM: Report Gen  ←  ⑤ Parse Metrics  ←  ⑥ Risk Assessment    │
-│     (vLLM/ROCm)         (Code)               (LLM + Rules)       │
+│  Memory: dialogue history + tool call log + strategy/backtest     │
+│  Tools: 8 registered tools (market, strategy, validate, backtest,  │
+│         walk-forward, paper-trade, knowledge, final-answer)        │
 └──────────────────────────┬────────────────────────────────────────┘
                            │
 ┌──────────────────────────▼────────────────────────────────────────┐
 │                AMD ROCm GPU (51 GB VRAM)                           │
 │                                                                    │
 │  ┌────────────────────────┐    ┌────────────────────────────────┐│
-│  │ vLLM (ROCm V1 Engine)  │    │ QLoRA Fine-tuning              ││
-│  │ Qwen2.5-7B (merged)    │    │ • 7,000 training samples       ││
-│  │ FP16, ~31s/step        │    │ • 3 epochs, bf16               ││
+│  │ vLLM (ROCm V1 Engine)  │    │ LoRA Fine-tuning               ││
+│  │ Qwen2.5-7B (merged)    │    │ • 2,000 NL→DSL training pairs  ││
+│  │ FP16, ~32 t/s          │    │ • LoRA r=64, bf16, 3 epochs    ││
 │  │ ~20 GB VRAM            │    │ • PEFT merge → vLLM serve      ││
 │  └────────────────────────┘    └────────────────────────────────┘│
 │                                                                    │
 │  ┌──────────────────────────────────────────────────────────────┐│
-│  │ Backtest Engine (FastAPI + TA-Lib + CCXT)                    ││
-│  │ • Synthetic OHLCV (GBM model) • DSL→IStrategy transpiler    ││
-│  │ • Technical indicators        • Trade simulation             ││
+│  │ Tool Services (FastAPI + CCXT + TA-Lib)                     ││
+│  │ • Market data • Backtest engine • Walk-forward analysis     ││
+│  │ • Paper trading (Binance Testnet) • Knowledge RAG           ││
 │  └──────────────────────────────────────────────────────────────┘│
 └────────────────────────────────────────────────────────────────────┘
 ```
+
+### Agent Capability Matrix
+
+| Capability | Implementation | Evidence |
+|-----------|---------------|----------|
+| **Reasoning** | ReAct loop — LLM outputs Thought before each Action | `src/agent/core.py` — `_build_agent_prompt()`, `REACT_SYSTEM_PROMPT` |
+| **Planning** | LLM decides tool sequence dynamically; typical flow: market→knowledge→generate→validate→backtest→walk-forward→answer | `src/agent/prompts.py` — decision guidelines in system prompt |
+| **Tool Use** | 8 registered tools with structured JSON dispatch | `src/agent/tools.py` — `TOOL_REGISTRY`, `execute_tool()` |
+| **Memory Management** | `ConversationMemory` — dialogue history, tool call log, strategy/backtest tracking | `src/agent/memory.py` — messages, tool_calls, strategies, backtest_results |
+| **Task Execution** | Real backtests, walk-forward analysis, paper trading via FastAPI | `src/backtest/runner.py`, `src/tools/paper_trade.py` |
 
 ### Key Design Decisions
 
@@ -235,7 +254,107 @@ GPU utilization. VRAM usage ~16GB for model + KV cache on 64GB MI210.
 optimizations. The avg latency of ~6.8s reflects the 7B model's compute time for
 ~500 token outputs on AMD ROCm with eager execution mode.
 
-### 4.9 Corrected Training Data Generation
+### 4.9 ReAct Agent with Three-Tier Memory
+
+The agent uses a **ReAct (Reasoning + Acting) loop** where the LLM autonomously
+decides which tools to call, observes results, and iterates until the goal is met.
+This replaces a fixed linear pipeline with an adaptive, LLM-driven workflow.
+
+**Three-tier memory architecture:**
+
+| Tier | Name | Scope | Storage | Content |
+|------|------|-------|---------|---------|
+| 1 | WorkingMemory | Per-session | RAM | Messages, tool calls, current strategy/backtest |
+| 2 | EpisodicMemory | Per-session | JSON file | All strategies, backtests, thoughts, user requests |
+| 3 | SemanticMemory | Cross-session | JSON file | User preferences, strategy stats, experience rules |
+
+The semantic memory is loaded at startup and persists across sessions, allowing
+the agent to reference past strategy performance and user preferences.
+
+### 4.10 Multi-Agent Pipeline with Risk Veto
+
+A three-agent pipeline replaces the single-agent loop for production use:
+
+1. **Retrieval Agent** — Multi-path RAG (keyword + BM25 + dense + reranking) with
+   confidence gating. If no document passes the 0.45 threshold,
+   `has_valid_docs=false` and the pipeline short-circuits to neutral.
+2. **Reasoning Agent** — LoRA + RAG context → structured trading intent JSON
+   (view, confidence, position ratio, stop loss). Forced neutral when RAG is insufficient.
+3. **Risk Agent** — Hard rule validation (code-level, not model-influenced) with
+   **unique veto power**. Checks: position limits, stop-loss distance, confidence
+   threshold, reason completeness. `allow_execute=false` blocks all trades.
+
+> **The LLM only produces trading intent. The Risk Agent decides execution.**
+
+### 4.11 RL Reward System for Strategy Self-Optimization
+
+An 8-dimensional reward function computes a normalized score [-1, +1] from
+backtest metrics, feeding a three-layer RL feedback loop:
+
+| Layer | Mechanism | Scope |
+|-------|-----------|-------|
+| L1 (Immediate) | Reward injected into current session prompt | Per-session |
+| L2 (Experience) | High/low reward patterns → experience rules → semantic memory | Cross-session |
+| L3 (DPO Data) | Reward-ranked strategy pairs → DPO training data → LoRA update | Weight update |
+
+**Reward components:** Return (20%) + Alpha (15%) + Sharpe (15%) + Sortino (10%)
++ Calmar (5%) + Drawdown penalty (12%) + Consecutive losses (8%)
++ Walk-forward robustness (15%).
+
+After each backtest, the agent computes reward and displays:
+`🎯 RL Reward: +0.42 (Grade: A) — 收益率15%表现良好`
+
+### 4.12 Multi-Path RAG with Confidence Gating
+
+The retrieval system combines three search paths with a reranking + gating pipeline:
+
+```
+Query → ① Keyword (top 6) + ② BM25 (top 6) + ③ Dense vector (top 6)
+      → Merge & deduplicate (≤10 candidates)
+      → CrossEncoder reranking (keep top 4)
+      → Confidence gate (score < 0.45 → clear results)
+      → LLM context
+```
+
+The confidence gate is a hard gate: if no document passes the threshold,
+the reasoning agent is forced to output `neutral` — preventing hallucination.
+
+### 4.13 Intent Routing + Personality
+
+The agent classifies each message as trading intent or general conversation:
+
+- **Trading** (70+ keywords: 策略/回测/BTC/RSI/...) → ReAct agent loop with 8 tools
+- **General** (你好/讲个笑话/...) → Personality-driven direct response as "小R"
+
+The personality prompt gives the agent a name, humor, opinions, and memory —
+making it feel "alive" rather than a cold tool. It remembers user preferences
+across sessions via semantic memory.
+
+### 4.14 Dify Integration via HTTP Endpoints
+
+Two new FastAPI endpoints enable Dify Chatflow integration with just 3 nodes:
+
+| Endpoint | Dify Tool | Purpose |
+|----------|-----------|---------|
+| `POST /api/agent/run` | `runMultiAgent` | Full pipeline in one call |
+| `POST /api/agent/reward` | `computeReward` | RL reward computation |
+
+Dify Chatflow: Start → Tool(runMultiAgent) → End — no 12-node manual pipeline needed.
+
+### 4.15 LoRA Training Dataset Spec
+
+A formal spec for constructing anti-hallucination training data with 4 categories:
+
+| Category | Ratio | Purpose |
+|----------|-------|---------|
+| A: Structured output | 60% | Force JSON format, eliminate free text |
+| B: Reasoning chains | 25% | Chain-of-thought for trading decisions |
+| C: Tool calling | 10% | Correct tool selection format |
+| D: Boundary rejection | 5% | Anti-hallucination — refuse when info insufficient |
+
+Key principle: LoRA learns **how to think**, not **what to know** (facts come from RAG).
+
+### 4.16 Original: Corrected Training Data Generation
 
 Using the model + canonicalizer pipeline, 51 diverse NL prompts were processed
 to generate high-quality training data for future v2 LoRA fine-tuning:
@@ -289,6 +408,30 @@ correct DSL with proper types, negative stop_loss, and valid indicator reference
 | Batch eval (100 prompts) | `scripts/gen_eval_dataset.py` | ✅ 88/100 (88%) |
 | vLLM benchmark | `scripts/vllm_benchmark.py` | ✅ 6.2× scaling, 201.7 tokens/s |
 | Corrected training data | `scripts/gen_corrected_dataset.py` | ✅ 43 valid samples |
+| ReAct Agent core | `src/agent/core.py` | ✅ ReAct loop + intent routing + personality |
+| Three-tier memory | `src/agent/memory.py` | ✅ Working + Episodic + Semantic (file-backed) |
+| Agent prompts | `src/agent/prompts.py` | ✅ ReAct + DSL generation + reward feedback |
+| Agent tools | `src/agent/tools.py` | ✅ 8-tool registry + multi-path RAG retrieval |
+| Intent classifier | `src/agent/personality.py` | ✅ Trading vs general conversation routing |
+| RL reward function | `src/agent/reward.py` | ✅ 8-dim reward [-1,+1], grades A+ to F |
+| RL feedback loop | `src/agent/rl_feedback.py` | ✅ L1 prompt + L2 experience + L3 DPO pairs |
+| Multi-agent protocol | `src/agent/protocol.py` | ✅ AgentMessage JSON structure |
+| Retrieval Agent | `src/agent/retrieval_agent.py` | ✅ Multi-path RAG + confidence gating |
+| Reasoning Agent | `src/agent/reasoning_agent.py` | ✅ LoRA + RAG → trading intent JSON |
+| Risk Agent | `src/agent/risk_agent.py` | ✅ Hard rules + veto power (5 checks) |
+| Multi-agent orchestrator | `src/agent/orchestrator.py` | ✅ Retrieval→Reasoning→Risk pipeline |
+| Multi-path retrieval | `src/knowledge_base/multi_retriever.py` | ✅ Keyword+BM25+reranking+confidence gate |
+| Quant chunker | `src/knowledge_base/chunker.py` | ✅ 512 tokens, table-aware, metadata tags |
+| Dify HTTP endpoints | `src/api.py` | ✅ /api/agent/run + /api/agent/reward |
+| OpenAPI spec (Dify) | `dify/tools/trading_api_openapi.yml` | ✅ 7 operations including runMultiAgent |
+| Dify Chatflow guide | `dify/workflows/SETUP_GUIDE.md` | ✅ 3-node Chatflow with runMultiAgent |
+| LoRA training spec | `docs/lora_training_spec.md` | ✅ 4 categories (60/25/10/5), anti-hallucination |
+| LoRA dataset generator | `training/data/prepare_quant_lora_dataset.py` | ✅ 2000 samples (4 categories) |
+| DPO data generator | `training/scripts/prepare_dpo_data.py` | ✅ Reward-ranked preference pairs |
+| DPO trainer | `training/scripts/train_dpo.py` | ✅ TRL DPOTrainer, ROCm-optimized |
+| Agent tests | `tests/test_agent.py` | ✅ 78 tests (memory, tools, parser, intent, personality) |
+| Multi-agent tests | `tests/test_multi_agent.py` | ✅ 35 tests (protocol, agents, risk veto, retrieval) |
+| RL reward tests | `tests/test_reward.py` | ✅ 24 tests (reward, feedback, DPO, memory) |
 | Technical report | `docs/technical_report.md` | ✅ This document |
 
 ## 7. Team
