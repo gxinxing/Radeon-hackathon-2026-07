@@ -2,11 +2,7 @@
 
 [![AMD ROCm](https://img.shields.io/badge/AMD-ROCm%207.2-ED1C24?logo=amd&logoColor=white)](https://www.amd.com/en/products/software/rocm.html)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.9.1+ROCm-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org/)
-<<<<<<< HEAD
-[![Genesis](https://img.shields.io/badge/Genesis-1.2.3-blue)](https://genesis-embodied-ai.github.io/)
-=======
 [![Genesis](https://img.shields.io/badge/Genesis-1.3.1-blue)](https://genesis-embodied-ai.github.io/)
->>>>>>> track3-honest
 [![rsl_rl](https://img.shields.io/badge/rsl__rl-5.4.2-green)](https://github.com/leggedrobotics/rsl_rl)
 [![ONNX](https://img.shields.io/badge/ONNX-opset%2017-orange)](https://onnx.ai/)
 [![License](https://img.shields.io/badge/License-Hackathon-lightgrey)](#license)
@@ -90,27 +86,16 @@ robot policies can be trained without NVIDIA hardware.
 │  └─────────────────────────────────────────────────┘     │
 │                                                          │
 │  Reward: approach_ball(10) + ball_control(2)             │
-<<<<<<< HEAD
-│          + ball_to_goal(3) + upright(0.5) - fall         │
-=======
 │          + ball_to_goal(8) + upright(0.5) - fall         │
 │          + approach_angle(3) + directed_contact(5)        │
->>>>>>> track3-honest
 └──────────────────────────┬──────────────────────────────┘
                            │
                            ▼
 ┌──────────────────────────────────────────────────────────┐
-<<<<<<< HEAD
-│                   Deployment Pipeline                     │
-│                                                          │
-│  Trained .pt  ──▶  ONNX export  ──▶  Booster Studio      │
-│  checkpoint                       3v3 SoccerSim (Sim2Sim) │
-=======
 │                   Validation Pipeline                     │
 │                                                          │
 │  Trained .pt  ──▶  ONNX export  ──▶  1v1 Match           │
 │  checkpoint                       (ONNX Runtime, Genesis)  │
->>>>>>> track3-honest
 └──────────────────────────────────────────────────────────┘
 ```
 
@@ -337,25 +322,6 @@ Output: `demos/hierarchical_chase_hl_v4.mp4`
     --output models/soccer_policy.onnx
 ```
 
-<<<<<<< HEAD
-### Sim2Sim Validation in Booster Studio
-
-1. Install Booster Studio on the cloud instance:
-
-```bash
-bash install_booster_studio.sh
-```
-
-2. Access Booster Studio via noVNC:
-
-```
-https://radeon-global.anruicloud.com/instances/<instance-id>/proxy/6080/vnc.html
-```
-
-3. Load the ONNX model in Booster Studio's 3v3 SoccerSim
-4. Run matches against the official Booster AI
-
-=======
 ### 1v1 Match Verification (ONNX Runtime)
 
 ```bash
@@ -363,7 +329,6 @@ https://radeon-global.anruicloud.com/instances/<instance-id>/proxy/6080/vnc.html
 python match_1v1_onnx.py --onnx models/chase_v8_policy.onnx --steps 200
 ```
 
->>>>>>> track3-honest
 ### 3v3 Match Evaluation
 
 ```bash
@@ -404,11 +369,7 @@ The reward function (`reward.py`) implements a curriculum with task-specific ter
 |------|-------------|---------|
 | `balance` | upright, alive, tracking_vel, feet_swing, feet_slip | Maintain balance while walking |
 | `chase` | balance terms + approach_ball | Approach the ball |
-<<<<<<< HEAD
-| `chase_hl` | upright, alive, approach_ball, ball_control, ball_to_goal, goal_scored | Hierarchical (no gait terms) |
-=======
 | `chase_hl` | upright, alive, approach_ball, ball_control, ball_progress, ball_contact, directed_contact, approach_angle, ball_to_goal, goal_scored | Hierarchical (no gait terms) |
->>>>>>> track3-honest
 
 Key reward shaping techniques:
 
@@ -459,25 +420,15 @@ multi-process distributed architecture:
 bash run_1v1.sh runs/hierarchical_soccer_chase_hl/model_1894.pt 25
 ```
 
-<<<<<<< HEAD
-**Launch 3v3 match (6 robots):**
-=======
 **Launch 3v3 match (distributed, 6 robots):**
 
 > Note: 3v3 distributed match requires 6 Genesis processes to compile kernels
 > simultaneously (2-3 min each). The coordinator uses a 600s accept deadline.
 > 1v1 match above is the verified validation path.
->>>>>>> track3-honest
 ```bash
 bash run_3v3.sh runs/hierarchical_soccer_chase_hl/model_1894.pt 25
 ```
 
-<<<<<<< HEAD
-**Results:**
-- 1v1: Agent 119 steps, Opponent 112 steps, zero GPU crash
-- 3v3: All 6 workers 75-84 steps, 1240 steps logged, zero GPU crash
-- Match logs saved to `match_logs/match_YYYYMMDD_HHMMSS.json`
-=======
 **1v1 Verification Results:**
 - 200 steps at 10Hz (20s simulated)
 - Ball velocity non-zero: max 1.46 m/s, avg 0.94 m/s
@@ -485,7 +436,6 @@ bash run_3v3.sh runs/hierarchical_soccer_chase_hl/model_1894.pt 25
 - Robot height stable at 0.89-0.92m (no falls)
 - ONNX inference: 200 steps, no errors
 - Match log saved to `match_logs/match_1v1.json`
->>>>>>> track3-honest
 
 ---
 
@@ -526,14 +476,8 @@ bash run_3v3.sh runs/hierarchical_soccer_chase_hl/model_1894.pt 25
 │   │   ├── roles.py               # Role assignment (attacker/defender/keeper)
 │   │   ├── scene.py               # Match scene and state definitions
 │   │   └── result.py              # Match result tracking
-<<<<<<< HEAD
-│   └── booster_agent/            # Booster Studio Sim2Sim agent
-│       ├── src/main.py            # Agent entry (ONNX policy)
-│       └── src/rl_playbook.py    # RL-enhanced playbook
-=======
 │   └── soccer_env/
 │       └── soccer_scene.py        # Genesis soccer field scene builder
->>>>>>> track3-honest
 ├── scripts/
 │   └── match_eval_3v3.py         # Match evaluation script
 ├── tests/
@@ -556,19 +500,11 @@ bash run_3v3.sh runs/hierarchical_soccer_chase_hl/model_1894.pt 25
 
 | Component | Technology | Why |
 |-----------|-----------|-----|
-<<<<<<< HEAD
-| Physics simulation | Genesis 1.2.3 | GPU-accelerated, AMD Radeon compatible, Python-native |
-| Deep learning | PyTorch 2.9.1 (ROCm 6.2) | AMD GPU support via HIP/ROCm |
-| RL algorithm | rsl_rl 5.4.2 (PPO) | Lightweight, well-tested, compatible with Genesis |
-| Robot platform | Booster T1 (humanoid, 31 DoF) | Standard platform for RoboCup soccer |
-| Sim2Sim validation | Booster Studio 1.9.4 | Official simulator for 3v3 soccer |
-=======
 | Physics simulation | Genesis 1.3.1 | GPU-accelerated, AMD Radeon compatible, Python-native |
 | Deep learning | PyTorch 2.9.1 (ROCm 6.2) | AMD GPU support via HIP/ROCm |
 | RL algorithm | rsl_rl 5.4.2 (PPO) | Lightweight, well-tested, compatible with Genesis |
 | Robot platform | Booster T1 (humanoid, 31 DoF) | Standard platform for RoboCup soccer |
 | Match validation | Genesis 1v1 (ONNX Runtime) | In-engine verification of trained policy |
->>>>>>> track3-honest
 | Cloud GPU | Anrui Cloud (安睿云) AMD GPU (51 GB VRAM) | AMD Radeon GPU with JupyterLab + VNC |
 
 ---
@@ -581,12 +517,8 @@ bash run_3v3.sh runs/hierarchical_soccer_chase_hl/model_1894.pt 25
 
 2. **Workaround — Distributed multi-process architecture**: Each robot runs in its own
    Genesis process (proven stable with 1 robot). A socket-based coordinator syncs state
-<<<<<<< HEAD
-   between processes. Verified with 6 concurrent processes (3v3 match).
-=======
    between processes. 1v1 match verified with ONNX inference (200 steps, ball displaced 20m).
    3v3 distributed match (6 robots) is designed but not yet fully verified at runtime.
->>>>>>> track3-honest
 
 3. **Close-range ball control**: When the ball is within ~2m, the velocity-command interface
    cannot express fine motor adjustments needed for ball possession. A residual joint-level
@@ -611,13 +543,8 @@ by the Genesis physics simulation:
 
 ## 👥 Team
 
-<<<<<<< HEAD
-- Team Name: [TODO: fill in before submission]
-- Members: [TODO: fill in before submission]
-=======
 - Team Name: Individual Submission
 - Members: Simon
->>>>>>> track3-honest
 
 ---
 

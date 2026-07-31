@@ -16,10 +16,7 @@ MSG_STATE = 1
 MSG_BALL = 2
 MSG_CMD = 3
 MSG_END = 4
-<<<<<<< HEAD
-=======
 MSG_WORLD = 5  # Global perception: all robots + ball in one message
->>>>>>> track3-honest
 
 DEFAULT_PORT = 9876
 N_STEPS = 200  # 20s at 10Hz (HL decimation=5, 50Hz physics)
@@ -57,27 +54,17 @@ def recv_msg(sock):
 
 
 class MatchWorker:
-<<<<<<< HEAD
-    def __init__(self, role, has_ball, port, model_path, init_pos, team_id=0):
-=======
     def __init__(self, role, has_ball, port, model_path, init_pos, team_id=0, onnx_path=None):
->>>>>>> track3-honest
         self.role = role
         self.has_ball = has_ball
         self.port = port
         self.model_path = model_path
-<<<<<<< HEAD
-=======
         self.onnx_path = onnx_path
->>>>>>> track3-honest
         self.init_pos = init_pos
         self.team_id = team_id
         self.running = False
         self.opp_states = {}  # other robots' positions
-<<<<<<< HEAD
-=======
         self.all_robot_states = []  # list of {x,y,z,pitch,roll} for all robots
->>>>>>> track3-honest
         self.ball_pos = np.array([0.0, 0.0, 0.11])
         self.ball_vel = np.array([0.0, 0.0, 0.0])
         self.collision_push = np.array([0.0, 0.0, 0.0])
@@ -88,22 +75,14 @@ class MatchWorker:
 
         gs.init(backend=gs.gpu, logging_level='warning')
 
-<<<<<<< HEAD
-        with open('configs/hierarchical_agent.yaml') as f:
-=======
         with open(os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                'configs/hierarchical_agent.yaml')) as f:
->>>>>>> track3-honest
             cfg = yaml.safe_load(f)
         env_cfg = dict(cfg['env'])
         env_cfg['task'] = 'chase_hl'
         hl_cfg = cfg.get('high_level', {})
 
-<<<<<<< HEAD
-        from envs.soccer_env_hierarchical import SoccerEnvHierarchical
-=======
         from soccer_env_hierarchical import SoccerEnvHierarchical
->>>>>>> track3-honest
         self.env = SoccerEnvHierarchical(
             num_envs=1, env_cfg=env_cfg, obs_cfg=cfg['obs'],
             reward_cfg=cfg['reward'], command_cfg=cfg['command'],
@@ -111,17 +90,6 @@ class MatchWorker:
             high_level_decimation=hl_cfg.get('decimation', 5),
             show_viewer=False)
 
-<<<<<<< HEAD
-        self.cfg = cfg
-
-        self.policy = None
-        if self.model_path:
-            from rsl_rl.runners import OnPolicyRunner
-            runner = OnPolicyRunner(self.env, cfg['train'],
-                                    'runs/hierarchical_soccer_chase_hl', device=gs.device)
-            runner.load(self.model_path)
-            self.policy = runner.get_inference_policy(device=gs.device)
-=======
         # Override initial position so robot spawns at --init-pos, not default (0,0,0.6)
         import torch as _torch
         self.env.init_base_pos = _torch.tensor(self.init_pos, dtype=_torch.float32, device=self.env.device)
@@ -144,7 +112,6 @@ class MatchWorker:
             print(f'[{self.role}] ERROR: .pt path is deprecated. Use --onnx instead.')
             print(f'[{self.role}] Convert: python export_onnx_mlp.py --model {self.model_path} --output models/chase_policy.onnx')
             sys.exit(1)
->>>>>>> track3-honest
 
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.connect(('localhost', self.port))
@@ -153,15 +120,6 @@ class MatchWorker:
     def run(self):
         self.running = True
         obs = self.env.reset()
-<<<<<<< HEAD
-        step = 0
-
-        while self.running and step < N_STEPS:
-            # Receive ONE set of messages (opp state + ball), then proceed
-            self.sock.settimeout(30.0)  # long timeout: wait for coordinator to start broadcasting
-            try:
-                # Read opp state
-=======
         # Force robot to spawn at init_pos (init_qpos override alone doesn't work in Genesis)
         import torch as _torch
         pos = _torch.tensor([self.init_pos], dtype=_torch.float32, device=self.env.device)
@@ -174,35 +132,11 @@ class MatchWorker:
             # Receive world state from coordinator
             self.sock.settimeout(120.0)
             try:
->>>>>>> track3-honest
                 msg_type, data = recv_msg(self.sock)
                 if msg_type == MSG_END:
                     print(f'[{self.role}] Received END signal at step {step}')
                     self.running = False
                     break
-<<<<<<< HEAD
-                elif msg_type == MSG_STATE and data:
-                    self.opp_states['opp'] = np.array(data[:3])
-                elif msg_type is None:
-                    # Connection truly lost (not timeout)
-                    print(f'[{self.role}] Connection lost before step {step}')
-                    self.running = False
-                    break
-
-                # Read ball state (if sent)
-                msg_type, data = recv_msg(self.sock)
-                if msg_type == MSG_END:
-                    print(f'[{self.role}] Received END signal at step {step}')
-                    self.running = False
-                    break
-                elif msg_type == MSG_BALL and data:
-                    if not self.has_ball:
-                        self.ball_pos = np.array(data[:3])
-                        self.ball_vel = np.array(data[3:6])
-                elif msg_type == MSG_CMD and data:
-                    self.collision_push = np.array(data[:3])
-                elif msg_type is None:
-=======
                 elif msg_type is None:
                     print(f'[{self.role}] Connection lost before step {step}')
                     self.running = False
@@ -233,7 +167,6 @@ class MatchWorker:
                 elif msg_type2 == MSG_CMD and data2:
                     self.collision_push = np.array(data2[:3])
                 elif msg_type2 is None:
->>>>>>> track3-honest
                     self.running = False
                     break
             except socket.timeout:
@@ -243,12 +176,6 @@ class MatchWorker:
             if not self.running:
                 break
 
-<<<<<<< HEAD
-            # Compute action
-            if self.policy:
-                with torch.no_grad():
-                    action = self.policy(obs)
-=======
             # Compute action — three paths: ONNX → .pt → rule
             if self.onnx_policy:
                 # ONNX Runtime inference: build PlayerState + BallState from env
@@ -297,7 +224,6 @@ class MatchWorker:
             elif self.policy:
                 # .pt path removed — ONNX only
                 action = torch.zeros((1, 3), dtype=torch.float32, device=self.env.device)
->>>>>>> track3-honest
             else:
                 # Rule-based: chase ball
                 robot_pos = self.env.base_pos[0, :3].cpu().numpy()
@@ -333,18 +259,11 @@ class MatchWorker:
             # Send ball state if authority
             if self.has_ball:
                 ball_pos = self.env.ball_pos[0].cpu().numpy()
-<<<<<<< HEAD
-                try:
-                    self.sock.sendall(pack_state(MSG_BALL, [
-                        float(ball_pos[0]), float(ball_pos[1]), float(ball_pos[2]),
-                        0.0, 0.0, 0.0
-=======
                 ball_vel = self.env.ball_vel[0].cpu().numpy()
                 try:
                     self.sock.sendall(pack_state(MSG_BALL, [
                         float(ball_pos[0]), float(ball_pos[1]), float(ball_pos[2]),
                         float(ball_vel[0]), float(ball_vel[1]), float(ball_vel[2])
->>>>>>> track3-honest
                     ]))
                 except (BrokenPipeError, ConnectionResetError, OSError):
                     break
@@ -369,22 +288,14 @@ if __name__ == '__main__':
     parser.add_argument('--role', required=True)
     parser.add_argument('--has-ball', action='store_true')
     parser.add_argument('--port', type=int, default=DEFAULT_PORT)
-<<<<<<< HEAD
-    parser.add_argument('--model', default=None)
-=======
     parser.add_argument('--model', default=None, help='Path to .pt checkpoint (rsl_rl)')
     parser.add_argument('--onnx', default=None, help='Path to ONNX model (preferred over --model)')
->>>>>>> track3-honest
     parser.add_argument('--init-pos', type=float, nargs=3, default=[0, 0, 0.7])
     args = parser.parse_args()
 
     worker = MatchWorker(
         role=args.role, has_ball=args.has_ball, port=args.port,
-<<<<<<< HEAD
-        model_path=args.model, init_pos=args.init_pos)
-=======
         model_path=args.model, init_pos=args.init_pos,
         onnx_path=args.onnx)
->>>>>>> track3-honest
     worker.setup()
     worker.run()

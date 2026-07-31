@@ -268,14 +268,9 @@ class SharedRLPolicy:
         else:
             return "rule_vs_rule"
 
-    def _preprocess_obs(self, player: PlayerState, ball: BallState) -> np.ndarray:
-        """Build 19-dim observation vector from PlayerState + BallState.
-
-        Must match training env's _update_observation() exactly:
-          filtered_lin_vel(3) + filtered_ang_vel(3) + projected_gravity(2)
-          + ball_rel_body(2) + ball_vel_body(2) + dist_to_ball(1)
-          + goal_dir(2) + goal_dist(1) + last_hl_actions(3) = 19
-        """
+    def _preprocess_obs(self, player: PlayerState, ball: BallState,
+                        teammates: list = None, opponents: list = None) -> np.ndarray:
+        """Build observation vector. 19-dim base + optional 5-dim multi-agent extension."""
         cos_yaw = math.cos(player.yaw)
         sin_yaw = math.sin(player.yaw)
 
@@ -326,11 +321,53 @@ class SharedRLPolicy:
         goal_dist = np.array([goal_dist_val], dtype=np.float32)
 
         # 16-18: last high-level actions
-        return np.concatenate([
+        base_obs = np.concatenate([
             lin_vel_body, ang_vel_body, grav_xy,
             ball_rel_body, ball_vel_body, dist_to_ball,
             goal_dir, goal_dist, self.last_actions,
         ]).astype(np.float32)
+
+        # If no teammates/opponents given (None or empty), return 19-dim
+        if not teammates or not opponents:
+            return base_obs
+
+        # 19-23: multi-agent extension (nearest teammate, nearest opponent, possession)
+        tm_rels = []
+        for tm_pos in teammates:
+            tm_rel = np.array(tm_pos[:2]) - player.pos[:2]
+            tm_body = np.array([
+                cos_yaw * tm_rel[0] + sin_yaw * tm_rel[1],
+                -sin_yaw * tm_rel[0] + cos_yaw * tm_rel[1],
+            ])
+            tm_rels.append((np.linalg.norm(tm_body), tm_body))
+        tm_rels.sort(key=lambda t: t[0])
+        tm_nearest = tm_rels[0][1].astype(np.float32)
+
+        opp_rels = []
+        for opp_pos in opponents:
+            opp_rel = np.array(opp_pos[:2]) - player.pos[:2]
+            opp_body = np.array([
+                cos_yaw * opp_rel[0] + sin_yaw * opp_rel[1],
+                -sin_yaw * opp_rel[0] + cos_yaw * opp_rel[1],
+            ])
+            opp_rels.append((np.linalg.norm(opp_body), opp_body))
+        opp_rels.sort(key=lambda t: t[0])
+        opp_nearest = opp_rels[0][1].astype(np.float32)
+
+        # Possession flag
+        self_ball_dist = float(np.linalg.norm(ball_rel))
+        tm_min_dist = min((np.linalg.norm(np.array(tm[:2]) - ball.pos[:2])
+                          for tm in teammates), default=float('inf'))
+        opp_min_dist = min((np.linalg.norm(np.array(opp[:2]) - ball.pos[:2])
+                           for opp in opponents), default=float('inf'))
+        team_min = min(self_ball_dist, tm_min_dist)
+        if team_min <= opp_min_dist:
+            possession = 1.0 if self_ball_dist <= tm_min_dist else 0.0
+        else:
+            possession = -1.0
+        possession_flag = np.array([possession], dtype=np.float32)
+
+        return np.concatenate([base_obs, tm_nearest, opp_nearest, possession_flag]).astype(np.float32)
 
     def _infer(self, obs: np.ndarray) -> Optional[np.ndarray]:
         """Run ONNX Runtime forward pass: 19-dim obs → 3-dim raw action."""
@@ -349,12 +386,13 @@ class SharedRLPolicy:
         cmd[np.abs(cmd) < 0.05] = 0.0
         return cmd
 
-    def compute(self, player: PlayerState, ball: BallState) -> PolicyAction:
+    def compute(self, player: PlayerState, ball: BallState,
+                teammates: list = None, opponents: list = None) -> PolicyAction:
         """Compute action using ONNX model, with rule fallback."""
         if self.session is None:
             return self.rule_fallback.compute(player, ball)
 
-        obs = self._preprocess_obs(player, ball)
+        obs = self._preprocess_obs(player, ball, teammates, opponents)
         action_raw = self._infer(obs)
         if action_raw is None:
             return self.rule_fallback.compute(player, ball)
@@ -385,6 +423,18 @@ class SharedRLPolicy:
         obs = torch.from_numpy(obs_history).float().unsqueeze(0) if obs_history is not None else torch.zeros(1, 720)
         with torch.no_grad():
             return self.shoot_model(obs).squeeze(0).cpu().numpy()
+
+    def close(self):
+        """Release ONNX Runtime session and model resources."""
+        if self.session is not None:
+            del self.session
+            self.session = None
+        if self.walk_model is not None:
+            del self.walk_model
+            self.walk_model = None
+        if self.shoot_model is not None:
+            del self.shoot_model
+            self.shoot_model = None
 
 
 def team_side_positive(goal_x: float) -> bool:
