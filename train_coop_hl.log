@@ -1,0 +1,1159 @@
+[38;5;226m[Genesis] [04:18:34] [WARNING] Mesh is not watertight. Falling back to convex hull for estimating inertial properties.[0m
+[38;5;226m[Genesis] [04:18:35] [WARNING] Mesh is not watertight. Falling back to convex hull for estimating inertial properties.[0m
+[38;5;226m[Genesis] [04:18:35] [WARNING] Mesh is not watertight. Falling back to convex hull for estimating inertial properties.[0m
+[38;5;226m[Genesis] [04:18:35] [WARNING] Mesh is not watertight. Falling back to convex hull for estimating inertial properties.[0m
+[hierarchical] Walk model normalizer loaded: mean=torch.Size([1, 720])
+[hierarchical] Frozen walk model loaded from /workspace/booster_deploy/tasks/locomotion/models/t1_walk.pt
+[hierarchical] HL obs dim=19, HL action dim=3
+[hierarchical] HL dt=0.100s, decimation=5
+[hierarchical] HL clip: lin=1.2 m/s, ang=1.2 rad/s
+--------------------------------------------------------------------------------
+Resolved observation sets: 
+	 actor :  ['policy']
+	 critic :  ['policy']
+--------------------------------------------------------------------------------
+Actor Model: MLPModel(
+  (obs_normalizer): Identity()
+  (distribution): GaussianDistribution()
+  (mlp): MLP(
+    (0): Linear(in_features=19, out_features=256, bias=True)
+    (1): ELU(alpha=1.0)
+    (2): Linear(in_features=256, out_features=128, bias=True)
+    (3): ELU(alpha=1.0)
+    (4): Linear(in_features=128, out_features=64, bias=True)
+    (5): ELU(alpha=1.0)
+    (6): Linear(in_features=64, out_features=3, bias=True)
+  )
+)
+Critic Model: MLPModel(
+  (obs_normalizer): Identity()
+  (mlp): MLP(
+    (0): Linear(in_features=19, out_features=256, bias=True)
+    (1): ELU(alpha=1.0)
+    (2): Linear(in_features=256, out_features=128, bias=True)
+    (3): ELU(alpha=1.0)
+    (4): Linear(in_features=128, out_features=64, bias=True)
+    (5): ELU(alpha=1.0)
+    (6): Linear(in_features=64, out_features=1, bias=True)
+  )
+)
+
+============================================================
+  Hierarchical Soccer Training
+============================================================
+  High-level obs dim:    19
+  High-level action dim: 3 (vx, vy, wz)
+  Low-level model:       /workspace/booster_deploy/tasks/locomotion/models/t1_walk.pt
+  Decimation:            5 (HL dt = 0.100s)
+  Envs:                  512
+  Max iterations:        50
+  Save interval:         50
+  Log dir:               runs/hierarchical_soccer_coop_hl
+============================================================
+
+Could not find git repository in /opt/venv/lib/python3.12/site-packages/rsl_rl/__init__.py. Skipping.
+################################################################################
+[1m                            Learning iteration 0/50                             [0m 
+
+                               Run name: hierarchical_soccer_coop_hl
+                            Total steps: 12288 
+                       Steps per second: 730 
+                        Collection time: 16.235s 
+                          Learning time: 0.590s 
+                        Mean value loss: 98.9999
+                    Mean surrogate loss: 0.0081
+                      Mean entropy loss: 4.2437
+                            Mean reward: -26.48
+                    Mean episode length: 18.74
+                        Mean action std: 0.99
+         Mean episode goal_per_1k_steps: 0.0000
+         Mean episode mean_dist_to_ball: 3.2687
+               Mean episode goals_total: 0.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 16.83s
+                           Time elapsed: 0:00:16
+                                    ETA: 0:13:44
+
+################################################################################
+[1m                            Learning iteration 1/50                             [0m 
+
+                               Run name: hierarchical_soccer_coop_hl
+                            Total steps: 24576 
+                       Steps per second: 875 
+                        Collection time: 13.850s 
+                          Learning time: 0.182s 
+                        Mean value loss: 122.0525
+                    Mean surrogate loss: 0.0001
+                      Mean entropy loss: 4.1775
+                            Mean reward: -23.60
+                    Mean episode length: 20.96
+                        Mean action std: 0.96
+         Mean episode goal_per_1k_steps: 0.0000
+         Mean episode mean_dist_to_ball: 3.2444
+               Mean episode goals_total: 0.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 14.03s
+                           Time elapsed: 0:00:30
+                                    ETA: 0:12:20
+
+################################################################################
+[1m                            Learning iteration 2/50                             [0m 
+
+                               Run name: hierarchical_soccer_coop_hl
+                            Total steps: 36864 
+                       Steps per second: 870 
+                        Collection time: 13.940s 
+                          Learning time: 0.181s 
+                        Mean value loss: 111.0598
+                    Mean surrogate loss: -0.0007
+                      Mean entropy loss: 4.0790
+                            Mean reward: -27.68
+                    Mean episode length: 22.52
+                        Mean action std: 0.93
+         Mean episode goal_per_1k_steps: 0.0000
+         Mean episode mean_dist_to_ball: 3.2967
+               Mean episode goals_total: 0.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 14.12s
+                           Time elapsed: 0:00:44
+                                    ETA: 0:11:44
+
+################################################################################
+[1m                            Learning iteration 3/50                             [0m 
+
+                               Run name: hierarchical_soccer_coop_hl
+                            Total steps: 49152 
+                       Steps per second: 874 
+                        Collection time: 13.869s 
+                          Learning time: 0.182s 
+                        Mean value loss: 103.9960
+                    Mean surrogate loss: -0.0018
+                      Mean entropy loss: 3.9841
+                            Mean reward: -24.65
+                    Mean episode length: 21.00
+                        Mean action std: 0.91
+         Mean episode goal_per_1k_steps: 0.0000
+         Mean episode mean_dist_to_ball: 3.2834
+               Mean episode goals_total: 0.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 14.05s
+                           Time elapsed: 0:00:59
+                                    ETA: 0:11:18
+
+################################################################################
+[1m                            Learning iteration 4/50                             [0m 
+
+                               Run name: hierarchical_soccer_coop_hl
+                            Total steps: 61440 
+                       Steps per second: 963 
+                        Collection time: 12.646s 
+                          Learning time: 0.105s 
+                        Mean value loss: 92.8455
+                    Mean surrogate loss: -0.0022
+                      Mean entropy loss: 3.9281
+                            Mean reward: -27.29
+                    Mean episode length: 27.79
+                        Mean action std: 0.89
+         Mean episode goal_per_1k_steps: 0.0000
+         Mean episode mean_dist_to_ball: 3.2751
+               Mean episode goals_total: 0.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 12.75s
+                           Time elapsed: 0:01:11
+                                    ETA: 0:10:46
+
+################################################################################
+[1m                            Learning iteration 5/50                             [0m 
+
+                               Run name: hierarchical_soccer_coop_hl
+                            Total steps: 73728 
+                       Steps per second: 1690 
+                        Collection time: 7.157s 
+                          Learning time: 0.113s 
+                        Mean value loss: 91.0794
+                    Mean surrogate loss: -0.0037
+                      Mean entropy loss: 3.8666
+                            Mean reward: -25.83
+                    Mean episode length: 27.76
+                        Mean action std: 0.87
+         Mean episode goal_per_1k_steps: 0.0000
+         Mean episode mean_dist_to_ball: 3.3690
+               Mean episode goals_total: 0.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 7.27s
+                           Time elapsed: 0:01:19
+                                    ETA: 0:09:39
+
+################################################################################
+[1m                            Learning iteration 6/50                             [0m 
+
+                               Run name: hierarchical_soccer_coop_hl
+                            Total steps: 86016 
+                       Steps per second: 1621 
+                        Collection time: 7.466s 
+                          Learning time: 0.110s 
+                        Mean value loss: 91.4881
+                    Mean surrogate loss: -0.0042
+                      Mean entropy loss: 3.7739
+                            Mean reward: -26.84
+                    Mean episode length: 26.25
+                        Mean action std: 0.85
+         Mean episode goal_per_1k_steps: 0.0000
+         Mean episode mean_dist_to_ball: 3.4697
+               Mean episode goals_total: 0.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 7.58s
+                           Time elapsed: 0:01:26
+                                    ETA: 0:08:52
+
+################################################################################
+[1m                            Learning iteration 7/50                             [0m 
+
+                               Run name: hierarchical_soccer_coop_hl
+                            Total steps: 98304 
+                       Steps per second: 1625 
+                        Collection time: 7.451s 
+                          Learning time: 0.110s 
+                        Mean value loss: 77.5750
+                    Mean surrogate loss: -0.0033
+                      Mean entropy loss: 3.6967
+                            Mean reward: -22.43
+                    Mean episode length: 26.29
+                        Mean action std: 0.83
+         Mean episode goal_per_1k_steps: 0.0000
+         Mean episode mean_dist_to_ball: 3.3131
+               Mean episode goals_total: 0.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 7.56s
+                           Time elapsed: 0:01:34
+                                    ETA: 0:08:14
+
+################################################################################
+[1m                            Learning iteration 8/50                             [0m 
+
+                               Run name: hierarchical_soccer_coop_hl
+                            Total steps: 110592 
+                       Steps per second: 1632 
+                        Collection time: 7.417s 
+                          Learning time: 0.112s 
+                        Mean value loss: 74.7146
+                    Mean surrogate loss: -0.0049
+                      Mean entropy loss: 3.6369
+                            Mean reward: -24.02
+                    Mean episode length: 27.98
+                        Mean action std: 0.81
+         Mean episode goal_per_1k_steps: 0.0000
+         Mean episode mean_dist_to_ball: 3.3072
+               Mean episode goals_total: 0.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 7.53s
+                           Time elapsed: 0:01:41
+                                    ETA: 0:07:43
+
+################################################################################
+[1m                            Learning iteration 9/50                             [0m 
+
+                               Run name: hierarchical_soccer_coop_hl
+                            Total steps: 122880 
+                       Steps per second: 1615 
+                        Collection time: 7.495s 
+                          Learning time: 0.113s 
+                        Mean value loss: 60.7278
+                    Mean surrogate loss: -0.0048
+                      Mean entropy loss: 3.5958
+                            Mean reward: -22.97
+                    Mean episode length: 28.70
+                        Mean action std: 0.80
+         Mean episode goal_per_1k_steps: 0.0000
+         Mean episode mean_dist_to_ball: 3.2930
+               Mean episode goals_total: 0.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 7.61s
+                           Time elapsed: 0:01:49
+                                    ETA: 0:07:17
+
+################################################################################
+[1m                            Learning iteration 10/50                            [0m 
+
+                               Run name: hierarchical_soccer_coop_hl
+                            Total steps: 135168 
+                       Steps per second: 1621 
+                        Collection time: 7.463s 
+                          Learning time: 0.113s 
+                        Mean value loss: 59.8664
+                    Mean surrogate loss: -0.0041
+                      Mean entropy loss: 3.5219
+                            Mean reward: -23.80
+                    Mean episode length: 28.63
+                        Mean action std: 0.78
+         Mean episode goal_per_1k_steps: 0.0000
+         Mean episode mean_dist_to_ball: 3.2198
+               Mean episode goals_total: 0.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 7.58s
+                           Time elapsed: 0:01:56
+                                    ETA: 0:06:54
+
+################################################################################
+[1m                            Learning iteration 11/50                            [0m 
+
+                               Run name: hierarchical_soccer_coop_hl
+                            Total steps: 147456 
+                       Steps per second: 1630 
+                        Collection time: 7.421s 
+                          Learning time: 0.114s 
+                        Mean value loss: 58.8523
+                    Mean surrogate loss: -0.0009
+                      Mean entropy loss: 3.4706
+                            Mean reward: -23.40
+                    Mean episode length: 28.21
+                        Mean action std: 0.77
+         Mean episode goal_per_1k_steps: 0.0000
+         Mean episode mean_dist_to_ball: 3.3173
+               Mean episode goals_total: 0.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 7.54s
+                           Time elapsed: 0:02:04
+                                    ETA: 0:06:34
+
+################################################################################
+[1m                            Learning iteration 12/50                            [0m 
+
+                               Run name: hierarchical_soccer_coop_hl
+                            Total steps: 159744 
+                       Steps per second: 1634 
+                        Collection time: 7.403s 
+                          Learning time: 0.113s 
+                        Mean value loss: 52.3136
+                    Mean surrogate loss: -0.0047
+                      Mean entropy loss: 3.3829
+                            Mean reward: -22.23
+                    Mean episode length: 36.47
+                        Mean action std: 0.75
+         Mean episode goal_per_1k_steps: 0.0000
+         Mean episode mean_dist_to_ball: 3.3443
+               Mean episode goals_total: 0.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 7.52s
+                           Time elapsed: 0:02:11
+                                    ETA: 0:06:15
+
+################################################################################
+[1m                            Learning iteration 13/50                            [0m 
+
+                               Run name: hierarchical_soccer_coop_hl
+                            Total steps: 172032 
+                       Steps per second: 1620 
+                        Collection time: 7.468s 
+                          Learning time: 0.113s 
+                        Mean value loss: 55.5516
+                    Mean surrogate loss: -0.0057
+                      Mean entropy loss: 3.3106
+                            Mean reward: -23.18
+                    Mean episode length: 31.76
+                        Mean action std: 0.73
+         Mean episode goal_per_1k_steps: 0.0000
+         Mean episode mean_dist_to_ball: 3.2832
+               Mean episode goals_total: 0.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 7.58s
+                           Time elapsed: 0:02:19
+                                    ETA: 0:05:58
+
+################################################################################
+[1m                            Learning iteration 14/50                            [0m 
+
+                               Run name: hierarchical_soccer_coop_hl
+                            Total steps: 184320 
+                       Steps per second: 1602 
+                        Collection time: 7.551s 
+                          Learning time: 0.115s 
+                        Mean value loss: 50.3395
+                    Mean surrogate loss: -0.0049
+                      Mean entropy loss: 3.2746
+                            Mean reward: -19.49
+                    Mean episode length: 32.51
+                        Mean action std: 0.72
+         Mean episode goal_per_1k_steps: 0.0081
+         Mean episode mean_dist_to_ball: 3.2187
+               Mean episode goals_total: 0.0417
+--------------------------------------------------------------------------------
+                         Iteration time: 7.67s
+                           Time elapsed: 0:02:27
+                                    ETA: 0:05:43
+
+################################################################################
+[1m                            Learning iteration 15/50                            [0m 
+
+                               Run name: hierarchical_soccer_coop_hl
+                            Total steps: 196608 
+                       Steps per second: 1612 
+                        Collection time: 7.509s 
+                          Learning time: 0.112s 
+                        Mean value loss: 42.2844
+                    Mean surrogate loss: -0.0074
+                      Mean entropy loss: 3.1708
+                            Mean reward: -20.99
+                    Mean episode length: 28.05
+                        Mean action std: 0.70
+         Mean episode goal_per_1k_steps: 0.0732
+         Mean episode mean_dist_to_ball: 3.1889
+               Mean episode goals_total: 1.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 7.62s
+                           Time elapsed: 0:02:34
+                                    ETA: 0:05:28
+
+################################################################################
+[1m                            Learning iteration 16/50                            [0m 
+
+                               Run name: hierarchical_soccer_coop_hl
+                            Total steps: 208896 
+                       Steps per second: 1624 
+                        Collection time: 7.450s 
+                          Learning time: 0.113s 
+                        Mean value loss: 39.8993
+                    Mean surrogate loss: -0.0066
+                      Mean entropy loss: 3.1276
+                            Mean reward: -19.43
+                    Mean episode length: 32.30
+                        Mean action std: 0.68
+         Mean episode goal_per_1k_steps: 0.0000
+         Mean episode mean_dist_to_ball: 3.3464
+               Mean episode goals_total: 1.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 7.56s
+                           Time elapsed: 0:02:42
+                                    ETA: 0:05:15
+
+################################################################################
+[1m                            Learning iteration 17/50                            [0m 
+
+                               Run name: hierarchical_soccer_coop_hl
+                            Total steps: 221184 
+                       Steps per second: 1632 
+                        Collection time: 7.415s 
+                          Learning time: 0.112s 
+                        Mean value loss: 33.3016
+                    Mean surrogate loss: -0.0061
+                      Mean entropy loss: 3.0183
+                            Mean reward: -20.75
+                    Mean episode length: 37.38
+                        Mean action std: 0.66
+         Mean episode goal_per_1k_steps: 0.0000
+         Mean episode mean_dist_to_ball: 3.3269
+               Mean episode goals_total: 1.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 7.53s
+                           Time elapsed: 0:02:49
+                                    ETA: 0:05:02
+
+################################################################################
+[1m                            Learning iteration 18/50                            [0m 
+
+                               Run name: hierarchical_soccer_coop_hl
+                            Total steps: 233472 
+                       Steps per second: 1620 
+                        Collection time: 7.471s 
+                          Learning time: 0.112s 
+                        Mean value loss: 31.7743
+                    Mean surrogate loss: -0.0060
+                      Mean entropy loss: 2.9613
+                            Mean reward: -18.36
+                    Mean episode length: 34.24
+                        Mean action std: 0.64
+         Mean episode goal_per_1k_steps: 0.0000
+         Mean episode mean_dist_to_ball: 3.2881
+               Mean episode goals_total: 1.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 7.58s
+                           Time elapsed: 0:02:57
+                                    ETA: 0:04:49
+
+################################################################################
+[1m                            Learning iteration 19/50                            [0m 
+
+                               Run name: hierarchical_soccer_coop_hl
+                            Total steps: 245760 
+                       Steps per second: 1616 
+                        Collection time: 7.488s 
+                          Learning time: 0.112s 
+                        Mean value loss: 28.9562
+                    Mean surrogate loss: -0.0047
+                      Mean entropy loss: 2.8725
+                            Mean reward: -17.90
+                    Mean episode length: 27.99
+                        Mean action std: 0.63
+         Mean episode goal_per_1k_steps: 0.0000
+         Mean episode mean_dist_to_ball: 3.1125
+               Mean episode goals_total: 1.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 7.60s
+                           Time elapsed: 0:03:05
+                                    ETA: 0:04:37
+
+################################################################################
+[1m                            Learning iteration 20/50                            [0m 
+
+                               Run name: hierarchical_soccer_coop_hl
+                            Total steps: 258048 
+                       Steps per second: 1621 
+                        Collection time: 7.468s 
+                          Learning time: 0.112s 
+                        Mean value loss: 24.1884
+                    Mean surrogate loss: -0.0060
+                      Mean entropy loss: 2.8639
+                            Mean reward: -17.13
+                    Mean episode length: 36.52
+                        Mean action std: 0.63
+         Mean episode goal_per_1k_steps: 0.0000
+         Mean episode mean_dist_to_ball: 3.0408
+               Mean episode goals_total: 1.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 7.58s
+                           Time elapsed: 0:03:12
+                                    ETA: 0:04:26
+
+################################################################################
+[1m                            Learning iteration 21/50                            [0m 
+
+                               Run name: hierarchical_soccer_coop_hl
+                            Total steps: 270336 
+                       Steps per second: 1620 
+                        Collection time: 7.473s 
+                          Learning time: 0.112s 
+                        Mean value loss: 27.4451
+                    Mean surrogate loss: -0.0057
+                      Mean entropy loss: 2.7841
+                            Mean reward: -19.69
+                    Mean episode length: 45.48
+                        Mean action std: 0.61
+         Mean episode goal_per_1k_steps: 0.0000
+         Mean episode mean_dist_to_ball: 3.0391
+               Mean episode goals_total: 1.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 7.58s
+                           Time elapsed: 0:03:20
+                                    ETA: 0:04:14
+
+################################################################################
+[1m                            Learning iteration 22/50                            [0m 
+
+                               Run name: hierarchical_soccer_coop_hl
+                            Total steps: 282624 
+                       Steps per second: 1623 
+                        Collection time: 7.454s 
+                          Learning time: 0.113s 
+                        Mean value loss: 25.1757
+                    Mean surrogate loss: -0.0080
+                      Mean entropy loss: 2.7376
+                            Mean reward: -14.17
+                    Mean episode length: 44.64
+                        Mean action std: 0.60
+         Mean episode goal_per_1k_steps: 0.0244
+         Mean episode mean_dist_to_ball: 3.0350
+               Mean episode goals_total: 1.1250
+--------------------------------------------------------------------------------
+                         Iteration time: 7.57s
+                           Time elapsed: 0:03:27
+                                    ETA: 0:04:03
+
+################################################################################
+[1m                            Learning iteration 23/50                            [0m 
+
+                               Run name: hierarchical_soccer_coop_hl
+                            Total steps: 294912 
+                       Steps per second: 1616 
+                        Collection time: 7.487s 
+                          Learning time: 0.113s 
+                        Mean value loss: 25.6843
+                    Mean surrogate loss: -0.0088
+                      Mean entropy loss: 2.6499
+                            Mean reward: -14.10
+                    Mean episode length: 40.17
+                        Mean action std: 0.58
+         Mean episode goal_per_1k_steps: 0.0570
+         Mean episode mean_dist_to_ball: 3.1544
+               Mean episode goals_total: 2.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 7.60s
+                           Time elapsed: 0:03:35
+                                    ETA: 0:03:53
+
+################################################################################
+[1m                            Learning iteration 24/50                            [0m 
+
+                               Run name: hierarchical_soccer_coop_hl
+                            Total steps: 307200 
+                       Steps per second: 1614 
+                        Collection time: 7.503s 
+                          Learning time: 0.110s 
+                        Mean value loss: 25.6231
+                    Mean surrogate loss: -0.0064
+                      Mean entropy loss: 2.5703
+                            Mean reward: -16.24
+                    Mean episode length: 42.51
+                        Mean action std: 0.57
+         Mean episode goal_per_1k_steps: 0.0000
+         Mean episode mean_dist_to_ball: 3.1254
+               Mean episode goals_total: 2.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 7.61s
+                           Time elapsed: 0:03:43
+                                    ETA: 0:03:43
+
+################################################################################
+[1m                            Learning iteration 25/50                            [0m 
+
+                               Run name: hierarchical_soccer_coop_hl
+                            Total steps: 319488 
+                       Steps per second: 1612 
+                        Collection time: 7.509s 
+                          Learning time: 0.110s 
+                        Mean value loss: 21.0279
+                    Mean surrogate loss: -0.0073
+                      Mean entropy loss: 2.4916
+                            Mean reward: -14.02
+                    Mean episode length: 41.84
+                        Mean action std: 0.55
+         Mean episode goal_per_1k_steps: 0.0000
+         Mean episode mean_dist_to_ball: 3.0308
+               Mean episode goals_total: 2.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 7.62s
+                           Time elapsed: 0:03:50
+                                    ETA: 0:03:32
+
+################################################################################
+[1m                            Learning iteration 26/50                            [0m 
+
+                               Run name: hierarchical_soccer_coop_hl
+                            Total steps: 331776 
+                       Steps per second: 1615 
+                        Collection time: 7.498s 
+                          Learning time: 0.110s 
+                        Mean value loss: 17.6669
+                    Mean surrogate loss: -0.0077
+                      Mean entropy loss: 2.3659
+                            Mean reward: -12.29
+                    Mean episode length: 43.52
+                        Mean action std: 0.53
+         Mean episode goal_per_1k_steps: 0.0000
+         Mean episode mean_dist_to_ball: 3.0267
+               Mean episode goals_total: 2.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 7.61s
+                           Time elapsed: 0:03:58
+                                    ETA: 0:03:22
+
+################################################################################
+[1m                            Learning iteration 27/50                            [0m 
+
+                               Run name: hierarchical_soccer_coop_hl
+                            Total steps: 344064 
+                       Steps per second: 1611 
+                        Collection time: 7.516s 
+                          Learning time: 0.109s 
+                        Mean value loss: 21.9004
+                    Mean surrogate loss: -0.0077
+                      Mean entropy loss: 2.2960
+                            Mean reward: -12.85
+                    Mean episode length: 53.25
+                        Mean action std: 0.51
+         Mean episode goal_per_1k_steps: 0.0244
+         Mean episode mean_dist_to_ball: 2.9884
+               Mean episode goals_total: 2.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 7.63s
+                           Time elapsed: 0:04:05
+                                    ETA: 0:03:13
+
+################################################################################
+[1m                            Learning iteration 28/50                            [0m 
+
+                               Run name: hierarchical_soccer_coop_hl
+                            Total steps: 356352 
+                       Steps per second: 1603 
+                        Collection time: 7.554s 
+                          Learning time: 0.110s 
+                        Mean value loss: 19.5330
+                    Mean surrogate loss: -0.0089
+                      Mean entropy loss: 2.1963
+                            Mean reward: -10.83
+                    Mean episode length: 51.76
+                        Mean action std: 0.50
+         Mean episode goal_per_1k_steps: 0.0570
+         Mean episode mean_dist_to_ball: 2.9717
+               Mean episode goals_total: 2.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 7.66s
+                           Time elapsed: 0:04:13
+                                    ETA: 0:03:03
+
+################################################################################
+[1m                            Learning iteration 29/50                            [0m 
+
+                               Run name: hierarchical_soccer_coop_hl
+                            Total steps: 368640 
+                       Steps per second: 1605 
+                        Collection time: 7.544s 
+                          Learning time: 0.110s 
+                        Mean value loss: 17.8976
+                    Mean surrogate loss: -0.0091
+                      Mean entropy loss: 2.1120
+                            Mean reward: -8.68
+                    Mean episode length: 58.21
+                        Mean action std: 0.48
+         Mean episode goal_per_1k_steps: 0.1058
+         Mean episode mean_dist_to_ball: 2.9461
+               Mean episode goals_total: 2.0833
+--------------------------------------------------------------------------------
+                         Iteration time: 7.65s
+                           Time elapsed: 0:04:21
+                                    ETA: 0:02:54
+
+################################################################################
+[1m                            Learning iteration 30/50                            [0m 
+
+                               Run name: hierarchical_soccer_coop_hl
+                            Total steps: 380928 
+                       Steps per second: 1598 
+                        Collection time: 7.578s 
+                          Learning time: 0.110s 
+                        Mean value loss: 13.8273
+                    Mean surrogate loss: -0.0073
+                      Mean entropy loss: 2.0046
+                            Mean reward: -4.76
+                    Mean episode length: 72.12
+                        Mean action std: 0.47
+         Mean episode goal_per_1k_steps: 0.2197
+         Mean episode mean_dist_to_ball: 2.8627
+               Mean episode goals_total: 4.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 7.69s
+                           Time elapsed: 0:04:28
+                                    ETA: 0:02:44
+
+################################################################################
+[1m                            Learning iteration 31/50                            [0m 
+
+                               Run name: hierarchical_soccer_coop_hl
+                            Total steps: 393216 
+                       Steps per second: 1605 
+                        Collection time: 7.543s 
+                          Learning time: 0.110s 
+                        Mean value loss: 15.4874
+                    Mean surrogate loss: -0.0074
+                      Mean entropy loss: 1.9168
+                            Mean reward: -5.30
+                    Mean episode length: 73.49
+                        Mean action std: 0.45
+         Mean episode goal_per_1k_steps: 0.0732
+         Mean episode mean_dist_to_ball: 2.7219
+               Mean episode goals_total: 4.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 7.65s
+                           Time elapsed: 0:04:36
+                                    ETA: 0:02:35
+
+################################################################################
+[1m                            Learning iteration 32/50                            [0m 
+
+                               Run name: hierarchical_soccer_coop_hl
+                            Total steps: 405504 
+                       Steps per second: 1594 
+                        Collection time: 7.592s 
+                          Learning time: 0.112s 
+                        Mean value loss: 12.5603
+                    Mean surrogate loss: -0.0065
+                      Mean entropy loss: 1.8212
+                            Mean reward: -5.98
+                    Mean episode length: 62.03
+                        Mean action std: 0.44
+         Mean episode goal_per_1k_steps: 0.0081
+         Mean episode mean_dist_to_ball: 2.7357
+               Mean episode goals_total: 4.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 7.70s
+                           Time elapsed: 0:04:44
+                                    ETA: 0:02:26
+
+################################################################################
+[1m                            Learning iteration 33/50                            [0m 
+
+                               Run name: hierarchical_soccer_coop_hl
+                            Total steps: 417792 
+                       Steps per second: 1574 
+                        Collection time: 7.693s 
+                          Learning time: 0.113s 
+                        Mean value loss: 14.7010
+                    Mean surrogate loss: -0.0073
+                      Mean entropy loss: 1.7621
+                            Mean reward: -0.04
+                    Mean episode length: 70.86
+                        Mean action std: 0.43
+         Mean episode goal_per_1k_steps: 0.2197
+         Mean episode mean_dist_to_ball: 2.7742
+               Mean episode goals_total: 4.7083
+--------------------------------------------------------------------------------
+                         Iteration time: 7.81s
+                           Time elapsed: 0:04:52
+                                    ETA: 0:02:17
+
+################################################################################
+[1m                            Learning iteration 34/50                            [0m 
+
+                               Run name: hierarchical_soccer_coop_hl
+                            Total steps: 430080 
+                       Steps per second: 1457 
+                        Collection time: 8.322s 
+                          Learning time: 0.106s 
+                        Mean value loss: 13.4500
+                    Mean surrogate loss: -0.0047
+                      Mean entropy loss: 1.7002
+                            Mean reward: 0.59
+                    Mean episode length: 100.10
+                        Mean action std: 0.43
+         Mean episode goal_per_1k_steps: 0.2767
+         Mean episode mean_dist_to_ball: 2.7409
+               Mean episode goals_total: 6.7500
+--------------------------------------------------------------------------------
+                         Iteration time: 8.43s
+                           Time elapsed: 0:05:00
+                                    ETA: 0:02:08
+
+################################################################################
+[1m                            Learning iteration 35/50                            [0m 
+
+                               Run name: hierarchical_soccer_coop_hl
+                            Total steps: 442368 
+                       Steps per second: 1653 
+                        Collection time: 7.316s 
+                          Learning time: 0.113s 
+                        Mean value loss: 13.5913
+                    Mean surrogate loss: -0.0035
+                      Mean entropy loss: 1.6763
+                            Mean reward: 9.54
+                    Mean episode length: 104.40
+                        Mean action std: 0.42
+         Mean episode goal_per_1k_steps: 0.1953
+         Mean episode mean_dist_to_ball: 2.6460
+               Mean episode goals_total: 7.2083
+--------------------------------------------------------------------------------
+                         Iteration time: 7.43s
+                           Time elapsed: 0:05:07
+                                    ETA: 0:01:59
+
+################################################################################
+[1m                            Learning iteration 36/50                            [0m 
+
+                               Run name: hierarchical_soccer_coop_hl
+                            Total steps: 454656 
+                       Steps per second: 1663 
+                        Collection time: 7.275s 
+                          Learning time: 0.113s 
+                        Mean value loss: 14.6604
+                    Mean surrogate loss: -0.0072
+                      Mean entropy loss: 1.5975
+                            Mean reward: 5.23
+                    Mean episode length: 95.13
+                        Mean action std: 0.41
+         Mean episode goal_per_1k_steps: 0.2686
+         Mean episode mean_dist_to_ball: 2.7257
+               Mean episode goals_total: 9.1667
+--------------------------------------------------------------------------------
+                         Iteration time: 7.39s
+                           Time elapsed: 0:05:15
+                                    ETA: 0:01:50
+
+################################################################################
+[1m                            Learning iteration 37/50                            [0m 
+
+                               Run name: hierarchical_soccer_coop_hl
+                            Total steps: 466944 
+                       Steps per second: 1006 
+                        Collection time: 12.040s 
+                          Learning time: 0.168s 
+                        Mean value loss: 15.8194
+                    Mean surrogate loss: -0.0061
+                      Mean entropy loss: 1.5348
+                            Mean reward: 11.10
+                    Mean episode length: 120.57
+                        Mean action std: 0.40
+         Mean episode goal_per_1k_steps: 0.4476
+         Mean episode mean_dist_to_ball: 2.6794
+               Mean episode goals_total: 11.0833
+--------------------------------------------------------------------------------
+                         Iteration time: 12.21s
+                           Time elapsed: 0:05:27
+                                    ETA: 0:01:43
+
+################################################################################
+[1m                            Learning iteration 38/50                            [0m 
+
+                               Run name: hierarchical_soccer_coop_hl
+                            Total steps: 479232 
+                       Steps per second: 952 
+                        Collection time: 12.741s 
+                          Learning time: 0.164s 
+                        Mean value loss: 14.6583
+                    Mean surrogate loss: -0.0071
+                      Mean entropy loss: 1.4305
+                            Mean reward: 9.87
+                    Mean episode length: 111.37
+                        Mean action std: 0.39
+         Mean episode goal_per_1k_steps: 0.3906
+         Mean episode mean_dist_to_ball: 2.7198
+               Mean episode goals_total: 13.0000
+--------------------------------------------------------------------------------
+                         Iteration time: 12.90s
+                           Time elapsed: 0:05:40
+                                    ETA: 0:01:36
+
+################################################################################
+[1m                            Learning iteration 39/50                            [0m 
+
+                               Run name: hierarchical_soccer_coop_hl
+                            Total steps: 491520 
+                       Steps per second: 928 
+                        Collection time: 13.065s 
+                          Learning time: 0.167s 
+                        Mean value loss: 15.9698
+                    Mean surrogate loss: -0.0044
+                      Mean entropy loss: 1.3874
+                            Mean reward: 20.20
+                    Mean episode length: 141.39
+                        Mean action std: 0.38
+         Mean episode goal_per_1k_steps: 0.5778
+         Mean episode mean_dist_to_ball: 2.8462
+               Mean episode goals_total: 14.8750
+--------------------------------------------------------------------------------
+                         Iteration time: 13.23s
+                           Time elapsed: 0:05:53
+                                    ETA: 0:01:28
+
+################################################################################
+[1m                            Learning iteration 40/50                            [0m 
+
+                               Run name: hierarchical_soccer_coop_hl
+                            Total steps: 503808 
+                       Steps per second: 929 
+                        Collection time: 13.053s 
+                          Learning time: 0.169s 
+                        Mean value loss: 16.6849
+                    Mean surrogate loss: -0.0071
+                      Mean entropy loss: 1.3235
+                            Mean reward: 18.75
+                    Mean episode length: 146.08
+                        Mean action std: 0.37
+         Mean episode goal_per_1k_steps: 0.4313
+         Mean episode mean_dist_to_ball: 2.9941
+               Mean episode goals_total: 16.0417
+--------------------------------------------------------------------------------
+                         Iteration time: 13.22s
+                           Time elapsed: 0:06:06
+                                    ETA: 0:01:20
+
+################################################################################
+[1m                            Learning iteration 41/50                            [0m 
+
+                               Run name: hierarchical_soccer_coop_hl
+                            Total steps: 516096 
+                       Steps per second: 920 
+                        Collection time: 13.181s 
+                          Learning time: 0.168s 
+                        Mean value loss: 14.4428
+                    Mean surrogate loss: -0.0067
+                      Mean entropy loss: 1.2300
+                            Mean reward: 15.42
+                    Mean episode length: 133.21
+                        Mean action std: 0.36
+         Mean episode goal_per_1k_steps: 0.7406
+         Mean episode mean_dist_to_ball: 3.1253
+               Mean episode goals_total: 19.9583
+--------------------------------------------------------------------------------
+                         Iteration time: 13.35s
+                           Time elapsed: 0:06:20
+                                    ETA: 0:01:12
+
+################################################################################
+[1m                            Learning iteration 42/50                            [0m 
+
+                               Run name: hierarchical_soccer_coop_hl
+                            Total steps: 528384 
+                       Steps per second: 929 
+                        Collection time: 13.052s 
+                          Learning time: 0.163s 
+                        Mean value loss: 13.1350
+                    Mean surrogate loss: 0.0006
+                      Mean entropy loss: 1.1752
+                            Mean reward: 13.56
+                    Mean episode length: 132.08
+                        Mean action std: 0.36
+         Mean episode goal_per_1k_steps: 0.4883
+         Mean episode mean_dist_to_ball: 3.1845
+               Mean episode goals_total: 21.5417
+--------------------------------------------------------------------------------
+                         Iteration time: 13.22s
+                           Time elapsed: 0:06:33
+                                    ETA: 0:01:04
+
+################################################################################
+[1m                            Learning iteration 43/50                            [0m 
+
+                               Run name: hierarchical_soccer_coop_hl
+                            Total steps: 540672 
+                       Steps per second: 928 
+                        Collection time: 13.072s 
+                          Learning time: 0.166s 
+                        Mean value loss: 13.4013
+                    Mean surrogate loss: -0.0043
+                      Mean entropy loss: 1.1409
+                            Mean reward: 14.91
+                    Mean episode length: 142.62
+                        Mean action std: 0.35
+         Mean episode goal_per_1k_steps: 0.1709
+         Mean episode mean_dist_to_ball: 3.1415
+               Mean episode goals_total: 22.2917
+--------------------------------------------------------------------------------
+                         Iteration time: 13.24s
+                           Time elapsed: 0:06:46
+                                    ETA: 0:00:55
+
+################################################################################
+[1m                            Learning iteration 44/50                            [0m 
+
+                               Run name: hierarchical_soccer_coop_hl
+                            Total steps: 552960 
+                       Steps per second: 929 
+                        Collection time: 13.051s 
+                          Learning time: 0.167s 
+                        Mean value loss: 13.1407
+                    Mean surrogate loss: -0.0059
+                      Mean entropy loss: 1.0708
+                            Mean reward: 23.98
+                    Mean episode length: 151.91
+                        Mean action std: 0.34
+         Mean episode goal_per_1k_steps: 0.3662
+         Mean episode mean_dist_to_ball: 3.0158
+               Mean episode goals_total: 24.3333
+--------------------------------------------------------------------------------
+                         Iteration time: 13.22s
+                           Time elapsed: 0:06:59
+                                    ETA: 0:00:46
+
+################################################################################
+[1m                            Learning iteration 45/50                            [0m 
+
+                               Run name: hierarchical_soccer_coop_hl
+                            Total steps: 565248 
+                       Steps per second: 924 
+                        Collection time: 13.121s 
+                          Learning time: 0.171s 
+                        Mean value loss: 15.4893
+                    Mean surrogate loss: -0.0039
+                      Mean entropy loss: 1.0524
+                            Mean reward: 27.41
+                    Mean episode length: 155.65
+                        Mean action std: 0.34
+         Mean episode goal_per_1k_steps: 0.8789
+         Mean episode mean_dist_to_ball: 3.0431
+               Mean episode goals_total: 25.6250
+--------------------------------------------------------------------------------
+                         Iteration time: 13.29s
+                           Time elapsed: 0:07:13
+                                    ETA: 0:00:37
+
+################################################################################
+[1m                            Learning iteration 46/50                            [0m 
+
+                               Run name: hierarchical_soccer_coop_hl
+                            Total steps: 577536 
+                       Steps per second: 924 
+                        Collection time: 13.120s 
+                          Learning time: 0.167s 
+                        Mean value loss: 13.4318
+                    Mean surrogate loss: -0.0071
+                      Mean entropy loss: 0.9871
+                            Mean reward: 24.46
+                    Mean episode length: 158.78
+                        Mean action std: 0.34
+         Mean episode goal_per_1k_steps: 0.6266
+         Mean episode mean_dist_to_ball: 3.0742
+               Mean episode goals_total: 27.1667
+--------------------------------------------------------------------------------
+                         Iteration time: 13.29s
+                           Time elapsed: 0:07:26
+                                    ETA: 0:00:28
+
+################################################################################
+[1m                            Learning iteration 47/50                            [0m 
+
+                               Run name: hierarchical_soccer_coop_hl
+                            Total steps: 589824 
+                       Steps per second: 927 
+                        Collection time: 13.079s 
+                          Learning time: 0.171s 
+                        Mean value loss: 11.2561
+                    Mean surrogate loss: -0.0025
+                      Mean entropy loss: 0.9459
+                            Mean reward: 27.77
+                    Mean episode length: 162.43
+                        Mean action std: 0.33
+         Mean episode goal_per_1k_steps: 0.5859
+         Mean episode mean_dist_to_ball: 2.9902
+               Mean episode goals_total: 28.5417
+--------------------------------------------------------------------------------
+                         Iteration time: 13.25s
+                           Time elapsed: 0:07:39
+                                    ETA: 0:00:19
+
+################################################################################
+[1m                            Learning iteration 48/50                            [0m 
+
+                               Run name: hierarchical_soccer_coop_hl
+                            Total steps: 602112 
+                       Steps per second: 921 
+                        Collection time: 13.179s 
+                          Learning time: 0.157s 
+                        Mean value loss: 11.4195
+                    Mean surrogate loss: -0.0054
+                      Mean entropy loss: 0.9031
+                            Mean reward: 31.34
+                    Mean episode length: 171.43
+                        Mean action std: 0.33
+         Mean episode goal_per_1k_steps: 0.3906
+         Mean episode mean_dist_to_ball: 3.0447
+               Mean episode goals_total: 29.2917
+--------------------------------------------------------------------------------
+                         Iteration time: 13.34s
+                           Time elapsed: 0:07:53
+                                    ETA: 0:00:09
+
+################################################################################
+[1m                            Learning iteration 49/50                            [0m 
+
+                               Run name: hierarchical_soccer_coop_hl
+                            Total steps: 614400 
+                       Steps per second: 931 
+                        Collection time: 13.030s 
+                          Learning time: 0.168s 
+                        Mean value loss: 12.4202
+                    Mean surrogate loss: -0.0074
+                      Mean entropy loss: 0.8071
+                            Mean reward: 28.83
+                    Mean episode length: 163.11
+                        Mean action std: 0.32
+         Mean episode goal_per_1k_steps: 0.3743
+         Mean episode mean_dist_to_ball: 2.9044
+               Mean episode goals_total: 30.4583
+--------------------------------------------------------------------------------
+                         Iteration time: 13.20s
+                           Time elapsed: 0:08:06
+                                    ETA: 0:00:00
+
+
+=== Training complete ===
+  Models saved in: runs/hierarchical_soccer_coop_hl
+  Best model: runs/hierarchical_soccer_coop_hl/model_50.pt
+ccer_chase_hl/model_50.pt

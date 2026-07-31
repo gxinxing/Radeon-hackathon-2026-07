@@ -12,6 +12,10 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import FastAPI
+<<<<<<< HEAD
+=======
+from fastapi.responses import PlainTextResponse
+>>>>>>> track3-honest
 from pydantic import BaseModel
 
 from ..dsl.validator import validate_dsl
@@ -127,6 +131,58 @@ async def backtest(req: BacktestRequest) -> BacktestResponse:
     )
 
 
+<<<<<<< HEAD
+=======
+@app.post("/api/backtest/report", response_class=PlainTextResponse)
+async def backtest_report(req: BacktestRequest) -> str:
+    """Run a backtest and return a concise Chinese Markdown report for Dify."""
+    response = await backtest(req)
+
+    if not response.success:
+        details = "；".join(response.validation_errors) if response.validation_errors else (response.error or "未知错误")
+        return (
+            "# AMD AI 交易策略回测报告\n\n"
+            f"- 策略：{response.strategy_name or '未识别'}\n"
+            "- 结论：❌ REJECT（拒绝执行）\n"
+            f"- 原因：{details}\n\n"
+            "> 本系统不会因回测失败而伪造收益；当前策略必须调整后重新验证。"
+        )
+
+    m = response.metrics
+    total_return = float(m.get("total_return", 0))
+    max_drawdown = float(m.get("max_drawdown", 0))
+    sharpe = float(m.get("sharpe_ratio", 0))
+    win_rate = float(m.get("win_rate", 0))
+
+    warnings: list[str] = []
+    if max_drawdown <= -0.30:
+        warnings.append("最大回撤超过 30%")
+    if sharpe < 0.5:
+        warnings.append("夏普比率低于 0.5")
+    if int(m.get("total_trades", 0)) < 20:
+        warnings.append("交易样本少于 20 笔")
+
+    verdict = "⚠️ REVIEW（需要人工复核）" if warnings else "✅ PASS（通过基础风控）"
+    warning_text = "；".join(warnings) if warnings else "未触发基础风险阈值"
+
+    return (
+        "# AMD AI 交易策略回测报告\n\n"
+        f"- 策略：{response.strategy_name}\n"
+        f"- 回测周期：{req.days} 天\n"
+        f"- 初始资金：${float(m.get('initial_balance', req.initial_balance)):,.2f}\n"
+        f"- 最终资金：${float(m.get('final_balance', 0)):,.2f}\n"
+        f"- 总收益率：{total_return:.2%}\n"
+        f"- 最大回撤：{max_drawdown:.2%}\n"
+        f"- 夏普比率：{sharpe:.2f}\n"
+        f"- 胜率：{win_rate:.2%}\n"
+        f"- 完成交易：{int(m.get('total_trades', 0))} 笔\n"
+        f"- 相对基准 Alpha：{float(m.get('alpha', 0)):.2%}\n\n"
+        f"## 风控结论\n\n{verdict}\n\n风险检查：{warning_text}\n\n"
+        "> 仅用于研究和 Paper Trading，不构成投资建议。"
+    )
+
+
+>>>>>>> track3-honest
 @app.post("/api/validate")
 async def validate(strategy: dict[str, Any]):
     """Validate a strategy DSL without running a backtest."""

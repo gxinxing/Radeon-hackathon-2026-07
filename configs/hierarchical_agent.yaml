@@ -22,12 +22,21 @@ show_viewer: false
 env:
   robot_urdf: urdf/t1/t1.urdf
   episode_length_s: 24.0
+<<<<<<< HEAD
   hl_clip_lin: 0.8       # HL linear velocity command limit (m/s); CLI --clip_lin overrides
   hl_clip_ang: 1.0       # HL angular velocity limit (rad/s); CLI --clip_ang overrides
   multiagent_obs: false  # 3v3 only: append 5-dim teammate/opponent/possession to obs (19→24).
                          # OFF keeps the v6 (19-dim) checkpoint valid. Turn ON for the next
                          # multi-agent training run; the 3v3 harness must then feed
                          # env.teammate_pos / env.opponent_pos each step.
+=======
+  hl_clip_lin: 1.2       # HL linear velocity command limit (m/s); CLI --clip_lin overrides
+  hl_clip_ang: 1.2       # HL angular velocity limit (rad/s); CLI --clip_ang overrides
+  multiagent_obs: false  # 24-dim multi-agent obs NOT yet activated in training.
+                         # coop_hl task uses cooperative reward terms but with 19-dim obs
+                         # (teammate/opponent positions are zero). True 24-dim training
+                         # requires the 3v3 harness to feed env.teammate_pos/opponent_pos.
+>>>>>>> track3-honest
   dt: 0.02             # control dt = physics_dt(0.002) * decimation(10)
   substeps: 10
   action_scale: 0.25   # used by low-level (frozen model)
@@ -67,11 +76,21 @@ reward:
   orientation: -1.0
 
   # ── Ball-focused (main objectives — must dominate the reward budget) ──
+<<<<<<< HEAD
   approach_ball: 10.0      # reward for decreasing distance to ball (clamped >= 0, never punishes contact)
   ball_control: 2.0        # reward for being close to ball
   ball_progress: 10.0      # potential-based: any ball-to-goal distance reduction (kicks count)
   ball_contact: 1.0        # foot within 0.15 m of ball
   ball_to_goal: 3.0        # reward for ball moving toward goal
+=======
+  approach_ball: 10.0      # tanh-soft-clamped: weak gradient on contact
+  approach_angle: 3.0     # reward approaching ball from goal-opposite side
+  ball_control: 2.0        # reward for being close to ball
+  ball_progress: 10.0      # potential-based: any ball-to-goal distance reduction (kicks count)
+  ball_contact: 1.0        # foot within 0.15 m of ball
+  directed_contact: 5.0    # bonus for foot-near-ball WHILE ball moves toward goal
+  ball_to_goal: 8.0        # reward for ball moving toward goal (was 3.0 — too weak)
+>>>>>>> track3-honest
   goal_scored: 30.0        # big reward for scoring (episode resets on goal)
 
   # ── Cooperative (3v3) shaping — ONLY active when task=coop_hl AND

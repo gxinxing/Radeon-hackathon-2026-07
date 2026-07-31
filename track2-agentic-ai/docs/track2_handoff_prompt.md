@@ -1,5 +1,10 @@
 # Track 2 — Handoff Prompt for Next Agent
 
+<<<<<<< HEAD
+=======
+> ⚠️ **Docker is NOT available on the GPU instance (container environment). Dify cannot be deployed. Gradio is used as the primary UI.**
+
+>>>>>>> track3-honest
 > 给 Simon 的说明：下面这段英文 prompt 是**自包含的**，可直接粘贴给任意一个 coding agent（WorkBuddy 子代理、OpenClaw、Claude、Codex 均可）。它不依赖本对话的上下文，所有事实都已在内部写明。把 `<PROJECT_ROOT>` 替换成实际绝对路径再粘贴即可。
 
 ---

@@ -14,6 +14,10 @@ MSG_STATE = 1
 MSG_BALL = 2
 MSG_CMD = 3
 MSG_END = 4
+<<<<<<< HEAD
+=======
+MSG_WORLD = 5  # Global perception: all robots + ball in one message
+>>>>>>> track3-honest
 
 DEFAULT_PORT = 9876
 MATCH_DURATION = 20.0
@@ -75,6 +79,7 @@ class MatchCoordinator:
         server.listen(self.n_teams * 3 + 2)
         print(f'[Coord] Listening on port {self.port}, expecting up to {self.n_teams*3} clients')
 
+<<<<<<< HEAD
         # Accept clients — n_teams=1 means 1v1 (2 robots), n_teams=2 means 3v3 (6 robots)
         expected = 2 if self.n_teams <= 1 else self.n_teams * 3
         for i in range(expected):
@@ -89,6 +94,31 @@ class MatchCoordinator:
             self.states[name] = {'x': 0, 'y': 0, 'z': 0.7, 'pitch': 0, 'roll': 0}
             print(f'[Coord] {name} connected from {addr}')
             threading.Thread(target=self._handle_client, args=(conn, name), daemon=True).start()
+=======
+        # Accept clients with 600s total deadline (workers need time to compile Genesis kernels)
+        expected = 2 if self.n_teams <= 1 else self.n_teams * 3
+        accept_deadline = time.time() + 600
+        connected = 0
+        while connected < expected and time.time() < accept_deadline:
+            remaining = accept_deadline - time.time()
+            if remaining <= 0:
+                break
+            server.settimeout(remaining)
+            try:
+                conn, addr = server.accept()
+            except socket.timeout:
+                break
+            name = f'client_{connected}'
+            self.clients[name] = conn
+            self.states[name] = {'x': 0, 'y': 0, 'z': 0.7, 'pitch': 0, 'roll': 0}
+            print(f'[Coord] {name} connected from {addr} ({connected+1}/{expected})')
+            threading.Thread(target=self._handle_client, args=(conn, name), daemon=True).start()
+            connected += 1
+
+        if connected < expected:
+            print(f'[Coord] Warning: only {connected}/{expected} clients connected')
+        print(f'[Coord] All clients connected, starting match')
+>>>>>>> track3-honest
 
         server.settimeout(None)
         self.start_time = time.time()
@@ -116,6 +146,7 @@ class MatchCoordinator:
                             collisions.append((client_names[i], client_names[j], dist, dx, dy))
 
             # Broadcast to all clients
+<<<<<<< HEAD
             for name, conn in self.clients.items():
                 # Send all other clients' states
                 for other_name, other_state in states_snapshot.items():
@@ -131,6 +162,31 @@ class MatchCoordinator:
                     ball_snapshot['vx'], ball_snapshot['vy'], ball_snapshot['vz']
                 ])
                 # Send collision push-back
+=======
+            client_names = list(self.clients.keys())
+            n_robots = len(client_names)
+
+            # Build world state array: [n_robots * 5 (x,y,z,pitch,roll)] + [ball_x,ball_y,ball_z,ball_vx,ball_vy,ball_vz]
+            # Total floats = n_robots*5 + 6
+            world_data = []
+            for cn in client_names:
+                s = states_snapshot.get(cn, {})
+                world_data.extend([
+                    s.get('x', 0), s.get('y', 0), s.get('z', 0.7),
+                    s.get('pitch', 0), s.get('roll', 0)
+                ])
+            world_data.extend([
+                ball_snapshot['x'], ball_snapshot['y'], ball_snapshot['z'],
+                ball_snapshot['vx'], ball_snapshot['vy'], ball_snapshot['vz']
+            ])
+
+            for name, conn in self.clients.items():
+                # Send global world state (all robots + ball)
+                self._safe_send(conn, MSG_WORLD, world_data)
+
+                # Send collision push-back
+                # Always send collision push-back (even if zero, to keep protocol in sync)
+>>>>>>> track3-honest
                 push = [0, 0, 0]
                 for c in collisions:
                     if name == c[0]:
@@ -139,8 +195,12 @@ class MatchCoordinator:
                     elif name == c[1]:
                         push[0] = -c[3] / c[2] * 0.1
                         push[1] = -c[4] / c[2] * 0.1
+<<<<<<< HEAD
                 if push != [0, 0, 0]:
                     self._safe_send(conn, MSG_CMD, push)
+=======
+                self._safe_send(conn, MSG_CMD, push)
+>>>>>>> track3-honest
 
             # Log match state
             log_entry = {

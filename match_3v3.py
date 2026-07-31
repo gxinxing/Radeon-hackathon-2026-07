@@ -131,10 +131,17 @@ class ScoreBoard:
 
     def goal_scored(self, team: Team):
         if team == Team.LEFT:
+<<<<<<< HEAD
             left_score += 1  # left scored in right goal
             return "left"
         else:
             right_score += 1
+=======
+            self.left_score += 1  # left scored in right goal
+            return "left"
+        else:
+            self.right_score += 1
+>>>>>>> track3-honest
             return "right"
 
     def to_dict(self) -> dict:
