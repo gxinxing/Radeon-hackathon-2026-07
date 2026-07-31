@@ -53,11 +53,12 @@ def recv_msg(sock):
 
 
 class MatchWorker:
-    def __init__(self, role, has_ball, port, model_path, init_pos, team_id=0):
+    def __init__(self, role, has_ball, port, model_path, init_pos, team_id=0, onnx_path=None):
         self.role = role
         self.has_ball = has_ball
         self.port = port
         self.model_path = model_path
+        self.onnx_path = onnx_path
         self.init_pos = init_pos
         self.team_id = team_id
         self.running = False
@@ -72,13 +73,14 @@ class MatchWorker:
 
         gs.init(backend=gs.gpu, logging_level='warning')
 
-        with open('configs/hierarchical_agent.yaml') as f:
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                               'configs/hierarchical_agent.yaml')) as f:
             cfg = yaml.safe_load(f)
         env_cfg = dict(cfg['env'])
         env_cfg['task'] = 'chase_hl'
         hl_cfg = cfg.get('high_level', {})
 
-        from envs.soccer_env_hierarchical import SoccerEnvHierarchical
+        from soccer_env_hierarchical import SoccerEnvHierarchical
         self.env = SoccerEnvHierarchical(
             num_envs=1, env_cfg=env_cfg, obs_cfg=cfg['obs'],
             reward_cfg=cfg['reward'], command_cfg=cfg['command'],
@@ -88,13 +90,22 @@ class MatchWorker:
 
         self.cfg = cfg
 
+        # Three inference paths: ONNX (preferred) → .pt (legacy) → rule
         self.policy = None
-        if self.model_path:
+        self.onnx_policy = None
+
+        if self.onnx_path:
+            sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'src'))
+            from match_3v3.policy import SharedRLPolicy
+            self.onnx_policy = SharedRLPolicy(onnx_path=self.onnx_path)
+            print(f'[{self.role}] Using ONNX model: {self.onnx_path} (mode={self.onnx_policy.mode})')
+        elif self.model_path:
             from rsl_rl.runners import OnPolicyRunner
             runner = OnPolicyRunner(self.env, cfg['train'],
                                     'runs/hierarchical_soccer_chase_hl', device=gs.device)
             runner.load(self.model_path)
             self.policy = runner.get_inference_policy(device=gs.device)
+            print(f'[{self.role}] Using .pt model: {self.model_path}')
 
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.connect(('localhost', self.port))
@@ -145,8 +156,31 @@ class MatchWorker:
             if not self.running:
                 break
 
-            # Compute action
-            if self.policy:
+            # Compute action — three paths: ONNX → .pt → rule
+            if self.onnx_policy:
+                # ONNX Runtime inference: build PlayerState + BallState from env
+                from match_3v3.scene import PlayerState, BallState, Team, Role
+                robot_pos = self.env.base_pos[0].cpu().numpy()
+                robot_quat = self.env.base_quat[0].cpu().numpy()
+                robot_vel = self.env.filtered_lin_vel[0].cpu().numpy()
+                ball_pos = self.ball_pos
+                ball_vel = self.ball_vel
+
+                # Determine team from role (A = LEFT attacks +x, B = RIGHT attacks -x)
+                is_team_a = self.role.startswith('A')
+                team = Team.LEFT if is_team_a else Team.RIGHT
+
+                player = PlayerState(
+                    team=team, robot_idx=0, role=Role.ATTACKER,
+                    pos=robot_pos, quat=robot_quat, vel=robot_vel,
+                )
+                ball = BallState(pos=ball_pos, vel=ball_vel)
+
+                action_result = self.onnx_policy.compute(player, ball)
+                action = torch.tensor([action_result.velocity_cmd],
+                                      dtype=torch.float32, device=self.env.device)
+
+            elif self.policy:
                 with torch.no_grad():
                     action = self.policy(obs)
             else:
@@ -212,12 +246,14 @@ if __name__ == '__main__':
     parser.add_argument('--role', required=True)
     parser.add_argument('--has-ball', action='store_true')
     parser.add_argument('--port', type=int, default=DEFAULT_PORT)
-    parser.add_argument('--model', default=None)
+    parser.add_argument('--model', default=None, help='Path to .pt checkpoint (rsl_rl)')
+    parser.add_argument('--onnx', default=None, help='Path to ONNX model (preferred over --model)')
     parser.add_argument('--init-pos', type=float, nargs=3, default=[0, 0, 0.7])
     args = parser.parse_args()
 
     worker = MatchWorker(
         role=args.role, has_ball=args.has_ball, port=args.port,
-        model_path=args.model, init_pos=args.init_pos)
+        model_path=args.model, init_pos=args.init_pos,
+        onnx_path=args.onnx)
     worker.setup()
     worker.run()
