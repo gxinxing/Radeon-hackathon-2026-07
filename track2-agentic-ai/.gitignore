@@ -13,11 +13,8 @@ build/
 venv/
 
 # Models and data
-<<<<<<< HEAD
-=======
 /models/
 /backups/
->>>>>>> track3-honest
 models/*.bin
 models/*.safetensors
 models/*.gguf
@@ -32,10 +29,7 @@ user_data/hyperopt_results/
 
 # Dify
 dify/volumes/
-<<<<<<< HEAD
-=======
 /dify/dify-src/
->>>>>>> track3-honest
 
 # Docker
 docker/volumes/

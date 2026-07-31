@@ -138,20 +138,20 @@ Multi-track GPU sharing:
 
 ---
 
-### Part 7: 1v1 Match Verification (45s)
+### Part 7: 3v3 Distributed Match (45s)
 
-**Visual:** `demos/hierarchical_chase_hl_v12.mp4` (single robot demo)
+**Visual:** `demos/3v3_match_full.gif` (2D top-down animation)
 
 **Text overlay:**
-> "1v1 Match: RL agent (ONNX) vs ball"
-> "200 steps, ball displaced 20m, ball velocity 1.46 m/s"
-> "ONNX Runtime inference verified on AMD Radeon GPU"
+> "3v3 Match: Team A (RL, blue) vs Team B (rule-based, red)"
+> "6 robots, 1240 steps, 7 collisions, 25 seconds"
+> "Distributed multi-process: each robot in its own Genesis process"
 
 **Narration:**
-> "The 1v1 match verifies the ONNX inference pipeline end-to-end.
-> The robot actively chases and contacts the ball, pushing it 20 meters
-> across the field. Ball velocity reaches 1.46 m/s, confirming real
-> physical contact. The robot maintains balance at 0.9m height throughout."
+> "The 3v3 match validates the trained policy in a multi-agent setting.
+> Six robots run in separate Genesis processes, coordinated by a socket-based
+> server at 50 Hz. The ball was actively displaced 4.77 meters, showing
+> real contact behavior."
 
 ---
 
@@ -182,7 +182,7 @@ ONNX exported: chase_v8_policy.onnx (182.4 KB)
 ✅ First AMD-GPU humanoid soccer training pipeline
 ✅ 1,358 goals (830% improvement from reward fix)
 ✅ 4,618 steps/s on AMD Radeon (51 GB VRAM)
-✅ 1v1 match verified — ball displaced 20m, ONNX inference
+✅ 3v3 distributed match — 6 robots, 0 crashes
 ✅ ONNX deployment model (182 KB, 46,467 params)
 ✅ Fully reproducible — Genesis + ROCm PyTorch
 ```
@@ -198,7 +198,8 @@ ONNX exported: chase_v8_policy.onnx (182.4 KB)
 | File | Duration | Content |
 |------|----------|---------|
 | `demos/hierarchical_chase_hl_v12.mp4` | ~10s | Single robot chasing ball (v8 model) |
-| `match_logs/match_1v1.json` | — | 1v1 match log (200 steps, ONNX verified) |
+| `demos/3v3_match_full.gif` | ~40s | 3v3 match top-down animation (6 robots) |
+| `demos/3v3_match_demo.gif` | ~40s | 3v3 match (3 robots, earlier run) |
 | `train_v8.log` | — | Full training log (500 iterations) |
 | `track3-data/benchmark/gpu_samples.csv` | — | GPU utilization/VRAM/temp/power data |
 

@@ -12,10 +12,7 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import FastAPI
-<<<<<<< HEAD
-=======
 from fastapi.responses import PlainTextResponse
->>>>>>> track3-honest
 from pydantic import BaseModel
 
 from ..dsl.validator import validate_dsl
@@ -131,8 +128,6 @@ async def backtest(req: BacktestRequest) -> BacktestResponse:
     )
 
 
-<<<<<<< HEAD
-=======
 @app.post("/api/backtest/report", response_class=PlainTextResponse)
 async def backtest_report(req: BacktestRequest) -> str:
     """Run a backtest and return a concise Chinese Markdown report for Dify."""
@@ -182,7 +177,6 @@ async def backtest_report(req: BacktestRequest) -> str:
     )
 
 
->>>>>>> track3-honest
 @app.post("/api/validate")
 async def validate(strategy: dict[str, Any]):
     """Validate a strategy DSL without running a backtest."""
