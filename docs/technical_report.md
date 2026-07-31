@@ -112,11 +112,9 @@ model's observation. This design solves a fundamental problem: the original flat
 | 15 | goal_dist | 1 | Distance to goal |
 | 16-18 | last_hl_actions | 3 | Last velocity command [vx, vy, wz] |
 
-<<<<<<< HEAD
 ---
 
 ## 3. Data Pipeline
-
 ### 3.1 Data Generation
 
 This project does **not use external datasets**. All training data is generated on-the-fly
@@ -530,7 +528,13 @@ python render_match.py --log match_logs/match_*.json --output demos/3v3_match.gi
 
 ---
 
-## 13. Conclusion
+## 13. RoboCup 2026 Background
+
+RoboCup 2026 (June 30 – July 6, Incheon, South Korea) marked the first 11v11 humanoid robot soccer match. Over 70% of teams used Booster Robotics platforms. Booster also operates its own 3v3 robot football league. However, all participating teams' RL training relies on NVIDIA CUDA (Isaac Gym/Lab). This project is the first to train humanoid soccer policies on AMD Radeon GPUs, providing a viable path for non-NVIDIA users.
+
+---
+
+## 14. Conclusion
 
 This project demonstrates the first complete humanoid robot soccer training pipeline on
 AMD Radeon GPUs using Genesis + ROCm PyTorch. The reward function engineering was the

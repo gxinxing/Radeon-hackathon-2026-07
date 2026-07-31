@@ -45,15 +45,6 @@
 
 | Metric | Value | Note |
 |--------|-------|------|
-<<<<<<< HEAD
-| Reward improvement | **-22 → +24** | After P0/P1/P2 parameter tuning (500 iter) |
-| Action std (fixed) | **5.78 → 0.07** | entropy_coef 0.01→0.003 resolved noise blowup |
-| Episode length | **18 → 225 steps** | From instant-fall to sustained walking |
-| Ball distance (min) | **4.29m → 0.25m** | Robot actively approaches the ball |
-| ONNX inference | **0.4 ms** | 19→3 dim, real-time capable (4000 samples) |
-| 3v3 match | **6 robots, 0 crashes** | Distributed multi-process on single AMD GPU |
-| Training throughput | **~847 steps/s** | 2048 parallel envs on AMD Radeon (51 GB VRAM) |
-=======
 | Reward improvement | **-24 → +112** | coop_hl multi-agent training (24-dim obs, 500 iter) |
 | Action std (fixed) | **5.78 → 0.09** | entropy_coef 0.01→0.003 resolved noise blowup |
 | Episode length | **19 → 208 steps** | From instant-fall to sustained walking |
@@ -62,7 +53,6 @@
 | ONNX inference | **0.4 ms** | 19→3 dim, real-time capable (46,467 params) |
 | 1v1 match | **200 steps, ball displaced 20m** | ONNX inference verified on AMD Radeon GPU |
 | Training throughput | **4,618 steps/s** (peak) | 2048 parallel envs on AMD Radeon (51 GB VRAM) |
->>>>>>> track3-honest
 
 ---
 
