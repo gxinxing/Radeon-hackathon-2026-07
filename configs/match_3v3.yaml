@@ -1,0 +1,103 @@
+# ═══════════════════════════════════════════════════════════════════
+# 3v3 Soccer Match Configuration
+# ═══════════════════════════════════════════════════════════════════
+
+# --- Field dimensions (meters) ---
+field:
+  length: 14.0       # x-axis
+  width: 9.0         # y-axis
+  goal_width: 2.6
+  goal_height: 1.0
+  circle_radius: 1.5
+  ball_radius: 0.11
+  robot_stand_height: 0.72
+
+# --- Initial positions ---
+# Left team attacks +x, right team attacks -x
+# Order within team: [attacker, defender, goalkeeper]
+initial_positions:
+  left:
+    attacker: [-1.0, 0.0, 0.72]
+    defender: [-3.5, 1.5, 0.72]
+    goalkeeper: [-6.5, 0.0, 0.72]
+  right:
+    attacker: [1.0, 0.0, 0.72]
+    defender: [3.5, -1.5, 0.72]
+    goalkeeper: [6.5, 0.0, 0.72]
+  ball: [0.0, 0.0, 0.11]
+
+# --- Role parameters ---
+roles:
+  reassign_interval: 50    # steps between role reassignment
+  defend_offset: 2.0       # defender target offset from own goal (m)
+  keeper_y_range: 1.04     # goalkeeper lateral tracking range (m)
+
+# --- Policy parameters ---
+policy:
+  # Walk checkpoint (t1_walk.pt) — handles locomotion only
+  walk_checkpoint: ""      # set path at runtime via --checkpoint
+  # Shoot checkpoint — handles kicking skill
+  shoot_checkpoint: ""
+  action_scale: 0.25
+  obs_history_length: 10
+  # Rule-based fallback parameters
+  kick_distance: 0.3
+  kick_align_threshold: 0.5   # radians
+  max_speed: 0.5              # m/s
+  max_turn: 0.5               # rad/s
+  approach_speed: 0.4
+  defend_speed: 0.3
+  keeper_speed: 0.3
+
+# --- Match duration ---
+match:
+  max_steps: 1000        # ~20s at dt=0.02
+  max_duration_s: 20.0   # alternative: time-based limit
+  dt: 0.02
+  substeps: 2
+
+# --- Goal detection ---
+goal_detection:
+  # Ball must cross goal line within goal_width
+  goal_line_tolerance: 0.05     # meters beyond goal line
+  goal_y_tolerance: 1.3         # half goal_width + margin
+  # After goal, pause for N steps before reset
+  goal_pause_steps: 50
+
+# --- Reset rules ---
+reset:
+  # Reset ball to center after goal or out-of-bounds
+  ball_reset_pos: [0.0, 0.0, 0.11]
+  # Reset robots to formation after goal
+  reset_robots_on_goal: true
+  # Reset ball only (keep robots) on out-of-bounds
+  reset_robots_on_out: false
+  # Out-of-bounds tolerance
+  out_of_bounds_margin: 0.5
+
+# --- Disturbance ---
+disturbance:
+  enabled: false         # default off — must explicitly enable
+  # When enabled, applies random force perturbations to robots
+  force_magnitude: 5.0   # Newtons
+  force_interval: 200   # steps between perturbations
+  # Wind-like ball disturbance
+  ball_wind: false
+  ball_wind_magnitude: 0.5  # m/s^2
+
+# --- Evaluation ---
+evaluation:
+  default_matches: 20
+  default_seed: 42
+  output_dir: "results/match_3v3"
+  # Methods: rule_vs_rule, rl_vs_rule, full_vs_rule
+  supported_methods:
+    - rule_vs_rule
+    - rl_vs_rule
+    - full_vs_rule
+
+# --- Robot ---
+robot:
+  urdf: ""    # set at runtime, e.g. /workspace/booster/booster_deploy/assets/t1.xml
+  num_joints: 23
+  policy_joints: 21
