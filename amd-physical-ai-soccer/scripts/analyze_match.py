@@ -2,20 +2,36 @@
 """Analyze a 3v3 match JSON log and extract statistics."""
 import json, os, math, sys
 
-logfile = sys.argv[1] if len(sys.argv) > 1 else "/persistent/track3/match_logs/match_20260801_135258.json"
+logfile = sys.argv[1] if len(sys.argv) > 1 else "match_logs/match_latest.json"
 d = json.load(open(logfile))
 log = d.get("log", [])
+
+if not log:
+    print("ERROR: Empty match log — no events recorded")
+    sys.exit(1)
 
 print(f"Duration: {d.get('duration')}")
 print(f"N clients: {d.get('n_clients')}")
 print(f"Steps: {d.get('steps')}")
 print(f"Events: {len(log)}")
 
+# Goal mouth half-width (field goal_width=2.6, half=1.3)
+GOAL_HALF = 1.3
+
 robot_ids = []
 for e in log:
     if e.get("robots"):
         robot_ids = sorted(e["robots"].keys())
         break
+
+# Note: client_N naming depends on connection order, not team assignment.
+# Team A workers (ONNX, slower init) may connect after Team B (rule, faster init).
+# The coordinator assigns client_0..5 by connection order.
+# For accurate team attribution, the worker's --role arg (A_* = Team A, B_* = Team B)
+# should be sent in the handshake. Until then, this analysis treats client_0-2 as
+# Team A and client_3-5 as Team B, which MAY be incorrect.
+print("WARNING: Team attribution based on connection order, not role identification.")
+print("WARNING: If ONNX workers connect after rule workers, teams may be swapped.")
 print(f"Robots: {robot_ids}")
 
 ball_x = [e.get("ball", {}).get("x", 0) for e in log]
@@ -25,10 +41,11 @@ print(f"Ball Y range: [{min(ball_y):.2f}, {max(ball_y):.2f}]")
 
 left_goals = right_goals = 0
 for i in range(1, len(ball_x)):
-    if ball_x[i-1] < 7.0 and ball_x[i] >= 7.0:
-        right_goals += 1
-    if ball_x[i-1] > -7.0 and ball_x[i] <= -7.0:
-        left_goals += 1
+    # Goal: ball crosses x=±7.0 AND |y| <= GOAL_HALF (1.3)
+    if ball_x[i-1] < 7.0 and ball_x[i] >= 7.0 and abs(ball_y[i]) <= GOAL_HALF:
+        right_goals += 1  # left team scored in right goal
+    if ball_x[i-1] > -7.0 and ball_x[i] <= -7.0 and abs(ball_y[i]) <= GOAL_HALF:
+        left_goals += 1  # right team scored in left goal
 print(f"Left team goals (scored in right): {right_goals}")
 print(f"Right team goals (scored in left): {left_goals}")
 

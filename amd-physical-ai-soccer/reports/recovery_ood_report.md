@@ -17,7 +17,7 @@ This report documents the failure recovery and out-of-distribution (OOD) evaluat
 
 ## 3. Failure Recovery Analysis
 
-### 3.1 Rule vs Rule (20 matches, baseline)
+### 3.1 Rule vs Rule (20 matches, single-process, no t1_walk.pt)
 
 | Metric | Left Team | Right Team |
 |--------|-----------|------------|
@@ -28,16 +28,54 @@ This report documents the failure recovery and out-of-distribution (OOD) evaluat
 | Win Rate | 30% | 40% |
 | Draws | 6/20 (30%) | - |
 
-### 3.2 RL vs Rule (6 matches)
+> **Note:** This baseline uses the single-process match_eval_3v3.py which does NOT load t1_walk.pt.
+> The 6-worker architecture (below) loads t1_walk.pt for all workers, so the fair
+> same-architecture comparison is RL team vs Rule team within the 6-worker matches.
+
+### 3.2 Rule vs Rule (5 matches, 6-worker architecture, with t1_walk.pt)
+
+| Metric | Left Team (Rule) | Right Team (Rule) |
+|--------|-----------------|-------------------|
+| Avg Goals | 0.0 | 0.0 |
+| Avg Total Falls | 29.8 | (shared) |
+| Avg Recovery Rate | 83.3% | (shared) |
+| Abnormal Exits | 0/5 | 0/5 |
+
+### 3.3 RL vs Rule (21 matches, 6-worker architecture, 25s duration)
+
+### 3.3 RL vs Rule (21 matches, 6-worker architecture, 25s duration)
 
 | Metric | RL Team (Left) | Rule Team (Right) |
 |--------|----------------|-------------------|
 | Avg Goals | 0.0 | 0.0 |
-| Avg Total Falls (both teams) | 34.3 | - |
-| Avg Total Recoveries | 30.5 | - |
-| Avg Recovery Rate | 88.8% | - |
+| Avg Total Falls (both teams) | 37.6 | - |
+| Avg Total Recoveries | 33.3 | - |
+| Avg Recovery Rate | 88.5% | - |
 | Abnormal Exit Rate | 0% | 0% |
-| Draws | 6/6 (100%) | - |
+| Draws | 21/21 (100%) | - |
+
+### 3.4 RL+kick vs Rule (3 matches, 60s duration)
+
+| Metric | RL+kick Team | Rule Team |
+|--------|-------------|-----------|
+| Goals | 1 | 0 |
+| Avg Total Falls | 84.0 | - |
+| Avg Recovery Rate | 95.5% | - |
+| Abnormal Exits | 0 | 0 |
+
+### 3.5 Same-Architecture Recovery Rate Comparison
+
+| Group | Architecture | t1_walk.pt | Recovery Rate |
+|-------|-------------|------------|---------------|
+| Rule vs Rule (single-process) | match_eval_3v3.py | ❌ No | 51.9% |
+| Rule vs Rule (6-worker) | TCP coordinator | ✅ Yes | 83.3% |
+| RL vs Rule (6-worker, 25s) | TCP coordinator | ✅ Yes | 88.5% |
+| RL+disturbance (6-worker, 25s) | TCP coordinator | ✅ Yes | 87.8% |
+| RL+kick (6-worker, 60s) | TCP coordinator | ✅ Yes | 95.5% |
+
+> **Fair comparison:** Within the same 6-worker architecture (both teams have t1_walk.pt),
+> RL vs Rule recovery rate is 88.5% vs 83.3% — a 5.2 percentage point improvement.
+> The 51.9% single-process baseline is NOT directly comparable because it lacks t1_walk.pt.
 
 ### 3.3 Key Recovery Findings
 
@@ -141,11 +179,11 @@ ONNX Runtime only supports CPUExecutionProvider on this system (no ROCm EP). Inf
 - ✅ AMD ROCm GPU acceleration for physics simulation
 
 ### 6.2 What Needs Work
-- ❌ Kicking integration (RL chase → rule kick handoff)
-- ❌ Disturbance match execution
-- ❌ Observation noise injection in match mode
-- ❌ Friction variation in match mode
-- ❌ Goal scoring (0 goals in 6 matches)
+- ❌ Kicking integration (RL chase → rule kick handoff still incomplete in 6-worker architecture)
+- ✅ Disturbance match execution (5 matches completed, see Section 4.2)
+- ❌ Observation noise injection in match mode (framework exists, not applied)
+- ❌ Friction variation in match mode (framework exists, not applied)
+- ❌ Goal scoring in 25s matches (0 goals; 1 goal in 60s match with kick)
 
 ## 7. Reproduction Commands
 
