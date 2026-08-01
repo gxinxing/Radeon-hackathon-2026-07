@@ -77,13 +77,13 @@ This project is a **failure recovery and out-of-distribution (OOD) evaluation pl
 
 **GOAL SCORED:** In the 60s extended match (match_20260801_151931.json), the RL+kick team scored 1 goal (ball reached x=21.56, crossing the goal line at x=7.0). This is the first RL goal in the 6-worker architecture.
 
-**Recovery Rate Comparison:**
-- Rule vs Rule (single-process): 55.7% / 48.1% (avg 51.9%)
-- Rule vs Rule (6-worker): 83.3% (higher due to t1_walk.pt in both teams)
-- RL vs Rule (25s): 88.5% (avg across 21 matches)
-- RL vs Rule (60s): 95.5% (longer matches allow more recovery time)
-- RL + Disturbance: 87.8% (only -1.0% vs baseline)
-- **The hierarchical walk policy (t1_walk.pt) significantly improves fall recovery**
+**Recovery Rate Comparison (same-architecture, fair):**
+- Rule vs Rule (single-process, no t1_walk.pt): 51.9% — NOT comparable (different architecture)
+- Rule vs Rule (6-worker, with t1_walk.pt): 83.3% — fair baseline
+- RL vs Rule (6-worker, 25s): 88.5% — +5.2pp over same-architecture rule baseline
+- RL + Disturbance (6-worker, 25s): 87.8% — only -0.7pp vs RL no-disturbance
+- RL+kick (6-worker, 60s): 95.5% — longer matches allow more recovery time
+- **The hierarchical walk policy (t1_walk.pt) provides robust fall recovery in both RL and rule teams**
 
 **Stability:**
 - 0 abnormal exits in 29 RL matches (0%)

@@ -18,7 +18,8 @@ echo "[ $(date -u) ] Starting batch: $N_MATCHES matches, mode=$MODE, onnx=$ONNX"
 
 for ((i=1; i<=N_MATCHES; i++)); do
     PORT=$((PORT_BASE + i))
-    echo "[ $(date -u) ] Match $i/$N_MATCHES (port=$PORT)"
+    SEED=$((42 + i))
+    echo "[ $(date -u) ] Match $i/$N_MATCHES (port=$PORT, seed=$SEED)"
     
     pkill -f match_worker 2>/dev/null; pkill -f match_coordinator 2>/dev/null; sleep 2
     

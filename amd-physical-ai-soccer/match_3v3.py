@@ -131,10 +131,10 @@ class ScoreBoard:
 
     def goal_scored(self, team: Team):
         if team == Team.LEFT:
-            left_score += 1  # left scored in right goal
+            self.left_score += 1  # left scored in right goal
             return "left"
         else:
-            right_score += 1
+            self.right_score += 1
             return "right"
 
     def to_dict(self) -> dict:
