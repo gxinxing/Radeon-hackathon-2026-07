@@ -26,10 +26,11 @@
 - [x] GPU/ROCm evidence collected (rocm-smi, training logs, GPU samples)
 
 ### Incomplete Items
-- [ ] Disturbance matches (framework ready, not executed)
-- [ ] RL vs Rule goal scoring (0 goals in 6 matches)
+- [x] Disturbance matches — 5 RL+disturbance vs Rule completed (Group D)
+- [x] RL+kick vs Rule — 10 matches completed (Group B extended)
+- [ ] RL vs Rule goal scoring (0 goals in 21 RL matches total)
 - [ ] ONNX ROCm Execution Provider (CPU-only inference)
-- [ ] 10-match extended statistical set (5 completed)
+- [x] 10-match extended statistical set (10 RL+kick + 5 disturbance + 6 baseline = 21 total)
 
 ---
 
