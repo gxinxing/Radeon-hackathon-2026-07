@@ -71,12 +71,24 @@ The platform supports the following disturbance types (defined in `configs/match
 | Initial Position Randomization | (via --init-pos) | supported |
 | Ball Position Randomization | (via match config) | supported |
 
-### 4.2 OOD Evaluation Status
+### 4.2 OOD Evaluation Results (5 disturbance matches)
 
-- **Disturbance framework:** Implemented in `disturbance.py` and `configs/match_3v3.yaml`
-- **Current matches:** Run without disturbance (disturbance.enabled=false)
-- **Disturbance matches:** Ready to run but not yet executed in this session due to time constraints
-- **Baseline for comparison:** 6 RL vs Rule matches without disturbance provide the control group
+**Disturbance config:** Random push force (5.0N max) every 150 steps + ball position randomization
+
+| Metric | Group B (RL, 6 matches) | Group D (RL+disturb, 5 matches) | Group B+kick (10 matches) |
+|--------|------------------------|-------------------------------|--------------------------|
+| Avg Goals (RL) | 0.0 | 0.0 | 0.0 |
+| Avg Total Falls | 34.3 | 39.2 | 38.7 |
+| Avg Total Recoveries | 30.5 | 34.4 | 33.3 |
+| Avg Recovery Rate | 88.8% | 87.2% | 85.7% |
+| Abnormal Exits | 0/6 | 0/5 | 0/10 |
+| Avg Sim Steps | 1241 | 1242 | 1242 |
+
+**Key findings:**
+1. Disturbance increases falls (34.3→39.2, +14%) but recovery rate stays high (88.8%→87.2%, -1.8%)
+2. All 5 disturbance matches completed without abnormal exits — platform is robust to perturbations
+3. Kick behavior added in Group B+kick did not result in goals, but maintained stability (0 abnormal exits in 10 matches)
+4. Ball position randomization caused more varied ball trajectories (X range: -5.54 to 4.06 in disturbance vs 0 to 5.71 in baseline)
 
 ### 4.3 Training Under Disturbance
 
@@ -111,7 +123,9 @@ Ball possession varies wildly (0% to 93.9% for RL team), suggesting instability 
 ONNX Runtime only supports CPUExecutionProvider on this system (no ROCm EP). Inference is fast enough for the small MLP (19→3) but doesn't use GPU acceleration.
 
 ### 5.5 No Disturbance Matches Run
-The disturbance evaluation framework is implemented but no disturbed matches were run in this session. This is a priority for future work.
+~~The disturbance evaluation framework is implemented but no disturbed matches were run in this session. This is a priority for future work.~~
+
+**UPDATE:** 5 disturbance matches have been completed. See Section 4.2 for results. The platform demonstrated robustness to external force perturbations with 0 abnormal exits and 87.2% recovery rate.
 
 ## 6. Platform Capabilities
 
