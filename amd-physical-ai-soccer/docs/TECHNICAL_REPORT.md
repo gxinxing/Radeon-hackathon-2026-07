@@ -151,7 +151,7 @@ Domain randomization: ball spawn position randomized per episode.
 - **Installed on:** Remote AMD GPU instance
 - **VNC:** TigerVNC on display :99 (port 5999)
 - **noVNC:** Web interface on port 6080
-- **Agent:** RLChaseAgent deployed with chase_v8_policy.onnx
+- **Agent:** RLChaseAgent with chase_v8_policy.onnx deployed
 
 ### 6.2 Agent Architecture
 
@@ -169,7 +169,7 @@ The agent loads the ONNX model, builds 19-dim observations from match state, and
 
 ### 6.3 Status
 
-Booster Studio installed and VNC/noVNC running. Agent code prepared with v8 ONNX model. Sim2Sim match requires manual launch via Booster Studio GUI (3v3 SoccerSim mode).
+Booster Studio installed and VNC/noVNC running. Agent code prepared with v8 ONNX model. Sim2Sim match not executed in this session — requires manual GUI operation via noVNC.
 
 ## 7. Innovation
 
