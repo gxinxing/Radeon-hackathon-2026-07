@@ -38,7 +38,10 @@ def main() -> None:
             dsl = normalized["canonicalized"]
             report = None
             if dsl:
-                report_resp = client.post(f"{api}/api/cn/backtest/report", json={"strategy": dsl})
+                # The CN report endpoint expects the DSL root directly.
+                # Wrapping it again as {"strategy": dsl} creates strategy.strategy
+                # and causes a false validation rejection.
+                report_resp = client.post(f"{api}/api/cn/backtest/report", json=dsl)
                 report_resp.raise_for_status()
                 report = report_resp.text
             records.append({
