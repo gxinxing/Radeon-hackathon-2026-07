@@ -59,6 +59,16 @@ async def cn_backtest_report(payload: dict[str, Any]):
     """Return an auditable Chinese report for a domestic-market DSL."""
     from .backtest.cn_runner import run_cn_demo_backtest
 
+    # The global risk agent is an independent veto point in the Dify
+    # multi-agent workflow.  Keep this check at the execution boundary so a
+    # downstream node cannot accidentally paper-trade a rejected plan.
+    agent_risk_decision = str(payload.get("agent_risk_decision", "")).upper()
+    if agent_risk_decision == "REJECT":
+        reasons = payload.get("risk_reasons") or ["全局风控 Agent 否决执行"]
+        if isinstance(reasons, list):
+            reasons = "；".join(str(item) for item in reasons)
+        return "# AMD 国内市场策略报告\n\n- 结论：❌ REJECT\n- 原因：" + str(reasons)
+
     strategy = payload.get("strategy", {})
     market = strategy.get("market", {})
     constraints = strategy.get("constraints", {})
