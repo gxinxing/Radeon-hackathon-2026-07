@@ -22,6 +22,7 @@ import yaml
 VLLM_BASE_URL = os.environ.get("VLLM_BASE_URL", "http://localhost:8000/v1")
 BACKTEST_API_URL = os.environ.get("BACKTEST_API_URL", "http://localhost:8080")
 MODEL_NAME = os.environ.get("MODEL_NAME", "qwen-trader-merged")
+CN_MARKET_MODE = os.environ.get("CN_MARKET_MODE", "1").lower() in {"1", "true", "yes"}
 
 # ── Tool registry ───────────────────────────────────────────────────
 
@@ -165,16 +166,29 @@ def _tool_generate_strategy_dsl(params: dict, state: Any) -> dict:
         prompt += "\n\n" + "\n\n".join(context_parts)
         prompt += "\n\nUse this knowledge when setting strategy parameters."
 
-    dsl_text = call_vllm(DSL_GENERATION_PROMPT, prompt, temperature=0.2)
-    dsl = extract_yaml(dsl_text)
+    if CN_MARKET_MODE:
+        from ..cn_pipeline import CN_MARKET_DSL_PROMPT, process_cn_model_output
+        generation_prompt = CN_MARKET_DSL_PROMPT
+    else:
+        generation_prompt = DSL_GENERATION_PROMPT
+
+    dsl_text = call_vllm(generation_prompt, prompt, temperature=0.2)
+    cn_result = process_cn_model_output(dsl_text) if CN_MARKET_MODE else None
+    dsl = cn_result["canonicalized"] if cn_result else extract_yaml(dsl_text)
 
     if dsl is None:
-        return {"success": False, "error": "LLM failed to generate valid YAML", "raw_output": dsl_text[:500]}
+        return {
+            "success": False,
+            "error": "LLM failed to generate valid domestic-market DSL" if CN_MARKET_MODE else "LLM failed to generate valid YAML",
+            "raw_output": dsl_text[:2000],
+            "repairs": (cn_result or {}).get("extract_repairs", []) + (cn_result or {}).get("canon_repairs", []),
+        }
 
     # Canonicalize
     try:
         from ..dsl.canonicalizer import canonicalize_dsl
-        dsl = canonicalize_dsl(dsl)
+        if not CN_MARKET_MODE:
+            dsl = canonicalize_dsl(dsl)
     except Exception:
         pass
 
@@ -186,6 +200,8 @@ def _tool_generate_strategy_dsl(params: dict, state: Any) -> dict:
         "success": True,
         "strategy_name": dsl.get("strategy", {}).get("name", "Unknown"),
         "dsl": dsl,
+        "raw_output": dsl_text,
+        "repairs": (cn_result or {}).get("extract_repairs", []) + (cn_result or {}).get("canon_repairs", []),
     }
 
 

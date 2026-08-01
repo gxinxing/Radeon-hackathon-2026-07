@@ -42,6 +42,7 @@ import yaml
 VLLM_BASE_URL = os.environ.get("VLLM_BASE_URL", "http://localhost:8000/v1")
 BACKTEST_API_URL = os.environ.get("BACKTEST_API_URL", "http://localhost:8080")
 MODEL_NAME = os.environ.get("MODEL_NAME", "qwen-trader-merged")
+CN_MARKET_MODE = os.environ.get("CN_MARKET_MODE", "1").lower() in {"1", "true", "yes"}
 
 # --- System Prompts ---
 
@@ -320,10 +321,16 @@ def process_user_message(message: str, history: list) -> str:
     if context_parts:
         dsl_prompt += "\n\n" + "\n\n".join(context_parts)
         dsl_prompt += "\n\nUse this knowledge when setting strategy parameters (e.g., appropriate stop-loss for the timeframe and asset)."
-    dsl_text = call_vllm(SYSTEM_PROMPT_DSL, dsl_prompt, temperature=0.2)
+    if CN_MARKET_MODE:
+        from .cn_pipeline import CN_MARKET_DSL_PROMPT, process_cn_model_output
+        dsl_system_prompt = CN_MARKET_DSL_PROMPT
+    else:
+        dsl_system_prompt = SYSTEM_PROMPT_DSL
+    dsl_text = call_vllm(dsl_system_prompt, dsl_prompt, temperature=0.2)
 
-    # Extract YAML
-    strategy_dsl = extract_yaml(dsl_text)
+    # Extract and canonicalize; keep raw output for auditability.
+    cn_result = process_cn_model_output(dsl_text) if CN_MARKET_MODE else None
+    strategy_dsl = cn_result["canonicalized"] if cn_result else extract_yaml(dsl_text)
     if strategy_dsl is None:
         yield f"❌ LLM无法生成有效的策略DSL。原始输出:\n\n{dsl_text}"
         return
