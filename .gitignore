@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Python
 __pycache__/
 *.py[cod]
@@ -11,16 +10,29 @@ dist/
 build/
 .venv/
 
+# Environment
+.env
+
 # Logs
 wandb/
+logs/
+tmp/
+runs/
+sync.log
+sync_from_remote.sh
 
 # Models (large files)
 *.pth
 *.pt
 *.onnx
 *.npz
+*.safetensors
+*.bin
 *.mp4
 *.tar.gz
+*.gif
+demos/*.gif
+models/pretrained/
 
 # IDE / Agent
 .vscode/
@@ -40,31 +52,14 @@ lost+found/
 Thumbs.db
 
 # Auto-generated
-logs/
-tmp/
-runs/
 demo/
 
 # Large mesh files
 amd-physical-ai-soccer/assets/t1/meshes/
-=======
-*.pt
-*.safetensors
-*.gif
-demos/*.gif
-models/pretrained/
-track3-data/runs/hierarchical_soccer_chase_hl/model_*.pt
+
+# Track 3 match logs
 match_logs/match_20260731_004742.json
 match_logs/match_20260731_032656.json
-__pycache__/
-*.pyc
-track2-agentic-ai/dify/
-track2-agentic-ai/.venv/
-*.bin
-sync.log
-sync_from_remote.sh
-.DS_Store
-.codely-cli/
-.codely/
 
->>>>>>> track3-honest
+# Track 2 Dify source (large, not authored)
+track2-agentic-ai/dify/dify-src/
