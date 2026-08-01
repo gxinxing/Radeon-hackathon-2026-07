@@ -67,12 +67,13 @@ Genesis Physics Engine (AMD Radeon GPU, 50Hz)
 
 ---
 
-## Slide 7: Sim2Sim Validation
+## Slide 7: Sim2Sim Preparation
 - **Booster Studio 1.9.4** installed on AMD GPU instance
 - **Agent:** RLChaseAgent with chase_v8_policy.onnx deployed
 - **Architecture:** ONNX inference for chaser + rule-based for other roles
 - **VNC/noVNC** running for GUI access
 - Agent code at `src/booster_agent/src/main.py`
+- Sim2Sim match not executed — requires manual GUI operation
 
 ---
 
