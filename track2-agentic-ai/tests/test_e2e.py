@@ -55,19 +55,20 @@ def test_dsl_to_json_roundtrip():
     assert len(dsl_parsed["strategy"]["indicators"]) == 2
 
 
-def test_backtest_api():
+@pytest.mark.asyncio
+async def test_backtest_api():
     """Test the backtest API endpoint (requires running server)."""
     import httpx
 
     try:
-        with httpx.Client(timeout=30.0) as client:
+        async with httpx.AsyncClient(timeout=30.0) as client:
             # Health check
-            resp = client.get("http://localhost:8080/health")
+            resp = await client.get("http://localhost:8080/health")
             if resp.status_code != 200:
                 pytest.skip("Backtest API not running")
 
             # Run backtest
-            resp = client.post(
+            resp = await client.post(
                 "http://localhost:8080/api/backtest",
                 json={"strategy": VALID_DSL, "days": 30},
             )
@@ -80,13 +81,14 @@ def test_backtest_api():
         pytest.skip("Backtest API not running")
 
 
-def test_llm_inference():
+@pytest.mark.asyncio
+async def test_llm_inference():
     """Test LLM inference via vLLM (requires running server)."""
     import httpx
 
     try:
-        with httpx.Client(timeout=60.0) as client:
-            resp = client.get("http://localhost:8000/v1/models")
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            resp = await client.get("http://localhost:8000/v1/models")
             if resp.status_code != 200:
                 pytest.skip("vLLM not running")
 
@@ -94,7 +96,7 @@ def test_llm_inference():
             assert len(models.get("data", [])) > 0
 
             # Test chat completion
-            resp = client.post(
+            resp = await client.post(
                 "http://localhost:8000/v1/chat/completions",
                 json={
                     "model": models["data"][0]["id"],

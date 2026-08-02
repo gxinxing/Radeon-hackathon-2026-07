@@ -1,207 +1,190 @@
-# Video Demo Script: Domestic Market Quantitative Agent
+# Video Demo Script — Crypto Trading Agent on AMD Radeon GPU
 
-**Duration**: ~5 minutes | **Format**: Screen recording with English voiceover
+**Duration**: ~4 minutes | **Format**: Screen recording with voiceover
 
 ---
 
-## Part 1: Opening (0:00 – 0:20)
+## Part 1: Opening (0:00 – 0:15)
 
-**Screen**: Project title page
+**Screen**: Project title slide / README top section
 
 **Narration**:
-> This is a domestic market quantitative strategy agent powered by AMD ROCm GPU.
-> Users describe trading strategies in Chinese natural language, and the system
-> automatically generates a strategy DSL, executes a simulated backtest, and
-> produces a risk report — all running on AMD hardware.
+> A private crypto trading agent powered by AMD ROCm — converting natural language
+> into validated and backtested trading strategies, entirely on AMD hardware.
+
+**Action**: Show project title, badges (ROCm, vLLM, Qwen2.5), and one-line description.
+
+---
+
+## Part 2: AMD Evidence (0:15 – 0:45)
+
+**Screen 1**: Terminal — `rocm-smi` output
+
+**Action**: Run `rocm-smi --showproductname` in terminal.
+
+**Narration**:
+> Running on AMD Instinct MI210 GPU with ROCm 7.2. The model was fine-tuned
+> using QLoRA on this GPU — 81 training steps, final loss 0.16, peak memory 16 GB.
+
+**Screen 2**: Terminal — training log + vLLM benchmark
+
+**Action**: Show `tail -5 /tmp/qlora_train.log` then `cat /workspace/persistent/vllm_benchmark.json`
+
+**Narration**:
+> vLLM serves the merged Qwen2.5-7B model on this AMD GPU. Batch throughput
+> scales 6.2 times — from 32 tokens per second at batch size 1, to 201 tokens
+> per second at batch 16.
 
 **On-screen text**:
 ```
-AMD ROCm 7.2.1 | gfx1100 | Qwen2.5-7B | LoRA | vLLM
-Track 2: Agentic AI
+Training: 81 steps, loss=0.1625, GPU=16GB
+vLLM: 201.7 tokens/s (6.2× scaling)
 ```
 
 ---
 
-## Part 2: AMD GPU Evidence (0:20 – 1:00)
+## Part 3: Dify Workflow (0:45 – 1:15)
 
-**Screen 1**: Terminal — `rocminfo`
+**Screen**: Dify workflow editor (browser)
 
-**Action**: Run `rocminfo | grep -E "Name:|Marketing Name:|Device Type:"`
-
-**Narration**:
-> The system runs on an AMD Radeon Graphics GPU (gfx1100) with ROCm 7.2.1,
-> powered by an AMD EPYC 9334 32-core processor.
-
-**Screen 2**: Terminal — vLLM service check
-
-**Action**: Run `curl -s http://127.0.0.1:8000/v1/models | python3 -m json.tool`
+**Action**: Show the 12-node Chatflow in Dify's visual editor. Pan across nodes.
 
 **Narration**:
-> vLLM version 0.16.1 is serving the fine-tuned model named
-> models/qwen-trader-merged — a Qwen2.5-7B model with LoRA weights
-> fine-tuned for the Chinese domestic market.
+> The agent is orchestrated as a Dify workflow. Natural language input goes to
+> the fine-tuned Qwen model to generate a strategy DSL. A canonicalizer node
+> fixes common LLM output errors. If validation fails, a retry branch sends
+> error feedback back to the model. Validated strategies proceed to backtest,
+> and the model generates a risk analysis report.
+
+**On-screen text** (node labels highlighted):
+```
+Start → LLM(DSL) → Canonicalizer → IF/ELSE → Backtest → Report → End
+                     ↘ Retry ← (on failure)
+```
+
+---
+
+## Part 4: Live Interaction (1:15 – 2:45)
+
+**Screen**: Dify chat interface
+
+**Action**: Type the following prompt:
+
+```
+BTC放量突破前高，使用EMA20/EMA50，止损3%，帮我回测并分析风险
+```
+
+**Narration**:
+> Let's test with a real trading idea in Chinese: "BTC volume breakout, EMA 20
+> crosses 50, 3% stop loss, backtest and analyze risk."
+
+**Wait**: ~6-8 seconds for vLLM inference on AMD GPU.
+
+**Show as output appears**:
+
+1. **DSL Output** — YAML strategy specification
+   - Indicators: EMA 20 (fast), EMA 50 (slow)
+   - Entry: `ema_fast > ema_slow`
+   - Exit: `ema_fast < ema_slow`
+   - Risk: `stop_loss: -0.03`
+
+2. **Validation** — "Schema validation passed" (canonicalizer repairs shown)
+
+3. **Backtest Results** — metrics table:
+   - Total trades: N
+   - Win rate: X%
+   - Total return: X%
+   - Buy & Hold return: X% (benchmark)
+   - Alpha: +X% (vs B&H)
+   - Max drawdown: X%
+   - Sharpe ratio: X
+   - Sortino ratio: X
+
+4. **Risk Report** — Chinese language analysis:
+   - 策略概述 (Strategy summary)
+   - 回测表现 (Backtest performance vs benchmark)
+   - 风险分析 (Risk analysis)
+   - 建议 (Recommendation: APPROVE/MODIFY/REJECT)
+
+**Narration**:
+> The agent generated a valid strategy DSL, ran a 180-day backtest with
+> slippage modeling, and produced a risk report comparing the strategy
+> against a buy-and-hold benchmark — all powered by the AMD GPU.
+
+---
+
+## Part 5: Error Recovery (2:45 – 3:15)
+
+**Screen**: Dify chat interface (new conversation)
+
+**Action**: Type a prompt that triggers an error:
+
+```
+用ATR动态止损的EMA策略，止损设为 ema_fast - atr * 3
+```
+
+**Narration**:
+> Now let's test error recovery. This prompt asks for an expression-based
+> stop loss, which our schema doesn't support.
+
+**Show**:
+1. LLM generates DSL with `stop_loss: "ema_fast - atr * 3"`
+2. Canonicalizer detects: "cannot parse as number"
+3. Retry branch activates — sends error feedback to LLM
+4. LLM regenerates with `stop_loss: -0.04` (numeric)
+5. Validation passes
+6. Backtest runs successfully
 
 **On-screen text**:
 ```
-GPU: AMD Radeon Graphics (gfx1100)
-ROCm: 7.2.1
-vLLM: 0.16.1
-Model: models/qwen-trader-merged (Qwen2.5-7B + CN LoRA)
+Attempt 1: stop_loss = "ema_fast - atr * 3" → REJECTED
+Retry: "Fix: stop_loss must be negative number"
+Attempt 2: stop_loss = -0.04 → VALIDATED → Backtest succeeded
 ```
+
+**Narration**:
+> The system isn't just a chatbot — it has constraints, validation, and
+> automatic recovery. Invalid outputs never reach the backtest engine.
 
 ---
 
-## Part 3: LoRA Training Results (1:00 – 1:45)
+## Part 6: Closing (3:15 – 3:35)
 
-**Screen**: Terminal — training log
-
-**Action**: Run `tail -20 /persistent/track2/logs/cn_qlora_train.log`
-
-**Narration**:
-> The model was fine-tuned using 400 domestic market strategy samples on this
-> AMD GPU. Three epochs, 39 training steps, final loss of 0.2848,
-> token accuracy of 98.1%, and peak GPU memory of 16.21 GB.
+**Screen**: Summary slide with key metrics
 
 **On-screen text**:
 ```
-Training: 39 steps, loss=0.2848, token_accuracy=98.1%
-Peak GPU Memory: 16.21 GB
-LoRA: r=64, alpha=128, FP16
-Training time: 615 seconds (~10 min)
+NL→DSL Generation Quality
+├── 10-prompt evaluation:    9/10 (90%)
+├── 100-prompt evaluation:  88/100 (88%)
+└── Schema validation:      90%
+
+AMD ROCm Performance
+├── QLoRA training:  81 steps, loss=0.1625, 16GB VRAM
+├── vLLM throughput: 201.7 tokens/s (batch=16)
+└── Batch scaling:   6.2× (batch 1→16)
+
+Pipeline
+├── Canonicalizer: type coercion + repair logging
+├── LLM retry: error feedback on unrecoverable failures
+├── Backtest: multi-position, slippage, walk-forward
+└── Paper trading: explicit user confirmation only
 ```
+
+**Narration**:
+> 88 percent pass rate on 100 diverse prompts. 201 tokens per second throughput
+> on AMD hardware. A complete pipeline from natural language to validated,
+> backtested trading strategies — with safety boundaries that prevent invalid
+> outputs from reaching execution.
 
 ---
 
-## Part 4: Evaluation Quality (1:45 – 2:30)
+## Recording Notes
 
-**Screen**: Terminal — run evaluation
-
-**Action**: Run the evaluation script
-
-```bash
-cd /persistent/radeon-repo/track2-agentic-ai
-/opt/venv/bin/python scripts/eval_cn_market_v2.py \
-  --vllm-url http://127.0.0.1:8000/v1 \
-  --model models/qwen-trader-merged \
-  --output /persistent/track2/eval/cn_market_eval_final.json
-```
-
-**Narration**:
-> 24 evaluation cases cover 4 ETF instruments and 6 strategy types.
-> Before enhancement, the pass rate was only 45.83%, mainly due to JSON
-> format errors and non-compliant lot sizes. After enhancing the JSON
-> extractor and CN market canonicalizer, the pass rate reached 100%.
-
-**On-screen text**:
-```
-Before: 11/24 passed (45.83%)
-After:  24/24 passed (100%)
-Checks: json_valid, instrument_match, timeframe_match,
-        short_disabled, constraints_valid, numeric_types_valid
-```
-
----
-
-## Part 5: Dify Workflow Demo (2:30 – 3:45)
-
-**Screen 1**: Dify workflow editor
-
-**Action**: Show the 6-node workflow:
-1. User Input → 2. RAG Knowledge → 3. LLM → 4. Code Execution → 5. Backtest → 6. Answer
-
-**Narration**:
-> The Dify workflow implements the complete agent pipeline. The RAG node
-> retrieves domestic market rules. The LLM node uses the AMD GPU model to
-> generate a strategy DSL. The code node canonicalizes and validates it.
-> The backtest node executes a simulated trade, and the final node returns
-> a PASS or REJECT risk report.
-
-**Screen 2**: Terminal — test 3 strategy types
-
-**Action**: Run 3 curl requests testing the backtest API
-
-**Test 1: EMA Trend Strategy (510300.SH)**
-```bash
-curl -s -X POST http://127.0.0.1:8080/api/cn/backtest/report \
-  -H "Content-Type: application/json" \
-  -d '{"strategy":{"name":"CN_EMA_Trend",...}}'
-```
-
-**Narration**:
-> CSI 300 ETF daily EMA20/50 crossover strategy — the system returns PASS,
-> with a simulated return of -2.61% and maximum drawdown of -3.28%.
-
-**Test 2: RSI Mean Reversion (510500.SH)**
-```
-Instrument: 510500.SH | 30m | RSI(14)
-Result: -0.49% | Max drawdown -1.27% | REVIEW
-```
-
-**Test 3: ADX+EMA Strategy (159915.SZ)**
-```
-Instrument: 159915.SZ | 1d | EMA20/50 + ADX(14)>25
-Result: +6.07% | Max drawdown -2.93% | PASS
-```
-
-**On-screen text**:
-```
-All backtests use deterministic synthetic historical data
-(for system demonstration only, not investment advice)
-Market constraints: T+1, 100-share lot size, no short selling,
-10% price limits, commission, stamp duty
-```
-
----
-
-## Part 6: Architecture Summary (3:45 – 4:30)
-
-**Screen**: Architecture diagram
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                    AMD GPU (gfx1100 / ROCm 7.2.1)        │
-│  ┌───────────────────────────────────────────────────┐  │
-│  │  vLLM (port 8000)                                  │  │
-│  │  Model: qwen-trader-cn-merged (Qwen2.5-7B + LoRA) │  │
-│  └───────────────────────┬───────────────────────────┘  │
-│                          │                               │
-│  ┌───────────────────────▼───────────────────────────┐  │
-│  │  FastAPI (port 8080)                               │  │
-│  │  /api/knowledge  → RAG domestic market rules       │  │
-│  │  /api/cn/backtest/report → simulated backtest      │  │
-│  └───────────────────────┬───────────────────────────┘  │
-│                          │                               │
-│  ┌───────────────────────▼───────────────────────────┐  │
-│  │  Dify Workflow                                     │  │
-│  │  Input → RAG → LLM → Code → Backtest → Answer      │  │
-│  └───────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────┘
-```
-
-**Narration**:
-> The entire system runs on AMD GPU: vLLM inference, LoRA training, RAG
-> retrieval, and the backtest engine all run on the same AMD server.
-> The Dify workflow orchestrates all components into a complete agent
-> pipeline — from Chinese natural language input to risk decision.
-
----
-
-## Part 7: Disclaimers (4:30 – 5:00)
-
-**Screen**: Disclaimer text
-
-**Narration**:
-> All backtests use deterministic synthetic historical data for system
-> demonstration only. No real trading or live market operations were performed.
-> The system does not involve any cryptocurrency content. Results do not
-> constitute investment advice.
-
-**On-screen text**:
-```
-IMPORTANT DISCLAIMERS
-- Market data: Deterministic synthetic historical data (demo only)
-- Trading mode: Simulated / Paper Trading
-- Investment advice: Results do not constitute investment advice
-- Market scope: Chinese domestic securities market only (A-share ETFs)
-- Hardware: AMD GPU (gfx1100) + ROCm 7.2.1
-```
+- Record at 1920×1080, 30fps
+- Use Dify web UI in full screen (dark theme if available)
+- Terminal font size: 14-16pt for readability
+- Pre-warm vLLM before recording (first inference is slower)
+- Have a backup Gradio UI ready if Dify has issues
+- Keep training log and benchmark JSON visible in a second tab
+- Test the error recovery prompt beforehand to ensure it triggers retry
