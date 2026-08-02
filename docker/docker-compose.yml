@@ -9,8 +9,7 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - BINANCE_TESTNET_API_KEY=${BINANCE_TESTNET_API_KEY:-}
-      - BINANCE_TESTNET_API_SECRET=${BINANCE_TESTNET_API_SECRET:-}
+      - DATA_MODE=${DATA_MODE:-deterministic_synthetic_cn_market_demo}
     volumes:
       - ../src:/app/src
       - ../training:/app/training
@@ -42,7 +41,7 @@ services:
   #   export ROCBLAS_USE_HIPBLASLT=1 HIP_VISIBLE_DEVICES=0
   #   python -m vllm.entrypoints.openai.api_server \
   #     --model models/qwen-trader-merged --port 8000 \
-  #     --max-model-len 4096 --gpu-memory-utilization 0.50 \
+  #     --max-model-len 32768 --gpu-memory-utilization 0.45 \
   #     --dtype float16 --trust-remote-code --enforce-eager
   #
   # Or use Dockerfile.vllm with --device flags:

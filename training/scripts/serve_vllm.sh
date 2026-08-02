@@ -13,14 +13,16 @@ set -euo pipefail
 
 MODEL_PATH="${1:-models/qwen-trader-merged}"
 PORT="${VLLM_PORT:-8000}"
-MAX_MODEL_LEN="${VLLM_MAX_MODEL_LEN:-4096}"
-GPU_UTIL="${VLLM_GPU_UTIL:-0.60}"
+MAX_MODEL_LEN="${VLLM_MAX_MODEL_LEN:-32768}"
+GPU_UTIL="${VLLM_GPU_UTIL:-0.45}"
+SERVED_MODEL_NAME="${VLLM_SERVED_MODEL_NAME:-models/qwen-trader-merged}"
 
 echo "=== vLLM Serving on AMD ROCm ==="
 echo "Model:  ${MODEL_PATH}"
 echo "Port:   ${PORT}"
 echo "Max len: ${MAX_MODEL_LEN}"
 echo "GPU util: ${GPU_UTIL}"
+echo "Served name: ${SERVED_MODEL_NAME}"
 echo ""
 
 # --- Check model exists ---
@@ -56,6 +58,7 @@ echo ""
 # --- Start vLLM ---
 exec ${VENV_PYTHON} -m vllm.entrypoints.openai.api_server \
     --model "${MODEL_PATH}" \
+    --served-model-name "${SERVED_MODEL_NAME}" \
     --port "${PORT}" \
     --max-model-len "${MAX_MODEL_LEN}" \
     --gpu-memory-utilization "${GPU_UTIL}" \

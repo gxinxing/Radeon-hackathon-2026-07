@@ -88,12 +88,15 @@ API Key:      任意非空占位字符串
 如果 Open WebUI 不在 Docker 中运行，使用 `http://127.0.0.1:8000/v1`；如果运行在其他机器，使用 AMD 主机 IP。Dify 和 Open WebUI 使用同一个模型服务，确保演示结果一致。
 
 ```bash
-bash scripts/verify_e2e.sh
+bash scripts/verify_submission.sh
 python -m pytest tests/ -v
 ```
 
 详细文档：
 
+- [英文项目规格书（PDF）](./output/pdf/AMD_Quant_Assistant_Project_Specification.pdf)
+- [AMD 最终验证清单](./artifacts/submission_validation_20260802.json)
+- [24 题 AMD 推理结果](./artifacts/cn_market_eval_20260802_finalcheck.json)
 - [技术报告](./docs/technical_report.md)
 - [最终状态](./docs/track2_final_status.md)
 - [DSL 规范](./docs/dsl_specification.md)

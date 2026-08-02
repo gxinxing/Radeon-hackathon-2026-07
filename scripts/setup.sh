@@ -1,7 +1,7 @@
 #!/bin/bash
 # One-command setup for Track 2 — Domestic-market Quant Agent on AMD ROCm
 #
-# Installs dependencies, downloads model, prepares data, and starts services.
+# Installs dependencies, prepares domestic-market data, and starts services.
 # Run on the AMD GPU instance (安睿云).
 #
 # Usage:
@@ -12,6 +12,7 @@ set -euo pipefail
 PYTHON="${VENV_PYTHON:-/opt/venv/bin/python}"
 PIP="${VENV_PIP:-/opt/venv/bin/pip}"
 PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+MODEL_PATH="${MODEL_PATH:-${PROJECT_ROOT}/models/qwen-trader-merged}"
 
 echo "============================================"
 echo "  Track 2: Domestic-market Quant Agent Setup"
@@ -67,19 +68,19 @@ echo ""
 echo "[4/6] Preparing training data..."
 cd "${PROJECT_ROOT}"
 
-${PYTHON} training/data/prepare_dsl_pairs.py --total 2000 2>&1 | tail -2
-${PYTHON} training/data/prepare_fingpt.py --max-samples 5000 2>&1 | tail -2
-${PYTHON} training/data/merge_datasets.py 2>&1 | tail -3
+${PYTHON} training/data/generate_cn_market_pairs.py \
+    --output training/data/processed/cn_market_train.jsonl \
+    --count 400 --seed 20260730
 
 # --- Check/download model ---
 echo ""
-echo "[5/6] Checking model: Qwen2.5-7B-Instruct..."
-MODEL_DIR="${PROJECT_ROOT}/models/Qwen2.5-7B-Instruct"
-if [ ! -d "${MODEL_DIR}" ]; then
-    echo "Model not cached locally. Will download on first use."
-    echo "You can pre-download: ${PYTHON} -c \"from transformers import AutoModelForCausalLM; AutoModelForCausalLM.from_pretrained('Qwen/Qwen2.5-7B-Instruct')\""
+echo "[5/6] Checking merged domestic-market model..."
+if [ ! -f "${MODEL_PATH}/config.json" ]; then
+    echo "ERROR: merged model not found at ${MODEL_PATH}"
+    echo "Copy qwen-trader-cn-merged to this path or set MODEL_PATH."
+    exit 1
 else
-    echo "Model found at ${MODEL_DIR}"
+    echo "Model found at ${MODEL_PATH}"
 fi
 
 # --- Start services ---
@@ -99,7 +100,7 @@ curl -s http://localhost:8080/health | head -1 || echo "  WARNING: API not ready
 # Start vLLM (background, if installed)
 if ${PYTHON} -c "import vllm" 2>/dev/null; then
     echo "  Starting vLLM on :8000..."
-    bash training/scripts/serve_vllm.sh Qwen/Qwen2.5-7B-Instruct &
+    bash training/scripts/serve_vllm.sh "${MODEL_PATH}" &
     VLLM_PID=$!
     echo "  vLLM PID: ${VLLM_PID}"
 else
@@ -123,7 +124,7 @@ echo "  2. Merge LoRA weights:"
 echo "     ${PYTHON} training/scripts/merge_lora.py --adapter-path models/qwen-trader-lora/final --output-path models/qwen-trader-merged"
 echo "  3. Deploy Dify:"
 echo "     cd docker && docker compose up -d"
-echo "  4. Run end-to-end test:"
-echo "     bash scripts/verify_e2e.sh"
+echo "  4. Run submission verification:"
+echo "     bash scripts/verify_submission.sh"
 echo ""
 echo "To stop services: kill ${API_PID} ${VLLM_PID:-}"

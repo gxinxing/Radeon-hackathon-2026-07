@@ -96,10 +96,7 @@ The initial 24-case constraint pass rate was 45.83%. The final result reached 10
 
 ```bash
 bash scripts/setup.sh
-python -m uvicorn src.api:app --host 0.0.0.0 --port 8080
-python src/chat_app.py
-bash scripts/verify_e2e.sh
-python -m pytest tests/ -v
+bash scripts/verify_submission.sh
 ```
 
 For Dify, follow [`dify/workflows/SETUP_GUIDE.md`](../dify/workflows/SETUP_GUIDE.md). Large model weights are stored outside GitHub; checksums, training configuration, evaluation artifacts, and serving instructions are included in the repository.

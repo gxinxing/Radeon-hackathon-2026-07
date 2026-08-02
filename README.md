@@ -213,7 +213,7 @@ If Open WebUI is not running inside Docker, use `http://127.0.0.1:8000/v1`. If i
 ### 4. Verify
 
 ```bash
-bash scripts/verify_e2e.sh
+bash scripts/verify_submission.sh
 python -m pytest tests/ -v
 ```
 
@@ -306,6 +306,9 @@ tests/              Agent, RAG, DSL, memory, reward, and integration tests
 
 ## Documentation
 
+- [English project specification (PDF)](./output/pdf/AMD_Quant_Assistant_Project_Specification.pdf)
+- [Final AMD validation manifest](./artifacts/submission_validation_20260802.json)
+- [24-case AMD inference results](./artifacts/cn_market_eval_20260802_finalcheck.json)
 - [Technical report](./docs/technical_report.md)
 - [Track 2 final status](./docs/track2_final_status.md)
 - [DSL specification](./docs/dsl_specification.md)
