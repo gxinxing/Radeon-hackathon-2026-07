@@ -8,6 +8,10 @@ dist/
 build/
 .eggs/
 /tmp/
+/output/video/track2_demo_raw.mov
+/output/video/frames/
+/output/video/audio/
+/output/video/segments/
 
 # Virtual env
 .venv/

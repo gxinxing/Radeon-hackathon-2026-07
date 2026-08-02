@@ -5,7 +5,7 @@
 [![AMD ROCm](https://img.shields.io/badge/AMD-ROCm%207.2.1-ED1C24?logo=amd&logoColor=white)](https://www.amd.com/en/products/software/rocm.html)
 [![Qwen2.5](https://img.shields.io/badge/Qwen2.5--7B-local%20model-6E49C8)](https://huggingface.co/Qwen/Qwen2.5-7B-Instruct)
 [![vLLM](https://img.shields.io/badge/vLLM-ROCm-blue)](https://docs.vllm.ai/)
-[![Tests](https://img.shields.io/badge/tests-232%20passed-brightgreen)](./docs/track2_final_status.md)
+[![Tests](https://img.shields.io/badge/tests-285%20passed-brightgreen)](./docs/track2_final_status.md)
 
 **AMD AI DevMaster Hackathon 2026 — Track 2: Development & Local Deployment of Private AI Agents**
 
@@ -133,7 +133,7 @@ Ordinary questions use the general assistant path. Quantitative requests use the
 | CN-market evaluation | 24/24 after canonicalization and validation |
 | User interfaces | Open WebUI, Dify workflow, optional Gradio UI |
 | Dify workflow | 6 nodes, three deterministic demo cases |
-| Test suite | 232 passed; 2 known pre-existing async failures |
+| Test suite | 285 passed; 2 documented async integration failures when `pytest-asyncio` is unavailable |
 
 The evaluation uses deterministic synthetic historical data for reproducibility. Results are demonstrations of system behavior, not investment advice.
 
@@ -306,6 +306,9 @@ tests/              Agent, RAG, DSL, memory, reward, and integration tests
 
 ## Documentation
 
+- [English narrated 1080p demo video — Microsoft Ava neural voice](./output/video/track2_demo_1080p_ava.mp4)
+- [Live project showcase](https://61a41b94d2884d3c8a0e5cdea2f8f218.bj6.agentos-app.net)
+- [Showcase source](./landing/index.html)
 - [English project specification (PDF)](./output/pdf/AMD_Quant_Assistant_Project_Specification.pdf)
 - [Final AMD validation manifest](./artifacts/submission_validation_20260802.json)
 - [24-case AMD inference results](./artifacts/cn_market_eval_20260802_finalcheck.json)

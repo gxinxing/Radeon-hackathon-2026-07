@@ -110,7 +110,7 @@ def build():
     story += [Spacer(1, 14*mm), P("AMD AI DEVMASTER HACKATHON 2026", "H2X"),
               P("AMD Quant Assistant", "TitleX"),
               P("A private, auditable quantitative investment Agent running locally on AMD Radeon GPU and ROCm.", "Deck")]
-    metrics = [[P("24 / 24", "Metric"), P("98.1%", "Metric"), P("232", "Metric"), P("32K", "Metric")],
+    metrics = [[P("24 / 24", "Metric"), P("98.1%", "Metric"), P("285", "Metric"), P("32K", "Metric")],
                [P("CN evaluation", "MetricLabel"), P("token accuracy", "MetricLabel"), P("tests passed", "MetricLabel"), P("served context", "MetricLabel")]]
     mt = Table(metrics, colWidths=[42*mm]*4, rowHeights=[14*mm, 8*mm])
     mt.setStyle(TableStyle([("BACKGROUND",(0,0),(-1,-1),LIGHT), ("BOX",(0,0),(-1,-1),.8,colors.HexColor("#D9D9D9")),

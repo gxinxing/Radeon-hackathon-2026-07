@@ -88,7 +88,7 @@ The final LoRA run used 400 domestic-market samples, 39 steps, and 615 seconds o
 | Instrument and timeframe matching | 100% |
 | Constraint compliance | 100% |
 | Dify demo workflow | 6 nodes, 3 cases |
-| Test suite | 232 passed; 2 known pre-existing async failures |
+| Test suite | 285 passed; 2 documented async integration failures when `pytest-asyncio` is unavailable |
 
 The initial 24-case constraint pass rate was 45.83%. The final result reached 100% through explicit prompt constraints, typed canonicalization, repair logs, and validation—not by hiding failed cases.
 

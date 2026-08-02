@@ -25,7 +25,7 @@
 | 训练质量 | loss 0.2848，token accuracy 98.1% |
 | 国内市场评估 | 修复后 24/24 |
 | Dify 工作流 | 6 节点，3 个演示案例 |
-| 测试 | 232 passed，另有 2 个已知异步测试问题 |
+| 测试 | 285 passed；缺少 `pytest-asyncio` 时另有 2 个已记录的异步集成测试失败 |
 
 演示回测使用确定性合成历史数据，便于评委复现；不执行真实交易，也不构成投资建议。
 
@@ -94,6 +94,9 @@ python -m pytest tests/ -v
 
 详细文档：
 
+- [英文旁白 1080p 演示视频 — Microsoft Ava 神经语音](./output/video/track2_demo_1080p_ava.mp4)
+- [在线项目展示](https://61a41b94d2884d3c8a0e5cdea2f8f218.bj6.agentos-app.net)
+- [展示页源码](./landing/index.html)
 - [英文项目规格书（PDF）](./output/pdf/AMD_Quant_Assistant_Project_Specification.pdf)
 - [AMD 最终验证清单](./artifacts/submission_validation_20260802.json)
 - [24 题 AMD 推理结果](./artifacts/cn_market_eval_20260802_finalcheck.json)
