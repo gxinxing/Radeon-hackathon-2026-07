@@ -311,4 +311,5 @@ tests/              Agent, RAG, DSL, memory, reward, and integration tests
 - [DSL specification](./docs/dsl_specification.md)
 - [LoRA training specification](./docs/lora_training_spec.md)
 - [Dify workflow setup](./dify/workflows/SETUP_GUIDE.md)
+- [Graph Engine self-healing checks](./docs/graph_engine.md)
 - [中文说明](./README_zh.md)

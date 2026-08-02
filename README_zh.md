@@ -98,6 +98,7 @@ python -m pytest tests/ -v
 - [最终状态](./docs/track2_final_status.md)
 - [DSL 规范](./docs/dsl_specification.md)
 - [Dify 编排指南](./dify/workflows/SETUP_GUIDE.md)
+- [Graph Engine 主动诊断与修复](./docs/graph_engine.md)
 - [演示页面](./demos/dify_workflow_demo.html)
 
 赛道三机器人内容已独立存放在私有仓库：[Radeon-hackathon-2026-07-track3](https://github.com/gxinxing/Radeon-hackathon-2026-07-track3)。
