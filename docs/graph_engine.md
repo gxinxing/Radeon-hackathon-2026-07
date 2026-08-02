@@ -41,6 +41,7 @@ The current graph checks:
 
 - Open WebUI HTTP health on port `8082`
 - vLLM model availability on port `8000`
+- Open WebUI uses the IPv4 loopback URL `http://127.0.0.1:8000/v1` when both services run on the same host
 - context compaction enabled at `20,000` tokens with a `24,000` cap
 - RAG chunk size `512`, overlap `128`, and `full_context=false`
 

@@ -27,6 +27,7 @@ from urllib.request import Request, urlopen
 
 
 SAFE_CONFIG = {
+    "openai.api_base_urls": '["http://127.0.0.1:8000/v1"]',
     "chat.context_compaction.enable": "true",
     "chat.context_compaction.token_threshold": "20000",
     "chat.context_compaction.token_cap": "24000",
