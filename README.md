@@ -1,4 +1,6 @@
-# AMD ROCm Local Quant Agent
+# Radeon Hackathon 2026 — Track 2
+
+## AMD ROCm Local Quantitative Investment Assistant
 
 [![AMD ROCm](https://img.shields.io/badge/AMD-ROCm%207.2.1-ED1C24?logo=amd&logoColor=white)](https://www.amd.com/en/products/software/rocm.html)
 [![Qwen2.5](https://img.shields.io/badge/Qwen2.5--7B-local%20model-6E49C8)](https://huggingface.co/Qwen/Qwen2.5-7B-Instruct)
@@ -7,9 +9,54 @@
 
 **AMD AI DevMaster Hackathon 2026 — Track 2: Development & Local Deployment of Private AI Agents**
 
-An auditable, locally deployed investment and quantitative assistant running inference and fine-tuning on an AMD Radeon GPU. It combines a general conversational assistant with a grounded quantitative workflow for the domestic securities market.
+This repository is the **Track 2 submission**. It is an auditable, locally deployed investment and quantitative assistant for the domestic securities market. Inference and LoRA fine-tuning run on an AMD Radeon GPU with ROCm.
 
-The system is designed to answer ordinary investment questions, retrieve knowledge, perform local calculations, generate a constrained strategy DSL, backtest it, and return a risk-aware report. It does not place real orders.
+The assistant answers ordinary questions, retrieves knowledge, generates a constrained strategy DSL, validates it, runs a deterministic backtest, and returns a risk-aware report. It does not place real orders.
+
+This is not a live trading system. Demo backtests use deterministic synthetic historical data unless a public data adapter is explicitly enabled.
+
+## One-line pitch
+
+**A private, AMD-local investment copilot that turns an everyday question into a traceable answer, a validated strategy, a reproducible backtest, and an independent risk decision.**
+
+## Why this matters
+
+Most strategy demos stop at “the model generated an answer”. That is not enough for an investment assistant: the answer must be grounded, executable, reproducible, and rejectable when risk rules are violated.
+
+The problem we solve is therefore not only text generation. It is the full decision loop:
+
+```text
+Question → evidence → reasoning → executable plan → measurement → risk decision
+```
+
+The user can ask a normal question and receive a normal answer. When the request is quantitative, the same assistant switches to a constrained and auditable execution path.
+
+## What we built
+
+| User need | Product behavior | Evidence |
+|---|---|---|
+| “Can it understand me?” | Intent routing and natural-language conversation | `src/agent/personality.py`, `src/agent/core.py` |
+| “Can it use knowledge?” | Multi-path RAG with source and confidence gating | `src/knowledge_base/` |
+| “Can it do real work?” | DSL generation, validation, backtest, walk-forward, and report | `src/dsl/`, `src/backtest/` |
+| “Can it control risk?” | Independent Risk Agent with veto power | `src/agent/risk_agent.py` |
+| “Is it really using AMD?” | QLoRA training and vLLM inference on ROCm | `training/`, AMD metrics below |
+
+## How the Agent works
+
+```mermaid
+flowchart LR
+    U[User question] --> R{Intent router}
+    R -->|ordinary question| G[General assistant]
+    R -->|quantitative request| RET[Retrieval Agent / RAG]
+    RET --> REA[Reasoning Agent<br/>Qwen + LoRA]
+    REA --> DSL[Structured DSL]
+    DSL --> VAL[Canonicalize + validate]
+    VAL --> BT[Backtest / walk-forward]
+    BT --> RISK[Independent Risk Agent<br/>veto authority]
+    RISK --> OUT[Auditable report]
+```
+
+This separation is the product value: the language model proposes; deterministic code checks; the independent risk layer can reject.
 
 ## Highlights
 
@@ -47,6 +94,28 @@ User request
                  Qwen2.5-7B + vLLM + LoRA
 ```
 
+## What the evaluator can verify
+
+The submission demonstrates the five Agent capabilities required by Track 2:
+
+| Capability | Evidence in this repository |
+|---|---|
+| Reasoning | ReAct loop in `src/agent/core.py` |
+| Planning | Intent routing and tool sequencing in `src/agent/orchestrator.py` |
+| Tool calling | Registered tools in `src/tools/` and API routes in `src/api.py` |
+| Memory | Working, episodic, and semantic memory in `src/agent/memory.py` |
+| Task execution | DSL validation, backtest, walk-forward, and risk report |
+
+The end-to-end path is:
+
+```text
+User question → intent routing → RAG → local Qwen/LoRA
+              → DSL → canonicalization → schema/semantic validation
+              → backtest → independent Risk Agent veto → report
+```
+
+Ordinary questions use the general assistant path. Quantitative requests use the structured path; they are not all forced into a strategy template.
+
 ## Verified results
 
 | Area | Result |
@@ -61,35 +130,75 @@ User request
 
 The evaluation uses deterministic synthetic historical data for reproducibility. Results are demonstrations of system behavior, not investment advice.
 
-## Quick start
+### Evidence chain
+
+```mermaid
+flowchart TB
+    A[AMD Radeon GPU / ROCm] --> B[QLoRA adaptation]
+    B --> C[Merged local model]
+    C --> D[vLLM OpenAI-compatible server]
+    D --> E[ReAct + RAG + multi-agent tools]
+    E --> F[24/24 domestic-market evaluation]
+    F --> G[Dify six-node demo]
+```
+
+The important claim is not a single accuracy number. It is the chain from AMD hardware to a working local Agent and a measured, reproducible result.
+
+### Why AMD is part of the solution
+
+- The model is served locally on ROCm instead of calling a hosted model API.
+- LoRA fine-tuning and inference use the same AMD-hosted model asset.
+- vLLM exposes a local OpenAI-compatible endpoint so the Agent and Dify can use the model without changing application logic.
+- The measured GPU footprint and training time are recorded in `artifacts/` rather than described only as a qualitative claim.
+
+## Reproduce on an AMD ROCm machine
+
+### 1. Install and prepare
 
 ```bash
-# Run on an AMD ROCm environment
 bash scripts/setup.sh
 
-# Start the API
+# Or, for an already prepared environment:
+python -m pip install -r requirements.txt
+```
+
+The setup script installs dependencies and prepares training data. It does not put large model weights in GitHub.
+
+### 2. Provide the merged model
+
+Download or copy the merged LoRA model to `models/qwen-trader-merged/`, or set the model path used by `training/scripts/serve_vllm.sh`. The source repository contains the training scripts, configuration, checksums, and evaluation artifacts; the multi-GB weights are stored separately.
+
+### 3. Start services
+
+```bash
+# Terminal 1: local Agent/backtest API
 python -m uvicorn src.api:app --host 0.0.0.0 --port 8080
 
-# Start the Gradio assistant in another terminal
+# Terminal 2: AMD ROCm model server
+bash training/scripts/serve_vllm.sh models/qwen-trader-merged
+
+# Terminal 3: optional local UI
 python src/chat_app.py
 ```
 
-Useful endpoints:
+Expected endpoints:
 
 ```text
-http://localhost:8080/docs       FastAPI documentation
-http://localhost:7860            Gradio UI
-http://localhost:8000/v1         vLLM-compatible local endpoint
+FastAPI: http://127.0.0.1:8080/docs
+Gradio:  http://127.0.0.1:7860
+vLLM:   http://127.0.0.1:8000/v1
 ```
 
-Run the reproducible checks:
+### 4. Verify
 
 ```bash
 bash scripts/verify_e2e.sh
 python -m pytest tests/ -v
 ```
 
-## Dify workflow
+The shell check covers DSL validation, transpilation, API backtest, optional vLLM inference, training-data presence, and walk-forward analysis. vLLM-dependent checks are skipped if the model server is not running.
+
+## Dify workflow and model configuration
 
 The Dify setup guide is at [`dify/workflows/SETUP_GUIDE.md`](./dify/workflows/SETUP_GUIDE.md). The workflow is:
 
@@ -98,7 +207,45 @@ User Input → RAG Retrieval → Local LLM → DSL Validation
            → Backtest API → Risk Report
 ```
 
-The local model is configured as an OpenAI-compatible endpoint. Dify is an orchestration layer; model inference remains on the AMD ROCm host.
+In Dify, add a custom OpenAI-compatible model. The API key can be any non-empty placeholder because the local vLLM server does not authenticate requests.
+
+```text
+Model name:  qwen-trader-merged
+API Base URL: http://host.docker.internal:8000/v1
+```
+
+Use the URL that matches the deployment:
+
+| Deployment | API Base URL |
+|---|---|
+| Dify Docker + vLLM on host | `http://host.docker.internal:8000/v1` |
+| Dify and vLLM in one Compose network | `http://vllm:8000/v1` |
+| Dify outside Docker | `http://127.0.0.1:8000/v1` or the AMD host IP |
+
+Do not use `host.docker.internal` when Dify itself is not running in Docker. Dify is the orchestration layer; model inference remains on the AMD ROCm host.
+
+The six-node demonstration is:
+
+```text
+User Input → Intent/RAG → Local Qwen → Code Validation
+           → Backtest API → Independent Risk Report
+```
+
+See [`dify/workflows/SETUP_GUIDE.md`](./dify/workflows/SETUP_GUIDE.md) and [`dify/tools/trading_api_openapi.yml`](./dify/tools/trading_api_openapi.yml).
+
+## Recommended 3-minute evaluation path
+
+This is the shortest path for a reviewer to see the value rather than browse the entire codebase:
+
+1. Start the AMD-local vLLM endpoint and the FastAPI service.
+2. Ask one ordinary investment question to show the general-assistant path.
+3. Ask for a domestic-market strategy to show RAG → local model → DSL.
+4. Show the validator rejecting an invalid constraint and repairing safe formatting issues.
+5. Run the deterministic backtest and walk-forward check.
+6. Show the independent risk verdict and the source/timestamp/limitations in the final report.
+7. Open the Dify workflow to show that it orchestrates the same local components.
+
+The self-contained HTML demonstration is [`demos/dify_workflow_demo.html`](./demos/dify_workflow_demo.html). The corresponding metrics and run manifests are in [`artifacts/`](./artifacts/).
 
 ## Model assets
 
@@ -119,13 +266,15 @@ scripts/            Setup, evaluation, benchmark, and end-to-end verification
 tests/              Agent, RAG, DSL, memory, reward, and integration tests
 ```
 
-## Scope and safety
+## Scope, limitations, and safety
 
 - No real trading or real order execution is performed.
 - Demo market data is deterministic synthetic data unless an explicitly configured public data adapter is used.
 - External results carry source, timestamp, mode, confidence, and limitations where available.
 - Risk rules are implemented in code and can veto model output.
 - The project is for hackathon demonstration and research only.
+- No paid exchange credential is required for the reproducible demo.
+- Track 3 robot assets are maintained separately in [`gxinxing/Radeon-hackathon-2026-07-track3`](https://github.com/gxinxing/Radeon-hackathon-2026-07-track3).
 
 ## Documentation
 

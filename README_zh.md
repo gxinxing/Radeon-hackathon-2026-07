@@ -28,6 +28,42 @@
 
 演示回测使用确定性合成历史数据，便于评委复现；不执行真实交易，也不构成投资建议。
 
+## 一句话定位
+
+**一个运行在 AMD Radeon / ROCm 本地环境的量化投资助理：把自然语言问题变成有证据、可执行、可回测、可审计，并且可以被风控否决的结果。**
+
+## 为什么做
+
+普通策略 Demo 往往只展示“模型生成了一段文字”。但投资助理真正需要的是完整闭环：问题要能理解，知识要有依据，策略要能执行，结果要能复现，风险要能拒绝。
+
+```text
+用户问题 → 证据检索 → 推理规划 → 可执行策略 → 回测度量 → 风控结论
+```
+
+普通问题走自然对话；量化问题进入受约束的 DSL、校验、回测和风控链路，不会被强制套成同一种策略模板。
+
+## 核心价值证据
+
+| 评委关心的问题 | 项目中的证据 |
+|---|---|
+| 能否理解普通问题 | 意图路由与通用助理回复 |
+| 能否使用知识 | 多路 RAG、来源和置信度门控 |
+| 能否真正执行任务 | DSL 校验、回测、Walk-forward、报告 |
+| 能否控制风险 | 独立风控 Agent，拥有否决权 |
+| 是否真正使用 AMD | ROCm 上的 LoRA 微调与 vLLM 推理 |
+
+```mermaid
+flowchart LR
+    A[用户问题] --> B{意图路由}
+    B -->|普通问题| C[通用助理]
+    B -->|量化问题| D[RAG / 检索 Agent]
+    D --> E[推理 Agent<br/>Qwen + LoRA]
+    E --> F[DSL + 校验]
+    F --> G[回测 / Walk-forward]
+    G --> H[独立风控 Agent<br/>否决权]
+    H --> I[可审计报告]
+```
+
 ## 快速开始
 
 ```bash
@@ -47,3 +83,6 @@ python -m pytest tests/ -v
 - [最终状态](./docs/track2_final_status.md)
 - [DSL 规范](./docs/dsl_specification.md)
 - [Dify 编排指南](./dify/workflows/SETUP_GUIDE.md)
+- [演示页面](./demos/dify_workflow_demo.html)
+
+赛道三机器人内容已独立存放在私有仓库：[Radeon-hackathon-2026-07-track3](https://github.com/gxinxing/Radeon-hackathon-2026-07-track3)。
