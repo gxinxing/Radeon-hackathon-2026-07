@@ -198,7 +198,7 @@ vLLM:   http://127.0.0.1:8000/v1
 
 ### Open WebUI connection
 
-Open WebUI is the primary conversational front end used in the demo. It connects to the same local AMD-hosted vLLM server; it does not call an OpenAI cloud model.
+Open WebUI is the only public conversational front end used in the demo. Dify remains an internal orchestration and evaluation surface; its chat endpoint is not exposed to public visitors. Open WebUI connects to the same local AMD-hosted vLLM server and does not call an OpenAI cloud model.
 
 In Open WebUI, add an **OpenAI-compatible connection**:
 
@@ -208,7 +208,9 @@ Model:        qwen-trader-merged
 API key:      any non-empty placeholder
 ```
 
-If Open WebUI is not running inside Docker, use `http://127.0.0.1:8000/v1`. If it runs on another machine, use the AMD host IP. Open WebUI, Dify, and the optional Gradio UI all call the same vLLM endpoint, so the model and AMD inference evidence remain consistent.
+If Open WebUI is not running inside Docker, use `http://127.0.0.1:8000/v1`. If it runs on another machine, use the AMD host IP. Open WebUI and Dify call the same vLLM endpoint, so the model and AMD inference evidence remain consistent.
+
+For a multi-user deployment, keep `ENABLE_SIGNUP=False`, use `DEFAULT_USER_ROLE=pending` (or `user` only when accounts are provisioned by an administrator), and do not share an administrator account. Keep workspace knowledge/model public sharing disabled and grant knowledge bases through Open WebUI groups or explicit user permissions. Open WebUI persists chats per authenticated user; Dify is not part of the public tenant surface. See the [Open WebUI environment reference](https://docs.openwebui.com/reference/env-configuration/) and [RBAC documentation](https://docs.openwebui.com/features/authentication-access/rbac/).
 
 ### 4. Verify
 
