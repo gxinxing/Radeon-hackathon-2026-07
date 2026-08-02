@@ -13,6 +13,7 @@
 - AMD 本地推理：Qwen2.5-7B、FP16 LoRA、ROCm vLLM。
 - 结构化闭环：自然语言 → DSL → 规范化 → 校验 → 回测 → 风险报告。
 - Dify 六节点编排：用户输入、RAG、LLM、代码校验、回测、风险报告。
+- Open WebUI 对话入口：连接同一个 AMD 本地 vLLM 模型，支持自然对话和 Agent 调用。
 - 普通问题走通用助理回复，不会被强制转换成策略 DSL。
 
 ## 已验证结果
@@ -71,6 +72,20 @@ bash scripts/setup.sh
 python -m uvicorn src.api:app --host 0.0.0.0 --port 8080
 python src/chat_app.py
 ```
+
+### Open WebUI 配置
+
+Open WebUI 是项目的主要对话入口，不调用 OpenAI 云端模型，而是连接 AMD GPU 主机上的本地 vLLM。
+
+在 Open WebUI 中添加 OpenAI-compatible 连接：
+
+```text
+API Base URL: http://host.docker.internal:8000/v1
+模型名称:     qwen-trader-merged
+API Key:      任意非空占位字符串
+```
+
+如果 Open WebUI 不在 Docker 中运行，使用 `http://127.0.0.1:8000/v1`；如果运行在其他机器，使用 AMD 主机 IP。Dify 和 Open WebUI 使用同一个模型服务，确保演示结果一致。
 
 ```bash
 bash scripts/verify_e2e.sh

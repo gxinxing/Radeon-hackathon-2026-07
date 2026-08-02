@@ -67,6 +67,7 @@ This separation is the product value: the language model proposes; deterministic
 - AMD-local model serving: Qwen2.5-7B with FP16 LoRA adaptation and vLLM on ROCm.
 - Structured DSL pipeline: natural language → JSON/YAML DSL → canonicalization → schema/semantic validation → backtest → report.
 - Dify integration: six-node workflow with RAG, local LLM, code validation, backtest, and risk report.
+- Open WebUI integration: the conversational front end connected to the same AMD-local vLLM endpoint.
 - General-assistant fallback: non-quantitative questions receive a natural response instead of being forced through the strategy pipeline.
 
 ## Architecture
@@ -92,6 +93,11 @@ User request
                              ▼
                  AMD Radeon GPU / ROCm
                  Qwen2.5-7B + vLLM + LoRA
+                         │
+              ┌──────────┴──────────┐
+              ▼                     ▼
+        Open WebUI                Dify
+      chat experience       visual workflow demo
 ```
 
 ## What the evaluator can verify
@@ -125,6 +131,7 @@ Ordinary questions use the general assistant path. Quantitative requests use the
 | Training quality | loss 0.2848, token accuracy 98.1%, peak VRAM 16.21 GB |
 | vLLM serving | FP16, local OpenAI-compatible endpoint, average latency ~8.2 s |
 | CN-market evaluation | 24/24 after canonicalization and validation |
+| User interfaces | Open WebUI, Dify workflow, optional Gradio UI |
 | Dify workflow | 6 nodes, three deterministic demo cases |
 | Test suite | 232 passed; 2 known pre-existing async failures |
 
@@ -189,6 +196,20 @@ Gradio:  http://127.0.0.1:7860
 vLLM:   http://127.0.0.1:8000/v1
 ```
 
+### Open WebUI connection
+
+Open WebUI is the primary conversational front end used in the demo. It connects to the same local AMD-hosted vLLM server; it does not call an OpenAI cloud model.
+
+In Open WebUI, add an **OpenAI-compatible connection**:
+
+```text
+API Base URL: http://host.docker.internal:8000/v1
+Model:        qwen-trader-merged
+API key:      any non-empty placeholder
+```
+
+If Open WebUI is not running inside Docker, use `http://127.0.0.1:8000/v1`. If it runs on another machine, use the AMD host IP. Open WebUI, Dify, and the optional Gradio UI all call the same vLLM endpoint, so the model and AMD inference evidence remain consistent.
+
 ### 4. Verify
 
 ```bash
@@ -229,6 +250,13 @@ The six-node demonstration is:
 ```text
 User Input → Intent/RAG → Local Qwen → Code Validation
            → Backtest API → Independent Risk Report
+```
+
+The two user-facing modes are:
+
+```text
+Open WebUI → local vLLM → Agent / RAG / tools → answer or report
+Dify       → local vLLM → six-node workflow  → structured demo result
 ```
 
 See [`dify/workflows/SETUP_GUIDE.md`](./dify/workflows/SETUP_GUIDE.md) and [`dify/tools/trading_api_openapi.yml`](./dify/tools/trading_api_openapi.yml).
