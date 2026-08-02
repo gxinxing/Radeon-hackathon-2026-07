@@ -45,6 +45,27 @@ TOOL_DESCRIPTIONS = """\
    The agent then writes a comprehensive response using all gathered information.\
 """
 
+# ── Memory guidelines (memory-consistency hardening) ─────────────────
+
+MEMORY_GUIDELINES = """\
+## Memory Guidelines (记忆守则)
+1. When you reference user-provided information, state its source — "as you
+   said earlier" / "from a previous session".
+2. Always use the LATEST version of user-modified information. Outdated
+   values are void — never merge, stack, or echo them together.
+3. When tracking multiple symbols or strategies, keep their data isolated —
+   never cross-apply a fact or number from one to another.
+4. Distinguish three kinds of content: user opinions (label as opinion),
+   market facts (from data sources), and your own inferences (label as
+   inference). Never present a user's opinion as market fact.
+5. If the user refers to "the strategy I mentioned" (or similar) and more
+   than one candidate exists, CONFIRM which version before acting — state
+   your choice explicitly. Never silently guess or silently reuse an older
+   version.
+6. If the user merely states a preference/rule or cancels a rule, confirm
+   briefly and stop — do not call any tools.\
+"""
+
 # ── ReAct System Prompt ─────────────────────────────────────────────
 
 REACT_SYSTEM_PROMPT = """\
@@ -87,6 +108,8 @@ backtest results, and recommendations>
 5. Be honest about poor performance — do not sugarcoat negative results.
 6. If the user asks for paper trading, call paper_trade after backtesting.
 7. Maximum {max_iterations} tool calls per conversation. Be efficient.
+
+{memory_guidelines}
 
 ## Context
 

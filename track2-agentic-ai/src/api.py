@@ -24,6 +24,7 @@ from .backtest.server import app as backtest_app, BacktestRequest, BacktestRespo
 from .tools.market_data import router as market_router
 from .tools.indicators import router as indicators_router
 from .tools.paper_trade import router as paper_trade_router
+from .tools.external.routes import router as external_tools_router
 
 
 app = FastAPI(
@@ -47,6 +48,7 @@ app.add_middleware(
 app.include_router(market_router, prefix="/api")
 app.include_router(indicators_router, prefix="/api")
 app.include_router(paper_trade_router, prefix="/api")
+app.include_router(external_tools_router, prefix="/api")
 
 
 @app.get("/health")

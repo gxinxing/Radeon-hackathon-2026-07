@@ -24,7 +24,8 @@ from typing import Any, Generator
 import httpx
 
 from .memory import AgentMemory
-from .prompts import REACT_SYSTEM_PROMPT, TOOL_DESCRIPTIONS
+from .memory_extract import apply_memory_updates
+from .prompts import REACT_SYSTEM_PROMPT, TOOL_DESCRIPTIONS, MEMORY_GUIDELINES
 from .rl_feedback import RLFeedbackLoop
 from .personality import is_trading_intent, build_personality_prompt
 from .tools import (
@@ -164,6 +165,7 @@ def _format_system_prompt(state: AgentState) -> str:
         conversation_history=conv_history,
         semantic_memory=semantic_ctx,
         reward_feedback=reward_ctx,
+        memory_guidelines=MEMORY_GUIDELINES,
     )
 
 
@@ -197,6 +199,14 @@ def run_agent_loop(
                 memory.add_assistant_message(pair[1])
 
     memory.add_user_message(user_message)
+
+    # Extract explicit long-term preferences / rule cancellations from the
+    # current message into Tier-3 SemanticMemory (S3/S8 memory consistency).
+    # Whitelist-based and non-fatal: must never break the agent loop.
+    try:
+        apply_memory_updates(memory, user_message)
+    except Exception:
+        pass  # non-fatal by design
 
     # ── Intent routing: trading vs general conversation ────────
     if not is_trading_intent(user_message):
