@@ -6,7 +6,7 @@ Designed to run on AMD Radeon GPU with ROCm PyTorch.
 Usage:
     /opt/venv/bin/python training/scripts/train_qlora.py \
         --data training/data/processed/merged_train.jsonl \
-        --model /workspace/track2-agentic-ai/models/hf_cache/models--Qwen--Qwen2.5-7B-Instruct/snapshots/<hash> \
+        --model /workspace/models/hf_cache/models--Qwen--Qwen2.5-7B-Instruct/snapshots/<hash> \
         --output models/qwen-trader-lora \
         --epochs 3 --batch-size 4 --grad-accum 4
 

@@ -1,6 +1,6 @@
 """Memory-consistency test runner (zero external dependencies).
 
-Usage (from repo root `track2-agentic-ai/`):
+Usage (from the repository root):
 
     # 用 mock 适配器做框架自检（无需 LLM / GPU / 网络）
     python -m tests.memory_consistency.runner --adapter mock

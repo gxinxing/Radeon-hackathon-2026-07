@@ -1,11 +1,11 @@
 #!/bin/bash
-# One-command setup for Track 2 — Crypto Trading Agent on AMD ROCm
+# One-command setup for Track 2 — Domestic-market Quant Agent on AMD ROCm
 #
 # Installs dependencies, downloads model, prepares data, and starts services.
 # Run on the AMD GPU instance (安睿云).
 #
 # Usage:
-#   cd track2-agentic-ai && bash scripts/setup.sh
+#   bash scripts/setup.sh
 
 set -euo pipefail
 
@@ -14,7 +14,7 @@ PIP="${VENV_PIP:-/opt/venv/bin/pip}"
 PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
 echo "============================================"
-echo "  Track 2: Crypto Trading Agent Setup"
+echo "  Track 2: Domestic-market Quant Agent Setup"
 echo "  AMD ROCm GPU Environment"
 echo "============================================"
 echo ""

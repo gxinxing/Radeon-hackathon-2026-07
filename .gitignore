@@ -1,65 +1,45 @@
+# Track 2 — ignore patterns
+
 # Python
 __pycache__/
 *.py[cod]
-*.pyc
-*.pyo
-*$py.class
-*.so
 *.egg-info/
 dist/
 build/
+.eggs/
+
+# Virtual env
 .venv/
+venv/
 
-# Environment
-.env
+# Models and data
+/models/
+/backups/
+models/*.bin
+models/*.safetensors
+models/*.gguf
+training/data/raw/
+training/data/processed/
 
-# Logs
-wandb/
-logs/
-tmp/
-runs/
-sync.log
-sync_from_remote.sh
+# Freqtrade
+user_data/backtest_results/
+user_data/logs/
+user_data/hyperopt_results/
+*.ftr
 
-# Models (large files)
-*.pth
-*.pt
-*.onnx
-*.npz
-*.safetensors
-*.bin
-*.mp4
-*.tar.gz
-*.gif
-demos/*.gif
-models/pretrained/
+# Dify
+dify/volumes/
+/dify/dify-src/
 
-# IDE / Agent
-.vscode/
-.idea/
-.codely/
-.codely-cli/
-.pytest_cache/
-.ipynb_checkpoints/
+# Docker
+docker/volumes/
 
-# Booster repos (cloned, not authored)
-booster/
-
-# System
-lost+found/
-.oneclick/
+# OS
 .DS_Store
 Thumbs.db
 
-# Auto-generated
-demo/
-
-# Large mesh files
-amd-physical-ai-soccer/assets/t1/meshes/
-
-# Track 3 match logs
-match_logs/match_20260731_004742.json
-match_logs/match_20260731_032656.json
-
-# Track 2 Dify source (large, not authored)
-track2-agentic-ai/dify/dify-src/
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
