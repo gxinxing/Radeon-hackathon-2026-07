@@ -24,8 +24,9 @@ from .intent import (
     GENERAL,
 )
 from .protocol import ToolResult, SOURCE_CONFIDENCE, now_iso, ttl_iso, tools_mode
-from .providers import market_data, announcement, search
+from .providers import market_data, announcement, search, _mock_ohlcv
 from .knowledge_store import store
+from ..compute import resolve_compute
 
 # Query words that signal a need for LIVE data (RAG's static rules can't satisfy)
 _LIVE_MARKET_WORDS = ["行情", "价格", "股价", "最新", "走势", "收盘", "开盘", "现价", "涨", "成交"]
@@ -73,16 +74,27 @@ def handle_query(user_query: str, mode: str | None = None) -> ToolResult:
 
     # 3. Local compute → stay local, never call external APIs
     if decision.intent == LOCAL_COMPUTE:
+        # 计算类题目：若无输入数据，自动注入 510300.SH 的 mock 行情（确定性演示数据）
+        demo = {"prices": [r["close"] for r in _mock_ohlcv("510300.SH", 120)]}
+        resolved = resolve_compute(user_query, params=demo)
+        if not resolved["success"]:
+            return ToolResult(
+                success=False, route="local_compute", tool=f"compute/{resolved['kind']}",
+                source="Local computation engine",
+                source_confidence=SOURCE_CONFIDENCE["local"],
+                relevance_score=decision.confidence,
+                data_mode="compute_error", data=resolved["result"],
+                steps=steps, retrieved_at=now_iso(),
+            )
+        steps.append({"step": "compute", "kind": resolved["kind"], "local": True,
+                      "network": False, "data_source": "mock 510300.SH (demo)"})
         return ToolResult(
-            success=True, route="local_compute", tool="intent_router",
-            source="Local computation",
-            source_confidence=SOURCE_CONFIDENCE["rag"],
+            success=True, route="local_compute", tool=f"compute/{resolved['kind']}",
+            source="Local computation engine (numpy)",
+            source_confidence=SOURCE_CONFIDENCE["local"],
             relevance_score=decision.confidence,
-            data_mode="route", data={
-                "note": "本地计算意图（因子/风险/回测/指标），由 src 本地工具链完成，不访问外部 API",
-                "available": ["backtest", "indicators", "walkforward", "dsl_validate"],
-            },
-            steps=steps,
+            data_mode="computed", data=resolved["result"],
+            steps=steps, retrieved_at=now_iso(),
         )
 
     if decision.intent == GENERAL:

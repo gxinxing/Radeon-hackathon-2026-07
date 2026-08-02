@@ -30,6 +30,7 @@ SOURCE_CONFIDENCE = {
     "aggregator": 0.6,
     "mock": 0.4,
     "rag": 0.7,
+    "local": 1.0,
 }
 
 
