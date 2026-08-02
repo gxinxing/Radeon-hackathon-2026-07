@@ -286,6 +286,18 @@ class SemanticMemory:
             self.user_preferences[key] = value
         self._persist()
 
+    def remove_preference(self, key: str) -> bool:
+        """Remove a user preference (rule cancellation). Returns True if removed.
+
+        Added for the memory-consistency S8 scenario: a rule the user
+        explicitly cancels must vanish from long-term memory, not linger.
+        """
+        if key in self.user_preferences:
+            del self.user_preferences[key]
+            self._persist()
+            return True
+        return False
+
     def learn_from_session(self, episodic: EpisodicMemory) -> None:
         """Extract insights from an episodic memory and store them.
 
@@ -398,12 +410,20 @@ class SemanticMemory:
         parts: list[str] = []
         prefs = self.user_preferences
 
+        # Extra explicit long-term rules (from memory_extract):
+        # max_daily_drawdown, unified_stop_loss, etc.
+        _EXTRA_LABELS = {
+            "max_daily_drawdown": "Max daily drawdown tolerance",
+            "unified_stop_loss": "Unified stop-loss",
+        }
+
         # Only include if there's actual learned data
         has_prefs = (
             prefs.get("preferred_pairs")
             or prefs.get("preferred_indicators")
             or prefs.get("preferred_timeframes")
             or prefs.get("risk_tolerance", "moderate") != "moderate"
+            or any(k in prefs for k in _EXTRA_LABELS)
         )
         if has_prefs:
             parts.append("## Long-Term Memory")
@@ -413,6 +433,9 @@ class SemanticMemory:
                 parts.append(f"- Preferred timeframes: {', '.join(prefs['preferred_timeframes'][:3])}")
             if prefs.get("risk_tolerance", "moderate") != "moderate":
                 parts.append(f"- Risk tolerance: {prefs['risk_tolerance']}")
+            for extra_key, label in _EXTRA_LABELS.items():
+                if prefs.get(extra_key):
+                    parts.append(f"- {label}: {prefs[extra_key]}")
 
         if self.strategy_stats:
             parts.append(f"\n## Historical Performance\n{self.get_strategy_summary()}")

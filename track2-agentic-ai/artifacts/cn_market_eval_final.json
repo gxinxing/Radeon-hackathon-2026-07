@@ -4,8 +4,8 @@
     "total": 24,
     "passed": 24,
     "pass_rate": 1.0,
-    "avg_latency_ms": 8247.69,
-    "p95_latency_ms": 9795.56,
+    "avg_latency_ms": 8560.61,
+    "p95_latency_ms": 10021.63,
     "total_retries": 0,
     "check_rates": {
       "json_valid": 1.0,
@@ -28,12 +28,12 @@
         20,
         50
       ],
-      "latency_ms": 7714.41,
+      "latency_ms": 7751.91,
       "retry_count": 0,
-      "raw_output": "strategy: {\"name\": \"CN_ema_trend_20_50_0068\", \"market\": {\"exchange\": \"cn_stock\", \"instrument\": \"510300.SH\", \"timeframe\": \"1d\"}, \"indicators\": [{\"name\": \"ema_fast\", \"type\": \"EMA\", \"params\": {\"period\": 20, \"field\": \"close\"}}, {\"name\": \"ema_slow\", \"type\": \"EMA\", \"params\": {\"period\": 50, \"field\": \"close\"}}], \"entry\": {\"long\": \"ema_fast > ema_slow\", \"short\": null}, \"exit\": {\"long\": \"ema_fast < ema_slow\", \"short\": null}, \"risk\": {\"stop_loss\": -0.05, \"max_position_pct\": 0.3, \"max_drawdown\": 0.15}, \"constraints\": {\"t_plus_one\": true, \"price_limit\": 0.1, \"allow_short\": false, \"lot_size\": 100}}",
+      "raw_output": "strategy: {\"name\": \"CN_ema_trend_20_50_0084\", \"market\": {\"exchange\": \"cn_stock\", \"instrument\": \"510300.SH\", \"timeframe\": \"1d\"}, \"indicators\": [{\"name\": \"ema_fast\", \"type\": \"EMA\", \"params\": {\"period\": 20, \"field\": \"close\"}}, {\"name\": \"ema_slow\", \"type\": \"EMA\", \"params\": {\"period\": 50, \"field\": \"close\"}}], \"entry\": {\"long\": \"ema_fast > ema_slow\", \"short\": null}, \"exit\": {\"long\": \"ema_fast < ema_slow\", \"short\": null}, \"risk\": {\"stop_loss\": -0.05, \"max_position_pct\": 0.3, \"max_drawdown\": 0.15}, \"constraints\": {\"t_plus_one\": true, \"price_limit\": 0.1, \"allow_short\": false, \"lot_size\": 100}}",
       "pre_repair_dsl": {
         "strategy": {
-          "name": "CN_ema_trend_20_50_0068",
+          "name": "CN_ema_trend_20_50_0084",
           "market": {
             "exchange": "cn_stock",
             "instrument": "510300.SH",
@@ -80,7 +80,7 @@
       },
       "post_repair_dsl": {
         "strategy": {
-          "name": "CN_ema_trend_20_50_0068",
+          "name": "CN_ema_trend_20_50_0084",
           "market": {
             "exchange": "cn_stock",
             "instrument": "510300.SH",
@@ -147,7 +147,7 @@
       "periods": [
         14
       ],
-      "latency_ms": 8136.75,
+      "latency_ms": 8149.88,
       "retry_count": 0,
       "raw_output": "strategy: {\"name\": \"CN_mean_reversion_rsi_30_70_0489\", \"market\": {\"exchange\": \"cn_stock\", \"instrument\": \"510300.SH\", \"timeframe\": \"30m\"}, \"indicators\": [{\"name\": \"rsi\", \"type\": \"RSI\", \"params\": {\"period\": 14}}, {\"name\": \"rsi_ma\", \"type\": \"SMA\", \"params\": {\"period\": 20, \"field\": \"rsi\"}}], \"entry\": {\"long\": \"rsi < rsi_ma * 0.75\", \"short\": null}, \"exit\": {\"long\": \"rsi > rsi_ma * 1.25\", \"short\": null}, \"risk\": {\"stop_loss\": -0.03, \"max_position_pct\": 0.15, \"max_drawdown\": 0.15}, \"constraints\": {\"t_plus_one\": true, \"price_limit\": 0.1, \"allow_short\": false, \"lot_size\": 100}}",
       "pre_repair_dsl": {
@@ -264,12 +264,12 @@
       "periods": [
         20
       ],
-      "latency_ms": 8829.32,
+      "latency_ms": 8422.72,
       "retry_count": 0,
-      "raw_output": "strategy: {\"name\": \"BollingerBandsReversal_20_200\", \"market\": {\"exchange\": \"cn_stock\", \"instrument\": \"510300.SH\", \"timeframe\": \"1d\"}, \"indicators\": [{\"name\": \"bb_bbm\", \"type\": \"BollingerBands\", \"params\": {\"period\": 20, \"std_dev\": 2}}, {\"name\": \"ema_fast\", \"type\": \"EMA\", \"params\": {\"period\": 20, \"field\": \"close\"}}], \"entry\": {\"long\": \"close < bb_bbm - (bb_bbm - ema_fast) * 0.5\", \"short\": null}, \"exit\": {\"long\": \"close > bb_bbm + (bb_bbm - ema_fast) * 0.5\", \"short\": null}, \"risk\": {\"stop_loss\": -0.03, \"max_position_pct\": 0.2, \"max_drawdown\": 0.15}, \"constraints\": {\"t_plus_one\": true, \"price_limit\": 0.1, \"allow_short\": false, \"lot_size\": 100}}",
+      "raw_output": "strategy: {\"name\": \"BollingerBandsReversal_20_20\", \"market\": {\"exchange\": \"cn_stock\", \"instrument\": \"510300.SH\", \"timeframe\": \"1d\"}, \"indicators\": [{\"name\": \"bb_bbm\", \"type\": \"BollingerBands\", \"params\": {\"period\": 20, \"std_dev\": 2}}, {\"name\": \"ema_fast\", \"type\": \"EMA\", \"params\": {\"period\": 20, \"field\": \"close\"}}], \"entry\": {\"long\": \"close < bb_bbm - 2.0 * bb_std\", \"short\": null}, \"exit\": {\"long\": \"close > bb_bbm + 0.5 * bb_std\", \"short\": null}, \"risk\": {\"stop_loss\": -0.05, \"max_position_pct\": 0.2, \"max_drawdown\": 0.15}, \"constraints\": {\"t_plus_one\": true, \"price_limit\": 0.1, \"allow_short\": false, \"lot_size\": 100}}",
       "pre_repair_dsl": {
         "strategy": {
-          "name": "BollingerBandsReversal_20_200",
+          "name": "BollingerBandsReversal_20_20",
           "market": {
             "exchange": "cn_stock",
             "instrument": "510300.SH",
@@ -294,15 +294,15 @@
             }
           ],
           "entry": {
-            "long": "close < bb_bbm - (bb_bbm - ema_fast) * 0.5",
+            "long": "close < bb_bbm - 2.0 * bb_std",
             "short": null
           },
           "exit": {
-            "long": "close > bb_bbm + (bb_bbm - ema_fast) * 0.5",
+            "long": "close > bb_bbm + 0.5 * bb_std",
             "short": null
           },
           "risk": {
-            "stop_loss": -0.03,
+            "stop_loss": -0.05,
             "max_position_pct": 0.2,
             "max_drawdown": 0.15
           },
@@ -316,7 +316,7 @@
       },
       "post_repair_dsl": {
         "strategy": {
-          "name": "BollingerBandsReversal_20_200",
+          "name": "BollingerBandsReversal_20_20",
           "market": {
             "exchange": "cn_stock",
             "instrument": "510300.SH",
@@ -341,15 +341,15 @@
             }
           ],
           "entry": {
-            "long": "close < bb_bbm - (bb_bbm - ema_fast) * 0.5",
+            "long": "close < bb_bbm - 2.0 * bb_std",
             "short": null
           },
           "exit": {
-            "long": "close > bb_bbm + (bb_bbm - ema_fast) * 0.5",
+            "long": "close > bb_bbm + 0.5 * bb_std",
             "short": null
           },
           "risk": {
-            "stop_loss": -0.03,
+            "stop_loss": -0.05,
             "max_position_pct": 0.2,
             "max_drawdown": 0.15
           },
@@ -385,7 +385,7 @@
         26,
         9
       ],
-      "latency_ms": 8032.01,
+      "latency_ms": 8714.75,
       "retry_count": 0,
       "raw_output": "strategy: {\"name\": \"CN_macd_trend_12_26\", \"market\": {\"exchange\": \"cn_stock\", \"instrument\": \"510300.SH\", \"timeframe\": \"1d\"}, \"indicators\": [{\"name\": \"macd\", \"type\": \"MACD\", \"params\": {\"fast_period\": 12, \"slow_period\": 26, \"signal_period\": 9}}, {\"name\": \"ema_fast\", \"type\": \"EMA\", \"params\": {\"period\": 20, \"field\": \"close\"}}], \"entry\": {\"long\": \"macd > 0 AND close < ema_fast\", \"short\": null}, \"exit\": {\"long\": \"macd < 0\", \"short\": null}, \"risk\": {\"stop_loss\": -0.05, \"max_position_pct\": 0.3, \"max_drawdown\": 0.15}, \"constraints\": {\"t_plus_one\": true, \"price_limit\": 0.1, \"allow_short\": false, \"lot_size\": 100}}",
       "pre_repair_dsl": {
@@ -507,7 +507,7 @@
         9,
         21
       ],
-      "latency_ms": 9795.56,
+      "latency_ms": 9803.97,
       "retry_count": 0,
       "raw_output": "strategy\n{\n  \"name\": \"ema_cross_9_21_0286\",\n  \"market\": {\n    \"exchange\": \"cn_stock\",\n    \"instrument\": \"510300.SH\",\n    \"timeframe\": \"30m\"\n  },\n  \"indicators\": [\n    {\n      \"name\": \"ema_fast\",\n      \"type\": \"EMA\",\n      \"params\": {\n        \"period\": 9,\n        \"field\": \"close\"\n      }\n    },\n    {\n      \"name\": \"ema_slow\",\n      \"type\": \"EMA\",\n      \"params\": {\n        \"period\": 21,\n        \"field\": \"close\"\n      }\n    }\n  ],\n  \"entry\": {\n    \"long\": \"ema_fast > ema_slow\",\n    \"short\": null\n  },\n  \"exit\": {\n    \"long\": \"ema_fast < ema_slow\",\n    \"short\": null\n  },\n  \"risk\": {\n    \"stop_loss\": -0.03,\n    \"max_position_pct\": 0.25,\n    \"max_drawdown\": 0.12\n  },\n  \"constraints\": {\n    \"t_plus_one\": true,\n    \"price_limit\": 0.1,\n    \"allow_short\": false,\n    \"lot_size\": 100\n  }\n}\n",
       "pre_repair_dsl": {
@@ -628,7 +628,7 @@
         20,
         50
       ],
-      "latency_ms": 7557.9,
+      "latency_ms": 7704.39,
       "retry_count": 0,
       "raw_output": "strategy: {\"name\": \"CN_ema_adx_strategy_0489\", \"market\": {\"exchange\": \"cn_stock\", \"instrument\": \"510300.SH\", \"timeframe\": \"1d\"}, \"indicators\": [{\"name\": \"ema_fast\", \"type\": \"EMA\", \"params\": {\"period\": 20, \"field\": \"close\"}}, {\"name\": \"adx\", \"type\": \"ADX\", \"params\": {\"period\": 14}}], \"entry\": {\"long\": \"ema_fast > ema_slow AND adx > 25\", \"short\": null}, \"exit\": {\"long\": \"ema_fast < ema_slow\", \"short\": null}, \"risk\": {\"stop_loss\": -0.05, \"max_position_pct\": 0.3, \"max_drawdown\": 0.15}, \"constraints\": {\"t_plus_one\": true, \"price_limit\": 0.1, \"allow_short\": false, \"lot_size\": 100}}",
       "pre_repair_dsl": {
@@ -746,12 +746,12 @@
         20,
         50
       ],
-      "latency_ms": 9894.05,
+      "latency_ms": 10127.85,
       "retry_count": 0,
-      "raw_output": "strategy\n{\n  \"name\": \"CN_ema_trend_20_50_0089\",\n  \"market\": {\n    \"exchange\": \"cn_stock\",\n    \"instrument\": \"510050.SH\",\n    \"timeframe\": \"1d\"\n  },\n  \"indicators\": [\n    {\n      \"name\": \"ema_fast\",\n      \"type\": \"EMA\",\n      \"params\": {\n        \"period\": 20,\n        \"field\": \"close\"\n      }\n    },\n    {\n      \"name\": \"ema_slow\",\n      \"type\": \"EMA\",\n      \"params\": {\n        \"period\": 50,\n        \"field\": \"close\"\n      }\n    }\n  ],\n  \"entry\": {\n    \"long\": \"ema_fast > ema_slow\",\n    \"short\": null\n  },\n  \"exit\": {\n    \"long\": \"ema_fast < ema_slow\",\n    \"short\": null\n  },\n  \"risk\": {\n    \"stop_loss\": -0.05,\n    \"max_position_pct\": 0.3,\n    \"max_drawdown\": 0.15\n  },\n  \"constraints\": {\n    \"t_plus_one\": true,\n    \"price_limit\": 0.1,\n    \"allow_short\": false,\n    \"lot_size\": 100\n  }\n}",
+      "raw_output": "strategy\n{\n  \"name\": \"CN_ema_trend_20_50_0389\",\n  \"market\": {\n    \"exchange\": \"cn_stock\",\n    \"instrument\": \"510050.SH\",\n    \"timeframe\": \"1d\"\n  },\n  \"indicators\": [\n    {\n      \"name\": \"ema_fast\",\n      \"type\": \"EMA\",\n      \"params\": {\n        \"period\": 20,\n        \"field\": \"close\"\n      }\n    },\n    {\n      \"name\": \"ema_slow\",\n      \"type\": \"EMA\",\n      \"params\": {\n        \"period\": 50,\n        \"field\": \"close\"\n      }\n    }\n  ],\n  \"entry\": {\n    \"long\": \"ema_fast > ema_slow\",\n    \"short\": null\n  },\n  \"exit\": {\n    \"long\": \"ema_fast < ema_slow\",\n    \"short\": null\n  },\n  \"risk\": {\n    \"stop_loss\": -0.05,\n    \"max_position_pct\": 0.3,\n    \"max_drawdown\": 0.15\n  },\n  \"constraints\": {\n    \"t_plus_one\": true,\n    \"price_limit\": 0.1,\n    \"allow_short\": false,\n    \"lot_size\": 100\n  }\n}",
       "pre_repair_dsl": {
         "strategy": {
-          "name": "CN_ema_trend_20_50_0089",
+          "name": "CN_ema_trend_20_50_0389",
           "market": {
             "exchange": "cn_stock",
             "instrument": "510050.SH",
@@ -798,7 +798,7 @@
       },
       "post_repair_dsl": {
         "strategy": {
-          "name": "CN_ema_trend_20_50_0089",
+          "name": "CN_ema_trend_20_50_0389",
           "market": {
             "exchange": "cn_stock",
             "instrument": "510050.SH",
@@ -865,12 +865,12 @@
       "periods": [
         14
       ],
-      "latency_ms": 8145.53,
+      "latency_ms": 8315.67,
       "retry_count": 0,
-      "raw_output": "strategy: {\"name\": \"CN_mean_reversion_rsi_30_70_0468\", \"market\": {\"exchange\": \"cn_stock\", \"instrument\": \"510050.SH\", \"timeframe\": \"30m\"}, \"indicators\": [{\"name\": \"rsi\", \"type\": \"RSI\", \"params\": {\"period\": 14}}, {\"name\": \"rsi_ma\", \"type\": \"SMA\", \"params\": {\"period\": 20, \"field\": \"rsi\"}}], \"entry\": {\"long\": \"rsi < rsi_ma * 0.85\", \"short\": null}, \"exit\": {\"long\": \"rsi > rsi_ma * 1.25\", \"short\": null}, \"risk\": {\"stop_loss\": -0.03, \"max_position_pct\": 0.15, \"max_drawdown\": 0.15}, \"constraints\": {\"t_plus_one\": true, \"price_limit\": 0.1, \"allow_short\": false, \"lot_size\": 100}}",
+      "raw_output": "strategy: {\"name\": \"CN_mean_reversion_rsi_30_70_0489\", \"market\": {\"exchange\": \"cn_stock\", \"instrument\": \"510050.SH\", \"timeframe\": \"30m\"}, \"indicators\": [{\"name\": \"rsi\", \"type\": \"RSI\", \"params\": {\"period\": 14}}, {\"name\": \"rsi_ma\", \"type\": \"SMA\", \"params\": {\"period\": 20, \"field\": \"rsi\"}}], \"entry\": {\"long\": \"rsi < rsi_ma * 0.75\", \"short\": null}, \"exit\": {\"long\": \"rsi > rsi_ma * 1.25\", \"short\": null}, \"risk\": {\"stop_loss\": -0.03, \"max_position_pct\": 0.15, \"max_drawdown\": 0.15}, \"constraints\": {\"t_plus_one\": true, \"price_limit\": 0.1, \"allow_short\": false, \"lot_size\": 100}}",
       "pre_repair_dsl": {
         "strategy": {
-          "name": "CN_mean_reversion_rsi_30_70_0468",
+          "name": "CN_mean_reversion_rsi_30_70_0489",
           "market": {
             "exchange": "cn_stock",
             "instrument": "510050.SH",
@@ -894,7 +894,7 @@
             }
           ],
           "entry": {
-            "long": "rsi < rsi_ma * 0.85",
+            "long": "rsi < rsi_ma * 0.75",
             "short": null
           },
           "exit": {
@@ -916,7 +916,7 @@
       },
       "post_repair_dsl": {
         "strategy": {
-          "name": "CN_mean_reversion_rsi_30_70_0468",
+          "name": "CN_mean_reversion_rsi_30_70_0489",
           "market": {
             "exchange": "cn_stock",
             "instrument": "510050.SH",
@@ -940,7 +940,7 @@
             }
           ],
           "entry": {
-            "long": "rsi < rsi_ma * 0.85",
+            "long": "rsi < rsi_ma * 0.75",
             "short": null
           },
           "exit": {
@@ -982,12 +982,12 @@
       "periods": [
         20
       ],
-      "latency_ms": 8829.91,
+      "latency_ms": 8424.45,
       "retry_count": 0,
-      "raw_output": "strategy: {\"name\": \"BollingerBandsReversal_20_200\", \"market\": {\"exchange\": \"cn_stock\", \"instrument\": \"510050.SH\", \"timeframe\": \"1d\"}, \"indicators\": [{\"name\": \"bb_bbm\", \"type\": \"BollingerBands\", \"params\": {\"period\": 20, \"std_dev\": 2}}, {\"name\": \"ema_fast\", \"type\": \"EMA\", \"params\": {\"period\": 20, \"field\": \"close\"}}], \"entry\": {\"long\": \"close < bb_bbm - (bb_bbm - ema_fast) * 0.5\", \"short\": null}, \"exit\": {\"long\": \"close > bb_bbm + (bb_bbm - ema_fast) * 0.5\", \"short\": null}, \"risk\": {\"stop_loss\": -0.03, \"max_position_pct\": 0.2, \"max_drawdown\": 0.15}, \"constraints\": {\"t_plus_one\": true, \"price_limit\": 0.1, \"allow_short\": false, \"lot_size\": 100}}",
+      "raw_output": "strategy: {\"name\": \"BollingerBandsReversal_20\", \"market\": {\"exchange\": \"cn_stock\", \"instrument\": \"510050.SH\", \"timeframe\": \"1d\"}, \"indicators\": [{\"name\": \"bb_bbm\", \"type\": \"BollingerBands\", \"params\": {\"period\": 20, \"std_dev\": 2}}, {\"name\": \"ema_fast\", \"type\": \"EMA\", \"params\": {\"period\": 20, \"field\": \"close\"}}], \"entry\": {\"long\": \"close < bb_bbm - 2.0 * bb_std\", \"short\": null}, \"exit\": {\"long\": \"close > bb_bbm + 0.5 * bb_std\", \"short\": null}, \"risk\": {\"stop_loss\": -0.03, \"max_position_pct\": 0.2, \"max_drawdown\": 0.15}, \"constraints\": {\"t_plus_one\": true, \"price_limit\": 0.1, \"allow_short\": false, \"lot_size\": 100}}",
       "pre_repair_dsl": {
         "strategy": {
-          "name": "BollingerBandsReversal_20_200",
+          "name": "BollingerBandsReversal_20",
           "market": {
             "exchange": "cn_stock",
             "instrument": "510050.SH",
@@ -1012,11 +1012,11 @@
             }
           ],
           "entry": {
-            "long": "close < bb_bbm - (bb_bbm - ema_fast) * 0.5",
+            "long": "close < bb_bbm - 2.0 * bb_std",
             "short": null
           },
           "exit": {
-            "long": "close > bb_bbm + (bb_bbm - ema_fast) * 0.5",
+            "long": "close > bb_bbm + 0.5 * bb_std",
             "short": null
           },
           "risk": {
@@ -1034,7 +1034,7 @@
       },
       "post_repair_dsl": {
         "strategy": {
-          "name": "BollingerBandsReversal_20_200",
+          "name": "BollingerBandsReversal_20",
           "market": {
             "exchange": "cn_stock",
             "instrument": "510050.SH",
@@ -1059,11 +1059,11 @@
             }
           ],
           "entry": {
-            "long": "close < bb_bbm - (bb_bbm - ema_fast) * 0.5",
+            "long": "close < bb_bbm - 2.0 * bb_std",
             "short": null
           },
           "exit": {
-            "long": "close > bb_bbm + (bb_bbm - ema_fast) * 0.5",
+            "long": "close > bb_bbm + 0.5 * bb_std",
             "short": null
           },
           "risk": {
@@ -1103,7 +1103,7 @@
         26,
         9
       ],
-      "latency_ms": 8041.44,
+      "latency_ms": 8236.4,
       "retry_count": 0,
       "raw_output": "strategy: {\"name\": \"CN_macd_trend_12_26\", \"market\": {\"exchange\": \"cn_stock\", \"instrument\": \"510050.SH\", \"timeframe\": \"1d\"}, \"indicators\": [{\"name\": \"macd\", \"type\": \"MACD\", \"params\": {\"fast_period\": 12, \"slow_period\": 26, \"signal_period\": 9}}, {\"name\": \"ema_fast\", \"type\": \"EMA\", \"params\": {\"period\": 20, \"field\": \"close\"}}], \"entry\": {\"long\": \"macd > 0 AND close < ema_fast\", \"short\": null}, \"exit\": {\"long\": \"macd < 0\", \"short\": null}, \"risk\": {\"stop_loss\": -0.05, \"max_position_pct\": 0.3, \"max_drawdown\": 0.15}, \"constraints\": {\"t_plus_one\": true, \"price_limit\": 0.1, \"allow_short\": false, \"lot_size\": 100}}",
       "pre_repair_dsl": {
@@ -1225,12 +1225,12 @@
         9,
         21
       ],
-      "latency_ms": 7633.7,
+      "latency_ms": 10021.63,
       "retry_count": 0,
-      "raw_output": "strategy: {\"name\": \"ema_cross_9_21_0086\", \"market\": {\"exchange\": \"cn_stock\", \"instrument\": \"510050.SH\", \"timeframe\": \"30m\"}, \"indicators\": [{\"name\": \"ema_fast\", \"type\": \"EMA\", \"params\": {\"period\": 9, \"field\": \"close\"}}, {\"name\": \"ema_slow\", \"type\": \"EMA\", \"params\": {\"period\": 21, \"field\": \"close\"}}], \"entry\": {\"long\": \"ema_fast > ema_slow\", \"short\": null}, \"exit\": {\"long\": \"ema_fast < ema_slow\", \"short\": null}, \"risk\": {\"stop_loss\": -0.03, \"max_position_pct\": 0.15, \"max_drawdown\": 0.15}, \"constraints\": {\"t_plus_one\": true, \"price_limit\": 0.1, \"allow_short\": false, \"lot_size\": 100}}",
+      "raw_output": "strategy\n{\n  \"name\": \"ema_cross_9_21_0284\",\n  \"market\": {\n    \"exchange\": \"cn_stock\",\n    \"instrument\": \"510050.SH\",\n    \"timeframe\": \"30m\"\n  },\n  \"indicators\": [\n    {\n      \"name\": \"ema_fast\",\n      \"type\": \"EMA\",\n      \"params\": {\n        \"period\": 9,\n        \"field\": \"close\"\n      }\n    },\n    {\n      \"name\": \"ema_slow\",\n      \"type\": \"EMA\",\n      \"params\": {\n        \"period\": 21,\n        \"field\": \"close\"\n      }\n    }\n  ],\n  \"entry\": {\n    \"long\": \"ema_fast > ema_slow\",\n    \"short\": null\n  },\n  \"exit\": {\n    \"long\": \"ema_fast < ema_slow\",\n    \"short\": null\n  },\n  \"risk\": {\n    \"stop_loss\": -0.03,\n    \"max_position_pct\": 0.25,\n    \"max_drawdown\": 0.12\n  },\n  \"constraints\": {\n    \"t_plus_one\": true,\n    \"price_limit\": 0.1,\n    \"allow_short\": false,\n    \"lot_size\": 100\n  }\n}\n",
       "pre_repair_dsl": {
         "strategy": {
-          "name": "ema_cross_9_21_0086",
+          "name": "ema_cross_9_21_0284",
           "market": {
             "exchange": "cn_stock",
             "instrument": "510050.SH",
@@ -1264,8 +1264,8 @@
           },
           "risk": {
             "stop_loss": -0.03,
-            "max_position_pct": 0.15,
-            "max_drawdown": 0.15
+            "max_position_pct": 0.25,
+            "max_drawdown": 0.12
           },
           "constraints": {
             "t_plus_one": true,
@@ -1277,7 +1277,7 @@
       },
       "post_repair_dsl": {
         "strategy": {
-          "name": "ema_cross_9_21_0086",
+          "name": "ema_cross_9_21_0284",
           "market": {
             "exchange": "cn_stock",
             "instrument": "510050.SH",
@@ -1311,8 +1311,8 @@
           },
           "risk": {
             "stop_loss": -0.03,
-            "max_position_pct": 0.15,
-            "max_drawdown": 0.15
+            "max_position_pct": 0.25,
+            "max_drawdown": 0.12
           },
           "constraints": {
             "t_plus_one": true,
@@ -1346,7 +1346,7 @@
         20,
         50
       ],
-      "latency_ms": 7563.63,
+      "latency_ms": 7734.26,
       "retry_count": 0,
       "raw_output": "strategy: {\"name\": \"CN_ema_adx_strategy_0078\", \"market\": {\"exchange\": \"cn_stock\", \"instrument\": \"510050.SH\", \"timeframe\": \"1d\"}, \"indicators\": [{\"name\": \"ema_fast\", \"type\": \"EMA\", \"params\": {\"period\": 20, \"field\": \"close\"}}, {\"name\": \"adx\", \"type\": \"ADX\", \"params\": {\"period\": 14}}], \"entry\": {\"long\": \"ema_fast > ema_slow AND adx > 25\", \"short\": null}, \"exit\": {\"long\": \"ema_fast < ema_slow\", \"short\": null}, \"risk\": {\"stop_loss\": -0.05, \"max_position_pct\": 0.3, \"max_drawdown\": 0.15}, \"constraints\": {\"t_plus_one\": true, \"price_limit\": 0.1, \"allow_short\": false, \"lot_size\": 100}}",
       "pre_repair_dsl": {
@@ -1464,12 +1464,12 @@
         20,
         50
       ],
-      "latency_ms": 7727.51,
+      "latency_ms": 7782.72,
       "retry_count": 0,
-      "raw_output": "strategy: {\"name\": \"CN_ema_trend_20_50_0468\", \"market\": {\"exchange\": \"cn_stock\", \"instrument\": \"510500.SH\", \"timeframe\": \"1d\"}, \"indicators\": [{\"name\": \"ema_fast\", \"type\": \"EMA\", \"params\": {\"period\": 20, \"field\": \"close\"}}, {\"name\": \"ema_slow\", \"type\": \"EMA\", \"params\": {\"period\": 50, \"field\": \"close\"}}], \"entry\": {\"long\": \"ema_fast > ema_slow\", \"short\": null}, \"exit\": {\"long\": \"ema_fast < ema_slow\", \"short\": null}, \"risk\": {\"stop_loss\": -0.05, \"max_position_pct\": 0.3, \"max_drawdown\": 0.15}, \"constraints\": {\"t_plus_one\": true, \"price_limit\": 0.1, \"allow_short\": false, \"lot_size\": 100}}",
+      "raw_output": "strategy: {\"name\": \"CN_ema_trend_20_50_0489\", \"market\": {\"exchange\": \"cn_stock\", \"instrument\": \"510500.SH\", \"timeframe\": \"1d\"}, \"indicators\": [{\"name\": \"ema_fast\", \"type\": \"EMA\", \"params\": {\"period\": 20, \"field\": \"close\"}}, {\"name\": \"ema_slow\", \"type\": \"EMA\", \"params\": {\"period\": 50, \"field\": \"close\"}}], \"entry\": {\"long\": \"ema_fast > ema_slow\", \"short\": null}, \"exit\": {\"long\": \"ema_fast < ema_slow\", \"short\": null}, \"risk\": {\"stop_loss\": -0.05, \"max_position_pct\": 0.3, \"max_drawdown\": 0.15}, \"constraints\": {\"t_plus_one\": true, \"price_limit\": 0.1, \"allow_short\": false, \"lot_size\": 100}}",
       "pre_repair_dsl": {
         "strategy": {
-          "name": "CN_ema_trend_20_50_0468",
+          "name": "CN_ema_trend_20_50_0489",
           "market": {
             "exchange": "cn_stock",
             "instrument": "510500.SH",
@@ -1516,7 +1516,7 @@
       },
       "post_repair_dsl": {
         "strategy": {
-          "name": "CN_ema_trend_20_50_0468",
+          "name": "CN_ema_trend_20_50_0489",
           "market": {
             "exchange": "cn_stock",
             "instrument": "510500.SH",
@@ -1583,12 +1583,12 @@
       "periods": [
         14
       ],
-      "latency_ms": 8151.77,
+      "latency_ms": 8012.23,
       "retry_count": 0,
-      "raw_output": "strategy: {\"name\": \"CN_mean_reversion_rsi_30_70_0489\", \"market\": {\"exchange\": \"cn_stock\", \"instrument\": \"510500.SH\", \"timeframe\": \"30m\"}, \"indicators\": [{\"name\": \"rsi\", \"type\": \"RSI\", \"params\": {\"period\": 14}}, {\"name\": \"rsi_ma\", \"type\": \"SMA\", \"params\": {\"period\": 20, \"field\": \"rsi\"}}], \"entry\": {\"long\": \"rsi < rsi_ma * 0.85\", \"short\": null}, \"exit\": {\"long\": \"rsi > rsi_ma * 1.25\", \"short\": null}, \"risk\": {\"stop_loss\": -0.03, \"max_position_pct\": 0.15, \"max_drawdown\": 0.15}, \"constraints\": {\"t_plus_one\": true, \"price_limit\": 0.1, \"allow_short\": false, \"lot_size\": 100}}",
+      "raw_output": "strategy: {\"name\": \"CN_mean_reversion_rsi_30_70_0468\", \"market\": {\"exchange\": \"cn_stock\", \"instrument\": \"510500.SH\", \"timeframe\": \"30m\"}, \"indicators\": [{\"name\": \"rsi\", \"type\": \"RSI\", \"params\": {\"period\": 14}}, {\"name\": \"rsi_ma\", \"type\": \"SMA\", \"params\": {\"period\": 20, \"field\": \"rsi\"}}], \"entry\": {\"long\": \"rsi < rsi_ma - 10\", \"short\": null}, \"exit\": {\"long\": \"rsi > rsi_ma + 10\", \"short\": null}, \"risk\": {\"stop_loss\": -0.03, \"max_position_pct\": 0.25, \"max_drawdown\": 0.12}, \"constraints\": {\"t_plus_one\": true, \"price_limit\": 0.1, \"allow_short\": false, \"lot_size\": 100}}",
       "pre_repair_dsl": {
         "strategy": {
-          "name": "CN_mean_reversion_rsi_30_70_0489",
+          "name": "CN_mean_reversion_rsi_30_70_0468",
           "market": {
             "exchange": "cn_stock",
             "instrument": "510500.SH",
@@ -1612,17 +1612,17 @@
             }
           ],
           "entry": {
-            "long": "rsi < rsi_ma * 0.85",
+            "long": "rsi < rsi_ma - 10",
             "short": null
           },
           "exit": {
-            "long": "rsi > rsi_ma * 1.25",
+            "long": "rsi > rsi_ma + 10",
             "short": null
           },
           "risk": {
             "stop_loss": -0.03,
-            "max_position_pct": 0.15,
-            "max_drawdown": 0.15
+            "max_position_pct": 0.25,
+            "max_drawdown": 0.12
           },
           "constraints": {
             "t_plus_one": true,
@@ -1634,7 +1634,7 @@
       },
       "post_repair_dsl": {
         "strategy": {
-          "name": "CN_mean_reversion_rsi_30_70_0489",
+          "name": "CN_mean_reversion_rsi_30_70_0468",
           "market": {
             "exchange": "cn_stock",
             "instrument": "510500.SH",
@@ -1658,17 +1658,17 @@
             }
           ],
           "entry": {
-            "long": "rsi < rsi_ma * 0.85",
+            "long": "rsi < rsi_ma - 10",
             "short": null
           },
           "exit": {
-            "long": "rsi > rsi_ma * 1.25",
+            "long": "rsi > rsi_ma + 10",
             "short": null
           },
           "risk": {
             "stop_loss": -0.03,
-            "max_position_pct": 0.15,
-            "max_drawdown": 0.15
+            "max_position_pct": 0.25,
+            "max_drawdown": 0.12
           },
           "constraints": {
             "t_plus_one": true,
@@ -1700,7 +1700,7 @@
       "periods": [
         20
       ],
-      "latency_ms": 8840.59,
+      "latency_ms": 8845.3,
       "retry_count": 0,
       "raw_output": "strategy: {\"name\": \"BollingerBandsReversal_20_200\", \"market\": {\"exchange\": \"cn_stock\", \"instrument\": \"510500.SH\", \"timeframe\": \"1d\"}, \"indicators\": [{\"name\": \"bb_bbm\", \"type\": \"BollingerBands\", \"params\": {\"period\": 20, \"std_dev\": 2}}, {\"name\": \"ema_fast\", \"type\": \"EMA\", \"params\": {\"period\": 20, \"field\": \"close\"}}], \"entry\": {\"long\": \"close < bb_bbm - (bb_bbm - ema_fast) * 0.5\", \"short\": null}, \"exit\": {\"long\": \"close > bb_bbm + (bb_bbm - ema_fast) * 0.5\", \"short\": null}, \"risk\": {\"stop_loss\": -0.03, \"max_position_pct\": 0.2, \"max_drawdown\": 0.15}, \"constraints\": {\"t_plus_one\": true, \"price_limit\": 0.1, \"allow_short\": false, \"lot_size\": 100}}",
       "pre_repair_dsl": {
@@ -1821,7 +1821,7 @@
         26,
         9
       ],
-      "latency_ms": 8047.83,
+      "latency_ms": 8048.2,
       "retry_count": 0,
       "raw_output": "strategy: {\"name\": \"CN_macd_trend_12_26\", \"market\": {\"exchange\": \"cn_stock\", \"instrument\": \"510500.SH\", \"timeframe\": \"1d\"}, \"indicators\": [{\"name\": \"macd\", \"type\": \"MACD\", \"params\": {\"fast_period\": 12, \"slow_period\": 26, \"signal_period\": 9}}, {\"name\": \"ema_fast\", \"type\": \"EMA\", \"params\": {\"period\": 20, \"field\": \"close\"}}], \"entry\": {\"long\": \"macd > 0 AND close < ema_fast\", \"short\": null}, \"exit\": {\"long\": \"macd < 0\", \"short\": null}, \"risk\": {\"stop_loss\": -0.05, \"max_position_pct\": 0.3, \"max_drawdown\": 0.15}, \"constraints\": {\"t_plus_one\": true, \"price_limit\": 0.1, \"allow_short\": false, \"lot_size\": 100}}",
       "pre_repair_dsl": {
@@ -1943,12 +1943,12 @@
         9,
         21
       ],
-      "latency_ms": 9869.33,
+      "latency_ms": 9882.13,
       "retry_count": 0,
-      "raw_output": "strategy\n{\n  \"name\": \"CN_ema_cross_9_21_0284\",\n  \"market\": {\n    \"exchange\": \"cn_stock\",\n    \"instrument\": \"510500.SH\",\n    \"timeframe\": \"30m\"\n  },\n  \"indicators\": [\n    {\n      \"name\": \"ema_fast\",\n      \"type\": \"EMA\",\n      \"params\": {\n        \"period\": 9,\n        \"field\": \"close\"\n      }\n    },\n    {\n      \"name\": \"ema_slow\",\n      \"type\": \"EMA\",\n      \"params\": {\n        \"period\": 21,\n        \"field\": \"close\"\n      }\n    }\n  ],\n  \"entry\": {\n    \"long\": \"ema_fast > ema_slow\",\n    \"short\": null\n  },\n  \"exit\": {\n    \"long\": \"ema_fast < ema_slow\",\n    \"short\": null\n  },\n  \"risk\": {\n    \"stop_loss\": -0.03,\n    \"max_position_pct\": 0.25,\n    \"max_drawdown\": 0.12\n  },\n  \"constraints\": {\n    \"t_plus_one\": true,\n    \"price_limit\": 0.1,\n    \"allow_short\": false,\n    \"lot_size\": 100\n  }\n}",
+      "raw_output": "strategy\n{\n  \"name\": \"CN_ema_cross_9_21_0368\",\n  \"market\": {\n    \"exchange\": \"cn_stock\",\n    \"instrument\": \"510500.SH\",\n    \"timeframe\": \"30m\"\n  },\n  \"indicators\": [\n    {\n      \"name\": \"ema_fast\",\n      \"type\": \"EMA\",\n      \"params\": {\n        \"period\": 9,\n        \"field\": \"close\"\n      }\n    },\n    {\n      \"name\": \"ema_slow\",\n      \"type\": \"EMA\",\n      \"params\": {\n        \"period\": 21,\n        \"field\": \"close\"\n      }\n    }\n  ],\n  \"entry\": {\n    \"long\": \"ema_fast > ema_slow\",\n    \"short\": null\n  },\n  \"exit\": {\n    \"long\": \"ema_fast < ema_slow\",\n    \"short\": null\n  },\n  \"risk\": {\n    \"stop_loss\": -0.03,\n    \"max_position_pct\": 0.25,\n    \"max_drawdown\": 0.12\n  },\n  \"constraints\": {\n    \"t_plus_one\": true,\n    \"price_limit\": 0.1,\n    \"allow_short\": false,\n    \"lot_size\": 100\n  }\n}\n",
       "pre_repair_dsl": {
         "strategy": {
-          "name": "CN_ema_cross_9_21_0284",
+          "name": "CN_ema_cross_9_21_0368",
           "market": {
             "exchange": "cn_stock",
             "instrument": "510500.SH",
@@ -1995,7 +1995,7 @@
       },
       "post_repair_dsl": {
         "strategy": {
-          "name": "CN_ema_cross_9_21_0284",
+          "name": "CN_ema_cross_9_21_0368",
           "market": {
             "exchange": "cn_stock",
             "instrument": "510500.SH",
@@ -2064,12 +2064,12 @@
         20,
         50
       ],
-      "latency_ms": 7555.11,
+      "latency_ms": 7567.29,
       "retry_count": 0,
-      "raw_output": "strategy: {\"name\": \"CN_ema_adx_strategy_0486\", \"market\": {\"exchange\": \"cn_stock\", \"instrument\": \"510500.SH\", \"timeframe\": \"1d\"}, \"indicators\": [{\"name\": \"ema_fast\", \"type\": \"EMA\", \"params\": {\"period\": 20, \"field\": \"close\"}}, {\"name\": \"adx\", \"type\": \"ADX\", \"params\": {\"period\": 14}}], \"entry\": {\"long\": \"ema_fast > ema_slow AND adx > 25\", \"short\": null}, \"exit\": {\"long\": \"ema_fast < ema_slow\", \"short\": null}, \"risk\": {\"stop_loss\": -0.05, \"max_position_pct\": 0.3, \"max_drawdown\": 0.15}, \"constraints\": {\"t_plus_one\": true, \"price_limit\": 0.1, \"allow_short\": false, \"lot_size\": 100}}",
+      "raw_output": "strategy: {\"name\": \"CN_ema_adx_strategy_0078\", \"market\": {\"exchange\": \"cn_stock\", \"instrument\": \"510500.SH\", \"timeframe\": \"1d\"}, \"indicators\": [{\"name\": \"ema_fast\", \"type\": \"EMA\", \"params\": {\"period\": 20, \"field\": \"close\"}}, {\"name\": \"adx\", \"type\": \"ADX\", \"params\": {\"period\": 14}}], \"entry\": {\"long\": \"ema_fast > ema_slow AND adx > 25\", \"short\": null}, \"exit\": {\"long\": \"ema_fast < ema_slow\", \"short\": null}, \"risk\": {\"stop_loss\": -0.05, \"max_position_pct\": 0.3, \"max_drawdown\": 0.15}, \"constraints\": {\"t_plus_one\": true, \"price_limit\": 0.1, \"allow_short\": false, \"lot_size\": 100}}",
       "pre_repair_dsl": {
         "strategy": {
-          "name": "CN_ema_adx_strategy_0486",
+          "name": "CN_ema_adx_strategy_0078",
           "market": {
             "exchange": "cn_stock",
             "instrument": "510500.SH",
@@ -2115,7 +2115,7 @@
       },
       "post_repair_dsl": {
         "strategy": {
-          "name": "CN_ema_adx_strategy_0486",
+          "name": "CN_ema_adx_strategy_0078",
           "market": {
             "exchange": "cn_stock",
             "instrument": "510500.SH",
@@ -2182,12 +2182,12 @@
         20,
         50
       ],
-      "latency_ms": 7772.81,
+      "latency_ms": 7770.34,
       "retry_count": 0,
-      "raw_output": "strategy: {\"name\": \"CN_ema_trend_20_50_0068\", \"market\": {\"exchange\": \"cn_stock\", \"instrument\": \"159915.SZ\", \"timeframe\": \"1d\"}, \"indicators\": [{\"name\": \"ema_fast\", \"type\": \"EMA\", \"params\": {\"period\": 20, \"field\": \"close\"}}, {\"name\": \"ema_slow\", \"type\": \"EMA\", \"params\": {\"period\": 50, \"field\": \"close\"}}], \"entry\": {\"long\": \"ema_fast > ema_slow\", \"short\": null}, \"exit\": {\"long\": \"ema_fast < ema_slow\", \"short\": null}, \"risk\": {\"stop_loss\": -0.05, \"max_position_pct\": 0.3, \"max_drawdown\": 0.15}, \"constraints\": {\"t_plus_one\": true, \"price_limit\": 0.1, \"allow_short\": false, \"lot_size\": 100}}",
+      "raw_output": "strategy: {\"name\": \"CN_ema_trend_20_50_0086\", \"market\": {\"exchange\": \"cn_stock\", \"instrument\": \"159915.SZ\", \"timeframe\": \"1d\"}, \"indicators\": [{\"name\": \"ema_fast\", \"type\": \"EMA\", \"params\": {\"period\": 20, \"field\": \"close\"}}, {\"name\": \"ema_slow\", \"type\": \"EMA\", \"params\": {\"period\": 50, \"field\": \"close\"}}], \"entry\": {\"long\": \"ema_fast > ema_slow\", \"short\": null}, \"exit\": {\"long\": \"ema_fast < ema_slow\", \"short\": null}, \"risk\": {\"stop_loss\": -0.05, \"max_position_pct\": 0.3, \"max_drawdown\": 0.15}, \"constraints\": {\"t_plus_one\": true, \"price_limit\": 0.1, \"allow_short\": false, \"lot_size\": 100}}",
       "pre_repair_dsl": {
         "strategy": {
-          "name": "CN_ema_trend_20_50_0068",
+          "name": "CN_ema_trend_20_50_0086",
           "market": {
             "exchange": "cn_stock",
             "instrument": "159915.SZ",
@@ -2234,7 +2234,7 @@
       },
       "post_repair_dsl": {
         "strategy": {
-          "name": "CN_ema_trend_20_50_0068",
+          "name": "CN_ema_trend_20_50_0086",
           "market": {
             "exchange": "cn_stock",
             "instrument": "159915.SZ",
@@ -2301,12 +2301,12 @@
       "periods": [
         14
       ],
-      "latency_ms": 7901.04,
+      "latency_ms": 7932.15,
       "retry_count": 0,
-      "raw_output": "strategy: {\"name\": \"CN_rsi_mean_reversion_0384\", \"market\": {\"exchange\": \"cn_stock\", \"instrument\": \"159915.SZ\", \"timeframe\": \"30m\"}, \"indicators\": [{\"name\": \"rsi\", \"type\": \"RSI\", \"params\": {\"period\": 14}}, {\"name\": \"rsi_ma\", \"type\": \"SMA\", \"params\": {\"period\": 20, \"field\": \"rsi\"}}], \"entry\": {\"long\": \"rsi < rsi_ma - 10\", \"short\": null}, \"exit\": {\"long\": \"rsi > rsi_ma + 10\", \"short\": null}, \"risk\": {\"stop_loss\": -0.03, \"max_position_pct\": 0.15, \"max_drawdown\": 0.15}, \"constraints\": {\"t_plus_one\": true, \"price_limit\": 0.1, \"allow_short\": false, \"lot_size\": 10000}}",
+      "raw_output": "strategy: {\"name\": \"CN_rsi_mean_reversion_0368\", \"market\": {\"exchange\": \"cn_stock\", \"instrument\": \"159915.SZ\", \"timeframe\": \"30m\"}, \"indicators\": [{\"name\": \"rsi\", \"type\": \"RSI\", \"params\": {\"period\": 14}}, {\"name\": \"rsi_ma\", \"type\": \"SMA\", \"params\": {\"period\": 20, \"field\": \"rsi\"}}], \"entry\": {\"long\": \"rsi < rsi_ma - 10\", \"short\": null}, \"exit\": {\"long\": \"rsi > rsi_ma + 10\", \"short\": null}, \"risk\": {\"stop_loss\": -0.03, \"max_position_pct\": 0.15, \"max_drawdown\": 0.15}, \"constraints\": {\"t_plus_one\": true, \"price_limit\": 0.1, \"allow_short\": false, \"lot_size\": 10000}}",
       "pre_repair_dsl": {
         "strategy": {
-          "name": "CN_rsi_mean_reversion_0384",
+          "name": "CN_rsi_mean_reversion_0368",
           "market": {
             "exchange": "cn_stock",
             "instrument": "159915.SZ",
@@ -2352,7 +2352,7 @@
       },
       "post_repair_dsl": {
         "strategy": {
-          "name": "CN_rsi_mean_reversion_0384",
+          "name": "CN_rsi_mean_reversion_0368",
           "market": {
             "exchange": "cn_stock",
             "instrument": "159915.SZ",
@@ -2426,9 +2426,9 @@
       "periods": [
         20
       ],
-      "latency_ms": 8392.82,
+      "latency_ms": 8878.27,
       "retry_count": 0,
-      "raw_output": "strategy: {\"name\": \"BollingerBandsReversal_20_200\", \"market\": {\"exchange\": \"cn_stock\", \"instrument\": \"159915.SZ\", \"timeframe\": \"1d\"}, \"indicators\": [{\"name\": \"bb_bbm\", \"type\": \"BollingerBands\", \"params\": {\"period\": 20, \"std_dev\": 2}}, {\"name\": \"ema_fast\", \"type\": \"EMA\", \"params\": {\"period\": 20, \"field\": \"close\"}}], \"entry\": {\"long\": \"close < bb_bbm - 2.0 * bb_std\", \"short\": null}, \"exit\": {\"long\": \"close > bb_bbm + 2.0 * bb_std\", \"short\": null}, \"risk\": {\"stop_loss\": -0.05, \"max_position_pct\": 0.2, \"max_drawdown\": 0.15}, \"constraints\": {\"t_plus_one\": true, \"price_limit\": 0.1, \"allow_short\": false, \"lot_size\": 100}}",
+      "raw_output": "strategy: {\"name\": \"BollingerBandsReversal_20_200\", \"market\": {\"exchange\": \"cn_stock\", \"instrument\": \"159915.SZ\", \"timeframe\": \"1d\"}, \"indicators\": [{\"name\": \"bb_bbm\", \"type\": \"BollingerBands\", \"params\": {\"period\": 20, \"std_dev\": 2}}, {\"name\": \"ema_fast\", \"type\": \"EMA\", \"params\": {\"period\": 20, \"field\": \"close\"}}], \"entry\": {\"long\": \"close < bb_bbm - 2.0 * bb_stddev AND close > ema_fast\", \"short\": null}, \"exit\": {\"long\": \"close > bb_bbm + 2.0 * bb_stddev OR close < ema_fast\", \"short\": null}, \"risk\": {\"stop_loss\": -0.03, \"max_position_pct\": 0.2, \"max_drawdown\": 0.15}, \"constraints\": {\"t_plus_one\": true, \"price_limit\": 0.1, \"allow_short\": false, \"lot_size\": 100}}",
       "pre_repair_dsl": {
         "strategy": {
           "name": "BollingerBandsReversal_20_200",
@@ -2456,15 +2456,15 @@
             }
           ],
           "entry": {
-            "long": "close < bb_bbm - 2.0 * bb_std",
+            "long": "close < bb_bbm - 2.0 * bb_stddev AND close > ema_fast",
             "short": null
           },
           "exit": {
-            "long": "close > bb_bbm + 2.0 * bb_std",
+            "long": "close > bb_bbm + 2.0 * bb_stddev OR close < ema_fast",
             "short": null
           },
           "risk": {
-            "stop_loss": -0.05,
+            "stop_loss": -0.03,
             "max_position_pct": 0.2,
             "max_drawdown": 0.15
           },
@@ -2503,15 +2503,15 @@
             }
           ],
           "entry": {
-            "long": "close < bb_bbm - 2.0 * bb_std",
+            "long": "close < bb_bbm - 2.0 * bb_stddev AND close > ema_fast",
             "short": null
           },
           "exit": {
-            "long": "close > bb_bbm + 2.0 * bb_std",
+            "long": "close > bb_bbm + 2.0 * bb_stddev OR close < ema_fast",
             "short": null
           },
           "risk": {
-            "stop_loss": -0.05,
+            "stop_loss": -0.03,
             "max_position_pct": 0.2,
             "max_drawdown": 0.15
           },
@@ -2547,7 +2547,7 @@
         26,
         9
       ],
-      "latency_ms": 8250.49,
+      "latency_ms": 8305.62,
       "retry_count": 0,
       "raw_output": "strategy: {\"name\": \"CN_macd_trend_12_26_0987\", \"market\": {\"exchange\": \"cn_stock\", \"instrument\": \"159915.SZ\", \"timeframe\": \"1d\"}, \"indicators\": [{\"name\": \"macd\", \"type\": \"MACD\", \"params\": {\"fast_period\": 12, \"slow_period\": 26, \"signal_period\": 9}}, {\"name\": \"ema_fast\", \"type\": \"EMA\", \"params\": {\"period\": 20, \"field\": \"close\"}}], \"entry\": {\"long\": \"macd > 0 AND close < ema_fast\", \"short\": null}, \"exit\": {\"long\": \"macd < 0\", \"short\": null}, \"risk\": {\"stop_loss\": -0.05, \"max_position_pct\": 0.3, \"max_drawdown\": 0.15}, \"constraints\": {\"t_plus_one\": true, \"price_limit\": 0.1, \"allow_short\": false, \"lot_size\": 100}}",
       "pre_repair_dsl": {
@@ -2669,12 +2669,12 @@
         9,
         21
       ],
-      "latency_ms": 7663.76,
+      "latency_ms": 7670.92,
       "retry_count": 0,
-      "raw_output": "strategy: {\"name\": \"ema_cross_9_21_0284\", \"market\": {\"exchange\": \"cn_stock\", \"instrument\": \"159915.SZ\", \"timeframe\": \"30m\"}, \"indicators\": [{\"name\": \"ema_fast\", \"type\": \"EMA\", \"params\": {\"period\": 9, \"field\": \"close\"}}, {\"name\": \"ema_slow\", \"type\": \"EMA\", \"params\": {\"period\": 21, \"field\": \"close\"}}], \"entry\": {\"long\": \"ema_fast > ema_slow\", \"short\": null}, \"exit\": {\"long\": \"ema_fast < ema_slow\", \"short\": null}, \"risk\": {\"stop_loss\": -0.03, \"max_position_pct\": 0.15, \"max_drawdown\": 0.15}, \"constraints\": {\"t_plus_one\": true, \"price_limit\": 0.1, \"allow_short\": false, \"lot_size\": 100}}",
+      "raw_output": "strategy: {\"name\": \"ema_cross_9_21_0068\", \"market\": {\"exchange\": \"cn_stock\", \"instrument\": \"159915.SZ\", \"timeframe\": \"30m\"}, \"indicators\": [{\"name\": \"ema_fast\", \"type\": \"EMA\", \"params\": {\"period\": 9, \"field\": \"close\"}}, {\"name\": \"ema_slow\", \"type\": \"EMA\", \"params\": {\"period\": 21, \"field\": \"close\"}}], \"entry\": {\"long\": \"ema_fast > ema_slow\", \"short\": null}, \"exit\": {\"long\": \"ema_fast < ema_slow\", \"short\": null}, \"risk\": {\"stop_loss\": -0.03, \"max_position_pct\": 0.15, \"max_drawdown\": 0.15}, \"constraints\": {\"t_plus_one\": true, \"price_limit\": 0.1, \"allow_short\": false, \"lot_size\": 100}}",
       "pre_repair_dsl": {
         "strategy": {
-          "name": "ema_cross_9_21_0284",
+          "name": "ema_cross_9_21_0068",
           "market": {
             "exchange": "cn_stock",
             "instrument": "159915.SZ",
@@ -2721,7 +2721,7 @@
       },
       "post_repair_dsl": {
         "strategy": {
-          "name": "ema_cross_9_21_0284",
+          "name": "ema_cross_9_21_0068",
           "market": {
             "exchange": "cn_stock",
             "instrument": "159915.SZ",
@@ -2790,12 +2790,12 @@
         20,
         50
       ],
-      "latency_ms": 7597.2,
+      "latency_ms": 11351.67,
       "retry_count": 0,
-      "raw_output": "strategy: {\"name\": \"CN_ema_adx_strategy_0078\", \"market\": {\"exchange\": \"cn_stock\", \"instrument\": \"159915.SZ\", \"timeframe\": \"1d\"}, \"indicators\": [{\"name\": \"ema_fast\", \"type\": \"EMA\", \"params\": {\"period\": 20, \"field\": \"close\"}}, {\"name\": \"adx\", \"type\": \"ADX\", \"params\": {\"period\": 14}}], \"entry\": {\"long\": \"ema_fast > ema_slow AND adx > 25\", \"short\": null}, \"exit\": {\"long\": \"ema_fast < ema_slow\", \"short\": null}, \"risk\": {\"stop_loss\": -0.05, \"max_position_pct\": 0.3, \"max_drawdown\": 0.15}, \"constraints\": {\"t_plus_one\": true, \"price_limit\": 0.1, \"allow_short\": false, \"lot_size\": 100}}",
+      "raw_output": "strategy\n{\n  \"name\": \"cn_ema_adx_strategy_0486\",\n  \"market\": {\n    \"exchange\": \"cn_stock\",\n    \"instrument\": \"159915.SZ\",\n    \"timeframe\": \"1d\"\n  },\n  \"indicators\": [\n    {\n      \"name\": \"ema_fast\",\n      \"type\": \"EMA\",\n      \"params\": {\n        \"period\": 20,\n        \"field\": \"close\"\n      }\n    },\n    {\n      \"name\": \"ema_slow\",\n      \"type\": \"EMA\",\n      \"params\": {\n        \"period\": 50,\n        \"field\": \"close\"\n      }\n    },\n    {\n      \"name\": \"adx\",\n      \"type\": \"ADX\",\n      \"params\": {\n        \"period\": 14\n      }\n    }\n  ],\n  \"entry\": {\n    \"long\": \"ema_fast > ema_slow AND adx > 25\",\n    \"short\": null\n  },\n  \"exit\": {\n    \"long\": \"ema_fast < ema_slow\",\n    \"short\": null\n  },\n  \"risk\": {\n    \"stop_loss\": -0.05,\n    \"max_position_pct\": 0.3,\n    \"max_drawdown\": 0.15\n  },\n  \"constraints\": {\n    \"t_plus_one\": true,\n    \"price_limit\": 0.1,\n    \"allow_short\": false,\n    \"lot_size\": 100\n  }\n}",
       "pre_repair_dsl": {
         "strategy": {
-          "name": "CN_ema_adx_strategy_0078",
+          "name": "cn_ema_adx_strategy_0486",
           "market": {
             "exchange": "cn_stock",
             "instrument": "159915.SZ",
@@ -2807,6 +2807,14 @@
               "type": "EMA",
               "params": {
                 "period": 20,
+                "field": "close"
+              }
+            },
+            {
+              "name": "ema_slow",
+              "type": "EMA",
+              "params": {
+                "period": 50,
                 "field": "close"
               }
             },
@@ -2841,7 +2849,7 @@
       },
       "post_repair_dsl": {
         "strategy": {
-          "name": "CN_ema_adx_strategy_0078",
+          "name": "cn_ema_adx_strategy_0486",
           "market": {
             "exchange": "cn_stock",
             "instrument": "159915.SZ",
@@ -2853,6 +2861,14 @@
               "type": "EMA",
               "params": {
                 "period": 20,
+                "field": "close"
+              }
+            },
+            {
+              "name": "ema_slow",
+              "type": "EMA",
+              "params": {
+                "period": 50,
                 "field": "close"
               }
             },
