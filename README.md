@@ -15,6 +15,21 @@ The assistant answers ordinary questions, retrieves knowledge, generates a const
 
 This is not a live trading system. Demo backtests use deterministic synthetic historical data unless a public data adapter is explicitly enabled.
 
+## Track 2 submission alignment (official requirements)
+
+This repository is the complete **Track 2 — Development & Local Deployment of Private AI Agents** submission. It satisfies every item in the official checklist (all materials in English):
+
+| # | Official requirement | Where it lives in this repo |
+|---|---|---|
+| 1 | **Project Specification Document** — application scenarios, agent architecture diagram, core capabilities, model introduction & local-deployment plan, AMD ROCm inference-speed optimization | [`output/pdf/AMD_Quant_Assistant_Project_Specification.pdf`](./output/pdf/AMD_Quant_Assistant_Project_Specification.pdf); architecture diagram and AMD optimization also in this README (`## Architecture`, `## Why AMD is part of the solution`) |
+| 2 | **Project Source Code + README** — full repo with environment config, startup guide, and dependency list | entire repository; this README (`## Reproduce on an AMD ROCm machine`, `## Repository layout`) |
+| 3 | **Demo Video** — 3–5 min, real run on AMD Radeon GPU from CLI/GUI to final result | [`output/video/track2_demo_1080p_ava.mp4`](./output/video/track2_demo_1080p_ava.mp4) — 4 min 23 s, English narration (Microsoft Ava neural voice) |
+| 4 | **Supplementary material** (PPT / Poster, choose one) | _Optional — a poster/PPT can be added before the Aug 6, 2026 deadline._ |
+
+Agent capabilities demonstrated (Track 2 judging: reasoning, planning, tool use, memory, task execution): see `## What the evaluator can verify`. Local AMD ROCm inference is the core requirement and is evidenced end-to-end in `## Verified results` and `docs/technical_report.md`.
+
+Suggested PR title: `Track 2, <your name / team name>, AMD ROCm Local Quantitative Investment Assistant`.
+
 ## One-line pitch
 
 **A private, AMD-local investment copilot that turns an everyday question into a traceable answer, a validated strategy, a reproducible backtest, and an independent risk decision.**
@@ -309,7 +324,7 @@ tests/              Agent, RAG, DSL, memory, reward, and integration tests
 ## Documentation
 
 - [English narrated 1080p demo video — Microsoft Ava neural voice](./output/video/track2_demo_1080p_ava.mp4)
-- [Live project showcase](https://61a41b94d2884d3c8a0e5cdea2f8f218.bj6.agentos-app.net)
+- [Live project showcase (preview — landing page refresh pending)](https://61a41b94d2884d3c8a0e5cdea2f8f218.bj6.agentos-app.net)
 - [Showcase source](./landing/index.html)
 - [English project specification (PDF)](./output/pdf/AMD_Quant_Assistant_Project_Specification.pdf)
 - [Final AMD validation manifest](./artifacts/submission_validation_20260802.json)
