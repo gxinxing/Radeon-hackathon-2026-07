@@ -382,8 +382,6 @@ This is the shortest path for a reviewer to see the value rather than browse the
 6. Show the independent risk verdict and the source/timestamp/limitations in the final report.
 7. Open the Dify workflow to show that it orchestrates the same local components.
 
-The self-contained HTML demonstration is [`demos/dify_workflow_demo.html`](./demos/dify_workflow_demo.html). The corresponding metrics and run manifests are in [`artifacts/`](./artifacts/).
-
 ## Model assets
 
 Large model weights are intentionally excluded from GitHub. The repository contains training scripts, configuration, checksums, and reproducibility instructions. Place the merged model under `models/` or configure the vLLM model path through the environment before starting the service.
