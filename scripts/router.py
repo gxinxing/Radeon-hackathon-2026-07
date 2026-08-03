@@ -72,9 +72,22 @@ async def _forward(client, url, headers, body, stream, extra_headers=None):
     r = await client.send(req, stream=stream)
     if stream:
         async def gen():
-            async for line in r.aiter_lines():
-                if line:
-                    yield line + "\n"
+            try:
+                async for line in r.aiter_lines():
+                    if line:
+                        yield line + "\n"
+            except Exception as e:
+                # upstream stream interrupted (e.g. vLLM closed connection) —
+                # emit an SSE error event so the response stays well-formed
+                # chunked and clients don't see "payload not completed".
+                err_payload = {"error": {"message": f"upstream stream interrupted: {e.__class__.__name__}: {str(e)[:120]}", "type": "upstream_error"}}
+                yield "data: " + json.dumps(err_payload, ensure_ascii=False) + "\n\n"
+                yield "data: [DONE]\n\n"
+            finally:
+                try:
+                    await r.aclose()
+                except Exception:
+                    pass
 
         return StreamingResponse(
             gen(), media_type="text/event-stream",
