@@ -65,6 +65,23 @@ flowchart LR
     H --> I[可审计报告]
 ```
 
+## 一键可复现 Demo（无需 GPU）
+
+最快看到完整管线运行的方式——**无需 AMD GPU、无需模型权重、无需联网、不涉及真实资金**：
+
+```bash
+pip install -r requirements.txt
+python demos/run_track2_demo.py
+```
+
+在进程内跑通完整流程（确定性合成数据）：自然语言 → 策略 DSL → 规范化 → 校验 → Freqtrade/Backtrader 转译 → 180 天回测 → 独立风险报告（APPROVE / MODIFY / REJECT），结果可复现。
+
+在有本地 vLLM 的 AMD ROCm 机器上，同一脚本会自动用真实模型生成 DSL：
+
+```bash
+VLLM=http://127.0.0.1:8000/v1 MODEL=models/qwen-trader-merged python demos/run_track2_demo.py
+```
+
 ## 快速开始
 
 ```bash

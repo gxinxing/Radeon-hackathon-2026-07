@@ -114,7 +114,26 @@ This repository is the complete **Track 2 — Development & Local Deployment of 
 | # | Official requirement | Where it lives in this repo |
 |---|---|---|
 | 1 | **Project Specification Document** — application scenarios, agent architecture diagram, core capabilities, model introduction & local-deployment plan, AMD ROCm inference-speed optimization | [`output/pdf/AMD_Quant_Assistant_Project_Specification.pdf`](./output/pdf/AMD_Quant_Assistant_Project_Specification.pdf); architecture diagram and AMD optimization also in this README (`## Architecture`, `## Why AMD is part of the solution`) |
-| 2 | **Project Source Code + README** — full repo with environment config, startup guide, and dependency list | entire repository; this README (`## Reproduce on an AMD ROCm machine`, `## Repository layout`) |
+| 2 | **Project Source Code + README** — full repo with environment config, startup guide, and dependency list | entire repository; this README (`## One-command reproducible demo (no GPU required)
+
+The fastest way to see the full pipeline running — **no AMD GPU, no model weights, no network, no real funds**:
+
+```bash
+pip install -r requirements.txt
+python demos/run_track2_demo.py
+```
+
+It runs the complete pipeline in-process on **deterministic synthetic OHLCV data**:
+natural language → strategy DSL → canonicalization → schema validation → Freqtrade/Backtrader transpilation → 180-day backtest → independent risk report (APPROVE / MODIFY / REJECT).
+Every run is reproducible (seeded data), and the risk agent's veto semantics are demonstrated live.
+
+On an AMD ROCm machine with the local vLLM model running, the same script automatically uses the real model for DSL generation instead of the built-in templates:
+
+```bash
+VLLM=http://127.0.0.1:8000/v1 MODEL=models/qwen-trader-merged python demos/run_track2_demo.py
+```
+
+## Reproduce on an AMD ROCm machine`, `## Repository layout`) |
 | 3 | **Demo Video** — 3–5 min, real run on AMD Radeon GPU from CLI/GUI to final result | [`output/video/track2_demo_1080p_ava.mp4`](./output/video/track2_demo_1080p_ava.mp4) — 4 min 23 s, English narration (Microsoft Ava neural voice) |
 | 4 | **Supplementary material** (PPT / Poster, choose one) | _Optional — a poster/PPT can be added before the Aug 6, 2026 deadline._ |
 
