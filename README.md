@@ -107,6 +107,25 @@ The assistant answers ordinary questions, retrieves knowledge, generates a const
 
 This is not a live trading system. Demo backtests use deterministic synthetic historical data unless a public data adapter is explicitly enabled.
 
+## Live demo
+
+Try the running system — inference on an AMD Radeon GPU (ROCm 7.2.1), local Qwen2.5-7B + LoRA served by vLLM:
+
+- **Showcase site**: [AutoQuant landing](https://61a41b94d2884d3c8a0e5cdea2f8f218.bj6.agentos-app.net)
+- **Chat interface**: [Open WebUI](https://minimize-orders-excel-saving.trycloudflare.com) — register or sign in, then select model `models/qwen-trader-merged`
+
+![Landing](docs/screenshots/landing.png)
+
+| Sign in / register | Chat with the local model |
+|---|---|
+| ![Open WebUI login](docs/screenshots/webui_login.png) | ![Open WebUI chat](docs/screenshots/webui_chat.png) |
+
+![Open WebUI conversation](docs/screenshots/webui_chat_reply.png)
+
+**Demo video** (4 min 23 s, English narration, real run on an AMD Radeon GPU):
+
+<video src="output/video/track2_demo_1080p_ava.mp4" controls></video>
+
 ## Track 2 submission alignment (official requirements)
 
 This repository is the complete **Track 2 — Development & Local Deployment of Private AI Agents** submission. It satisfies every item in the official checklist (all materials in English):
