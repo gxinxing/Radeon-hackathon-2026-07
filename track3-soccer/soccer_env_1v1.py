@@ -62,9 +62,7 @@ class SoccerEnv1v1(SoccerEnvHierarchical):
                 # Add opponent robot before building
                 robot_path = self.cfg["robot_urdf"]
                 if not os.path.isabs(robot_path):
-                    from envs.soccer_env import _genesis_asset
-                    ga = _genesis_asset(robot_path)
-                    robot_path = ga if os.path.exists(ga) else os.path.abspath(robot_path)
+                    robot_path = os.path.abspath(robot_path)
 
                 opp_pos = list(self.opponent_init_pos)
                 self.opponent = self_scene.add_entity(

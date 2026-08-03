@@ -31,8 +31,8 @@ sync_from_remote.sh
 *.mp4
 *.tar.gz
 *.gif
-demos/*.gif
-models/pretrained/
+track3-soccer/demos/*.gif
+track3-soccer/models/pretrained/
 
 # IDE / Agent
 .vscode/
@@ -55,11 +55,12 @@ Thumbs.db
 demo/
 
 # Large mesh files
-amd-physical-ai-soccer/assets/t1/meshes/
+track3-soccer/amd-physical-ai-soccer/assets/t1/meshes/
 
 # Track 3 match logs
-match_logs/match_20260731_004742.json
-match_logs/match_20260731_032656.json
+track3-soccer/match_logs/match_20260731_004742.json
+track3-soccer/match_logs/match_20260731_032656.json
 
 # Track 2 Dify source (large, not authored)
 track2-agentic-ai/dify/dify-src/
+.DS_Store

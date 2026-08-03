@@ -1,0 +1,222 @@
+{
+  "generated_at": "2026-08-01T13:40:00Z",
+  "remote_host": "root@***REMOVED***:31036",
+  "remote_base": "/persistent/track3",
+  "code_base": "/workspace/radeon-repo",
+  "models": {
+    "base_t1_walk": {
+      "path": "/persistent/track3/models/base/t1_walk.pt",
+      "size_bytes": 2166975,
+      "sha256": "ef1d61e19082b83405f4320a08f4cfc2d7d7f003ed3790dab013778ba442dec7",
+      "type": "torchscript_frozen_walk",
+      "input_dim": 720,
+      "output_dim": 21,
+      "description": "Frozen low-level walking model (booster_deploy T1 locomotion)"
+    },
+    "checkpoint_best": {
+      "path": "/persistent/track3/models/checkpoints/best.pt",
+      "size_bytes": 1134699,
+      "sha256": "76d713f8ae121d2669502fd2a29289144fea1e9b92f9a1e0f80a3cfed63130da",
+      "type": "rsl_rl_ppo_high_level",
+      "input_dim": 19,
+      "output_dim": 3,
+      "source_run": "hierarchical_soccer_chase_hl (inferred from size and cfgs.pkl)"
+    },
+    "checkpoint_model_400": {
+      "path": "/persistent/track3/models/checkpoints/model_400.pt",
+      "size_bytes": 1134699,
+      "sha256": "e405dc21f50c9de3c87623b570dfe6fceb14a55ddfe8b10201425b95a9ee7060",
+      "type": "rsl_rl_ppo_high_level",
+      "input_dim": 19,
+      "output_dim": 3
+    },
+    "checkpoint_model_450": {
+      "path": "/persistent/track3/models/checkpoints/model_450.pt",
+      "size_bytes": 1134699,
+      "sha256": "cc3f1caec2c11228d210fa83b3c50f171f1916c981e13a6bc23fc48f540c33cc",
+      "type": "rsl_rl_ppo_high_level",
+      "input_dim": 19,
+      "output_dim": 3
+    },
+    "onnx_chase_v6": {
+      "path": "/persistent/track3/models/onnx/chase_v6_policy.onnx",
+      "size_bytes": 187166,
+      "sha256": "692efebf3c146798664d078143e1b5ff180e1ca957cb8a9c9febc6584420fb91",
+      "type": "onnx_high_level",
+      "input_dim": 19,
+      "output_dim": 3,
+      "input_shape": ["batch", 19],
+      "output_shape": ["batch", 3]
+    },
+    "onnx_chase_v7": {
+      "path": "/persistent/track3/models/onnx/chase_v7_policy.onnx",
+      "size_bytes": 187178,
+      "sha256": "06dd0c69102275a00e8c665fc8d31d161351dbddc00d7b5d6757bec938c0e136",
+      "type": "onnx_high_level",
+      "input_dim": 19,
+      "output_dim": 3,
+      "input_shape": ["batch", 19],
+      "output_shape": ["batch", 3]
+    },
+    "onnx_chase_v8": {
+      "path": "/persistent/track3/models/onnx/chase_v8_policy.onnx",
+      "size_bytes": 186776,
+      "sha256": "6d7ce9121116663eaca7d14ab7d845d6f951a9c5c55521d88483f0e6d7c3fab5",
+      "type": "onnx_high_level",
+      "input_dim": 19,
+      "output_dim": 3,
+      "input_shape": [1, 19],
+      "output_shape": [1, 3],
+      "note": "v8 has fixed batch dimension (1) unlike v6/v7 which use dynamic batch"
+    },
+    "onnx_chase_v8_data": {
+      "path": "/persistent/track3/models/onnx/chase_v8_policy.onnx.data",
+      "size_bytes": 185600,
+      "sha256": "not_computed_external_data",
+      "note": "External data file for chase_v8 ONNX model"
+    }
+  },
+  "training_configs": {
+    "cfgs_pkl_source": "/persistent/track3/models/checkpoints/cfgs.pkl",
+    "task": "chase_hl",
+    "robot_urdf": "urdf/t1/t1.urdf",
+    "env": {
+      "dt": 0.02,
+      "substeps": 10,
+      "episode_length_s": 24.0,
+      "action_scale": 0.25,
+      "clip_actions": 100.0,
+      "simulate_action_latency": true,
+      "ball_radius": 0.11,
+      "field": [14.0, 9.0],
+      "goal_width": 2.6,
+      "circle_radius": 1.5,
+      "fall_height": 0.8,
+      "termination_pitch_deg": 30,
+      "termination_roll_deg": 30,
+      "base_init_pos": [0.0, 0.0, 0.6],
+      "base_init_quat": [1.0, 0.0, 0.0, 0.0],
+      "hl_clip_lin": 1.2,
+      "hl_clip_ang": 1.2,
+      "multiagent_obs": false
+    },
+    "obs_scales": {
+      "lin_vel": 2.0,
+      "ang_vel": 0.25,
+      "dof_pos": 1.0,
+      "dof_vel": 0.05,
+      "gravity": 1.0,
+      "command": 1.0,
+      "height": 5.0
+    },
+    "high_level": {
+      "decimation": 5,
+      "walk_model_path": "/workspace/booster_deploy/tasks/locomotion/models/t1_walk.pt",
+      "action_clip": 1.0
+    },
+    "train": {
+      "algorithm": "PPO",
+      "actor_hidden_dims": [256, 128, 64],
+      "critic_hidden_dims": [256, 128, 64],
+      "activation": "elu",
+      "learning_rate": 0.001,
+      "max_iterations": 500,
+      "save_interval": 50,
+      "seed": 42
+    }
+  },
+  "observation": {
+    "dim": 19,
+    "layout": [
+      "filtered_lin_vel(3)",
+      "filtered_ang_vel(3)",
+      "projected_gravity_xy(2)",
+      "ball_rel_body_xy(2)",
+      "ball_vel_body_xy(2)",
+      "dist_to_ball(1)",
+      "goal_dir_body_xy(2)",
+      "goal_dist(1)",
+      "last_hl_actions(3)"
+    ]
+  },
+  "action": {
+    "dim": 3,
+    "layout": ["vx", "vy", "wz"],
+    "clip_lin": 1.2,
+    "clip_ang": 1.2,
+    "scale": "raw velocity command (not scaled, clipped to [-clip_lin, clip_lin] / [-clip_ang, clip_ang])"
+  },
+  "pd_gains": {
+    "kp": 200.0,
+    "kd": 5.0,
+    "note": "Applied by low-level frozen walk model, not directly by high-level policy"
+  },
+  "simulation": {
+    "physics_dt": 0.002,
+    "control_dt": 0.02,
+    "substeps": 10,
+    "hl_decimation": 5,
+    "hl_dt": 0.1,
+    "render_fps": 30,
+    "seed": 42,
+    "num_robots_3v3": 6,
+    "team_size": 3,
+    "scene_type": "3v3_soccer"
+  },
+  "training_runs": {
+    "hierarchical_soccer_chase_hl": {
+      "path": "/workspace/radeon-repo/runs/hierarchical_soccer_chase_hl",
+      "checkpoints": ["model_0.pt", "model_49.pt"],
+      "status": "INCOMPLETE - only 2 checkpoints saved (expected 0-499 with save_interval=50)",
+      "max_iteration_logged": 499,
+      "final_reward": 93.07
+    },
+    "hierarchical_soccer_coop_hl": {
+      "path": "/workspace/radeon-repo/runs/hierarchical_soccer_coop_hl",
+      "checkpoints": ["model_0.pt", "model_50.pt", "model_100.pt", "model_150.pt", "model_200.pt", "model_250.pt", "model_300.pt", "model_350.pt", "model_400.pt", "model_450.pt", "model_499.pt"],
+      "status": "COMPLETE - full 500 iterations"
+    },
+    "curriculum_p1": {
+      "path": "/workspace/radeon-repo/runs/curriculum_p1",
+      "checkpoints": ["model_0.pt", "model_50.pt", "model_100.pt", "model_150.pt", "model_199.pt"],
+      "iterations": "0-199"
+    },
+    "curriculum_p2": {
+      "path": "/workspace/radeon-repo/runs/curriculum_p2",
+      "checkpoints": ["model_200.pt", "model_250.pt", "model_300.pt", "model_350.pt", "model_400.pt", "model_448.pt"],
+      "iterations": "200-448"
+    },
+    "curriculum_p3": {
+      "path": "/workspace/radeon-repo/runs/curriculum_p3",
+      "checkpoints": ["model_450.pt", "model_500.pt", "model_550.pt", "model_600.pt", "model_650.pt", "model_697.pt"],
+      "iterations": "450-697"
+    },
+    "curriculum_p4": {
+      "path": "/workspace/radeon-repo/runs/curriculum_p4",
+      "checkpoints": ["model_700.pt", "model_750.pt", "model_800.pt", "model_850.pt", "model_900.pt", "model_950.pt", "model_996.pt"],
+      "iterations": "700-996",
+      "status": "LATEST - most trained checkpoint available"
+    }
+  },
+  "videos": {
+    "persistent_demo": {
+      "path": "/persistent/track3/demo/hierarchical_chase_hl.mp4",
+      "size_bytes": 58163,
+      "status": "Single-robot demo, NOT 3v3"
+    },
+    "workspace_demos": "/workspace/radeon-repo/demos/",
+    "latest_demos": ["curriculum_v2.mp4", "curriculum_final.mp4", "1v1_demo.mp4"]
+  },
+  "issues_found": [
+    "match_worker.py line 81: from envs.soccer_env_hierarchical import SoccerEnvHierarchical - ModuleNotFoundError (file is at top level, not in envs/ package)",
+    "run_3v3_final.sh references model_499.pt from chase_hl run which only has model_0.pt and model_49.pt",
+    "render_training.py sets task='balance' instead of 'chase_hl' and hardcodes wrong log_dir",
+    "render_all.py hardcodes /workspace/amd-physical-ai-soccer instead of /workspace/radeon-repo",
+    "ONNX export script looks for model_500.pt but training only runs to iteration 499",
+    "Early match logs have n_clients=0 (all workers crashed due to ModuleNotFoundError)",
+    "Later match logs have n_clients=2 (only 2 of 6 workers connected)",
+    "ONNX policy _preprocess_obs sets ang_vel_body=zeros(3) but training env uses filtered_ang_vel",
+    "ONNX policy computes projected_gravity manually, may not match training transform_by_quat convention",
+    "match_evaluator.py is a statistical stub using np.random.poisson, not actual simulation"
+  ]
+}
