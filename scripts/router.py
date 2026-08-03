@@ -132,7 +132,7 @@ async def chat(request: Request):
         body = {**body, "model": DS_MODEL, "messages": msgs}
         headers = {"Content-Type": "application/json", "Authorization": f"Bearer {DS_KEY}"}
         try:
-            async with httpx.AsyncClient(timeout=120) as c:
+            async with httpx.AsyncClient(timeout=45) as c:
                 resp = await _forward(
                     c, f"{DS_BASE.rstrip('/')}/chat/completions", headers, body, stream,
                     extra_headers={"x-router-route": "general"},
