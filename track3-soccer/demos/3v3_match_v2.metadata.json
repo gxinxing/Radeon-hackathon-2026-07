@@ -1,0 +1,33 @@
+{
+  "model_path": "/workspace/radeon-repo/runs/curriculum_p4/model_996.pt",
+  "model_sha256": "4f3d9b2368086eea1795693866021baf19ef296e5fb9041145174bfa03b43a56",
+  "walk_model_path": "/workspace/booster_deploy/tasks/locomotion/models/t1_walk.pt",
+  "env_name": "SoccerEnvCurriculum",
+  "num_robots": 2,
+  "team_size": 1,
+  "left_team": "rl_policy (curriculum_p4, phase=3, kick active)",
+  "right_team": "virtual_opponent (0.5 m/s)",
+  "seed": 42,
+  "config_path": "/workspace/radeon-repo/configs/hierarchical_agent.yaml",
+  "git_commit": "a54cfac62506f43e0c3fe09051adf791dad31faa",
+  "start_time": "2026-08-01T15:27:30Z",
+  "end_time": "2026-08-01T15:29:21Z",
+  "validation_status": "passed",
+  "video_path": "/workspace/radeon-repo/demos/3v3_match_v2.mp4",
+  "video_frames": 750,
+  "video_fps": 30,
+  "total_reward": 225.84941963665187,
+  "goals_scored": 2,
+  "nan_detected": false,
+  "policy_output_stats": {
+    "mean": -0.1695060431957245,
+    "std": 1.7726788520812988,
+    "min": -13.289437294006348,
+    "max": 7.779566287994385
+  },
+  "kick_action_used": true,
+  "obs_dim": 24,
+  "action_dim": 4,
+  "phase": 3,
+  "opponent_speed": 0.5
+}

@@ -1,0 +1,76 @@
+# ── Python ──────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyc
+*.pyo
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+.venv/
+.venv/
+
+# ── Logs ────────────────────────────────
+wandb/
+logs/
+tmp/
+runs/
+*.log
+sync.log
+
+# ── Models (large files) ────────────────
+*.pth
+*.pt
+*.safetensors
+*.onnx
+*.onnx.data
+*.npz
+*.bin
+*.tar.gz
+models/pretrained/
+track3-data/runs/hierarchical_soccer_chase_hl/model_*.pt
+
+# ── Media / Demo ────────────────────────
+*.mp4
+*.gif
+demos/*.gif
+demo/
+demo_video*.mp4
+
+# ── IDE / Agent ─────────────────────────
+.vscode/
+.idea/
+.codely/
+.codely-cli/
+.pytest_cache/
+.ipynb_checkpoints/
+.DS_Store
+Thumbs.db
+
+# ── Specific match logs ─────────────────
+match_logs/match_20260731_004742.json
+match_logs/match_20260731_032656.json
+
+# ── Backups / temp ──────────────────────
+*.bak-*
+*.bak
+*_backup.yaml
+*_kick.yaml
+reports/
+scripts/render_*.py
+scripts/validate_*.py
+patch_worker_kick.sh
+
+# ── Booster repos (cloned, not authored) ─
+booster/
+
+# ── Track2 specifics ────────────────────
+track2-agentic-ai/dify/
+track2-agentic-ai/.venv/
+sync_from_remote.sh
+
+# ── System ──────────────────────────────
+lost+found/
+.oneclick/
+radeon-repo

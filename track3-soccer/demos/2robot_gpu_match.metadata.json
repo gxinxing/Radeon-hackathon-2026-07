@@ -1,0 +1,13 @@
+{
+  "model_path": "/workspace/radeon-repo/runs/soccer_1v1/model_499.pt",
+  "model_sha256": "a2415ac5b4e76023e6aca1ba6c87bc8a5bd54a05c41b213efd310c5780eeb7b2",
+  "env_name": "SoccerEnvHierarchical + manual R2 (GPU)",
+  "num_robots": 2,
+  "backend": "gpu",
+  "seed": 42,
+  "video_frames": 750,
+  "video_fps": 30,
+  "goals_scored": 2,
+  "render_time_s": 122.7,
+  "git_commit": "a54cfac62506f43e0c3fe09051adf791dad31faa"
+}

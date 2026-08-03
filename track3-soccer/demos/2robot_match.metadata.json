@@ -1,0 +1,16 @@
+{
+  "model_path": "/workspace/radeon-repo/runs/soccer_1v1/model_499.pt",
+  "model_sha256": "a2415ac5b4e76023e6aca1ba6c87bc8a5bd54a05c41b213efd310c5780eeb7b2",
+  "env_name": "Custom 2-robot scene (CPU backend)",
+  "num_robots": 2,
+  "left_team": "rl_policy (blue, 21-dim obs, soccer_1v1/model_499.pt)",
+  "right_team": "rule_based (red, chase-ball + kick)",
+  "backend": "cpu",
+  "seed": 42,
+  "video_frames": 750,
+  "video_fps": 30,
+  "goals_scored": 0,
+  "render_time_s": 19.7,
+  "git_commit": "a54cfac62506f43e0c3fe09051adf791dad31faa",
+  "pd_fix": "Used entity-LOCAL dof indices (0-22) instead of GLOBAL for set_dofs_kp"
+}

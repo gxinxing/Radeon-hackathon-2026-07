@@ -1,0 +1,41 @@
+{
+  "model_path": "/persistent/track3/models/checkpoints/best.pt",
+  "model_sha256": "76d713f8ae121d2669502fd2a29289144fea1e9b92f9a1e0f80a3cfed63130da",
+  "env_name": "SoccerEnvHierarchical",
+  "num_robots": 6,
+  "seed": 42,
+  "config_path": "N/A",
+  "git_commit": "a54cfac62506f43e0c3fe09051adf791dad31faa",
+  "start_time": "2026-08-01T14:03:34Z",
+  "end_time": "2026-08-01T14:05:03Z",
+  "validation_status": "passed",
+  "video_path": "/workspace/radeon-repo/demos/verified_match.mp4",
+  "video_frames": 250,
+  "video_fps": 30,
+  "total_reward": 68.821861743927,
+  "nan_detected": false,
+  "policy_output_stats": {
+    "mean": 0.11411309987306595,
+    "std": 0.29705744981765747,
+    "min": -1.3714771270751953,
+    "max": 1.7469851970672607
+  },
+  "robot_stats": {
+    "initial_pos": [
+      0.041809309273958206,
+      -0.00402807118371129,
+      0.9400720000267029
+    ],
+    "final_pos": [
+      -1.6641273498535156,
+      -0.7165930271148682,
+      0.9225034713745117
+    ],
+    "total_displacement": 1.84885835647583,
+    "min_height": 0.5633484721183777,
+    "max_height": 0.9442848563194275
+  },
+  "match_log_path": "/workspace/radeon-repo/demos/verified_match.match_log.json",
+  "match_log_seed": 42,
+  "match_log_model_sha256": "76d713f8ae121d2669502fd2a29289144fea1e9b92f9a1e0f80a3cfed63130da"
+}
