@@ -13,7 +13,7 @@
 - AMD 本地推理：Qwen2.5-7B、FP16 LoRA、ROCm vLLM。
 - 结构化闭环：自然语言 → DSL → 规范化 → 校验 → 回测 → 风险报告。
 - Dify 六节点编排：用户输入、RAG、LLM、代码校验、回测、风险报告。
-- Open WebUI 对话入口：连接同一个 AMD 本地 vLLM 模型，支持自然对话和 Agent 调用。
+- Open WebUI 对话入口：经本地路由代理（`autoquant-assistant`）统一接入——量化请求走本地 AMD vLLM 模型，通用助理请求可走 AMD 云模型；策略 DSL 管线完全本地（ROCm）。
 - 普通问题走通用助理回复，不会被强制转换成策略 DSL。
 
 ## 已验证结果
@@ -70,7 +70,8 @@ flowchart LR
 推理运行在 AMD Radeon GPU（ROCm 7.2.1）上，本地 Qwen2.5-7B + LoRA 由 vLLM 提供服务：
 
 - **展示页**：[AutoQuant landing](https://61a41b94d2884d3c8a0e5cdea2f8f218.bj6.agentos-app.net)
-- **聊天界面**：[Open WebUI](https://minimize-orders-excel-saving.trycloudflare.com) — 注册/登录后选择模型 `models/qwen-trader-merged`
+- **聊天界面**：[Open WebUI](https://minimize-orders-excel-saving.trycloudflare.com) — 注册/登录后使用统一模型 `autoquant-assistant`（自动分流：**量化问题 → 本地策略模型**，**通用问题 → 个人助理**）
+- **个人助理模式**：旅行规划、写作、答疑、生活日常等都能直接自然回答；量化请求自动进入本地策略 DSL 管线
 
 ![Landing](docs/screenshots/landing.png)
 
@@ -79,6 +80,8 @@ flowchart LR
 | ![Open WebUI 登录](docs/screenshots/webui_login.png) | ![Open WebUI 聊天](docs/screenshots/webui_chat.png) |
 
 ![Open WebUI 对话](docs/screenshots/webui_chat_reply.png)
+
+![Open WebUI 通用助理对话](docs/screenshots/webui_general_chat.png)
 
 **演示视频**（4 分 23 秒，英文解说，AMD Radeon GPU 实机运行）：
 

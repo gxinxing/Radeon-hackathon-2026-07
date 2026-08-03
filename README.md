@@ -112,7 +112,8 @@ This is not a live trading system. Demo backtests use deterministic synthetic hi
 Try the running system — inference on an AMD Radeon GPU (ROCm 7.2.1), local Qwen2.5-7B + LoRA served by vLLM:
 
 - **Showcase site**: [AutoQuant landing](https://61a41b94d2884d3c8a0e5cdea2f8f218.bj6.agentos-app.net)
-- **Chat interface**: [Open WebUI](https://minimize-orders-excel-saving.trycloudflare.com) — register or sign in, then select model `models/qwen-trader-merged`
+- **Chat interface**: [Open WebUI](https://minimize-orders-excel-saving.trycloudflare.com) — register or sign in, then chat with model `autoquant-assistant` (one unified entry, auto-routed: **quantitative questions → local strategy model**, **general questions → personal assistant**)
+- **Personal-assistant mode**: ask anything — travel plans, writing, Q&A, daily life — it answers directly like an assistant; quantitative requests are automatically routed into the local strategy DSL pipeline
 
 ![Landing](docs/screenshots/landing.png)
 
@@ -121,6 +122,8 @@ Try the running system — inference on an AMD Radeon GPU (ROCm 7.2.1), local Qw
 | ![Open WebUI login](docs/screenshots/webui_login.png) | ![Open WebUI chat](docs/screenshots/webui_chat.png) |
 
 ![Open WebUI conversation](docs/screenshots/webui_chat_reply.png)
+
+![Open WebUI general assistant chat](docs/screenshots/webui_general_chat.png)
 
 **Demo video** (4 min 23 s, English narration, real run on an AMD Radeon GPU):
 
@@ -350,7 +353,7 @@ vLLM:   http://127.0.0.1:8000/v1
 
 ### Open WebUI connection
 
-Open WebUI is the only public conversational front end used in the demo. Dify remains an internal orchestration and evaluation surface; its chat endpoint is not exposed to public visitors. Open WebUI connects to the same local AMD-hosted vLLM server and does not call an OpenAI cloud model.
+Open WebUI is the only public conversational front end used in the demo. Dify remains an internal orchestration and evaluation surface; its chat endpoint is not exposed to public visitors. Open WebUI connects through a local routing proxy (`autoquant-assistant`): quantitative requests are served by the local AMD-hosted vLLM model, while general personal-assistant requests may use an optional AMD cloud model — the strategy DSL pipeline itself runs fully local on ROCm.
 
 In Open WebUI, add an **OpenAI-compatible connection**:
 
