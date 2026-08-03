@@ -126,6 +126,13 @@ Try the running system — inference on an AMD Radeon GPU (ROCm 7.2.1), local Qw
 
 <video src="output/video/track2_demo_1080p_ava.mp4" controls></video>
 
+**Submission deck & poster:**
+
+- **Deck** (11 pages, PDF): [`output/pdf/track2_submission_ppt.pdf`](./output/pdf/track2_submission_ppt.pdf)
+- **Poster**:
+
+<img src="output/poster/track2_poster_user.png" alt="Track 2 poster" width="520"/>
+
 ## Track 2 submission alignment (official requirements)
 
 This repository is the complete **Track 2 — Development & Local Deployment of Private AI Agents** submission. It satisfies every item in the official checklist (all materials in English):
@@ -154,7 +161,7 @@ VLLM=http://127.0.0.1:8000/v1 MODEL=models/qwen-trader-merged python demos/run_t
 
 ## Reproduce on an AMD ROCm machine`, `## Repository layout`) |
 | 3 | **Demo Video** — 3–5 min, real run on AMD Radeon GPU from CLI/GUI to final result | [`output/video/track2_demo_1080p_ava.mp4`](./output/video/track2_demo_1080p_ava.mp4) — 4 min 23 s, English narration (Microsoft Ava neural voice) |
-| 4 | **Supplementary material** (PPT / Poster, choose one) | _Optional — a poster/PPT can be added before the Aug 6, 2026 deadline._ |
+| 4 | **Supplementary material** (PPT / Poster) | [`output/pdf/track2_submission_ppt.pdf`](./output/pdf/track2_submission_ppt.pdf) — 11-page deck; poster [`output/poster/track2_poster_user.png`](./output/poster/track2_poster_user.png) |
 
 Agent capabilities demonstrated (Track 2 judging: reasoning, planning, tool use, memory, task execution): see `## What the evaluator can verify`. Local AMD ROCm inference is the core requirement and is evidenced end-to-end in `## Verified results` and `docs/technical_report.md`.
 
