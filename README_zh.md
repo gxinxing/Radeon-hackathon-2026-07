@@ -65,6 +65,25 @@ flowchart LR
     H --> I[可审计报告]
 ```
 
+## 在线演示
+
+推理运行在 AMD Radeon GPU（ROCm 7.2.1）上，本地 Qwen2.5-7B + LoRA 由 vLLM 提供服务：
+
+- **展示页**：[AutoQuant landing](https://61a41b94d2884d3c8a0e5cdea2f8f218.bj6.agentos-app.net)
+- **聊天界面**：[Open WebUI](https://minimize-orders-excel-saving.trycloudflare.com) — 注册/登录后选择模型 `models/qwen-trader-merged`
+
+![Landing](docs/screenshots/landing.png)
+
+| 登录 / 注册 | 与本地模型对话 |
+|---|---|
+| ![Open WebUI 登录](docs/screenshots/webui_login.png) | ![Open WebUI 聊天](docs/screenshots/webui_chat.png) |
+
+![Open WebUI 对话](docs/screenshots/webui_chat_reply.png)
+
+**演示视频**（4 分 23 秒，英文解说，AMD Radeon GPU 实机运行）：
+
+<video src="output/video/track2_demo_1080p_ava.mp4" controls></video>
+
 ## 一键可复现 Demo（无需 GPU）
 
 最快看到完整管线运行的方式——**无需 AMD GPU、无需模型权重、无需联网、不涉及真实资金**：
