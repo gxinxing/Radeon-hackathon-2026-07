@@ -69,7 +69,7 @@ self.term_roll = env_cfg.get("termination_roll_deg", 30)
 
 ### Symptom
 The frozen `t1_walk.pt` model produces unstable actions in the hierarchical
-environment, even though it works perfectly in `verify_t1_walk.py`.
+environment, even though it works perfectly in `archive/verify_t1_walk.py`.
 
 ### Root Cause
 `_build_low_level_obs()` updated `obs_history` **before** physics simulation,

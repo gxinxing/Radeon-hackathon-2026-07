@@ -252,7 +252,7 @@ print('rsl_rl OK')
 "
 
 # 验证 t1_walk.pt 能行走 30 秒不摔倒
-/opt/venv/bin/python verify_t1_walk.py
+/opt/venv/bin/python archive/verify_t1_walk.py
 ```
 
 ---
@@ -293,10 +293,10 @@ ls runs/hierarchical_soccer_chase_hl/
 
 ```bash
 # 使用最新检查点渲染 300 步
-/opt/venv/bin/python render_hierarchical.py --steps 300
+/opt/venv/bin/python archive/render_hierarchical.py --steps 300
 
 # 使用指定模型渲染
-/opt/venv/bin/python render_hierarchical.py \
+/opt/venv/bin/python archive/render_hierarchical.py \
     --model runs/hierarchical_soccer_chase_hl/model_500.pt \
     --steps 500
 ```
@@ -328,10 +328,10 @@ python match_1v1_onnx.py --onnx models/chase_v8_policy.onnx --steps 200
 
 ```bash
 # 本地运行对抗评估（规则策略无需 GPU）
-/opt/venv/bin/python scripts/match_eval_3v3.py
+/opt/venv/bin/python archive/scripts/match_eval_3v3.py
 
 # 使用 RL 策略
-/opt/venv/bin/python scripts/match_eval_3v3.py \
+/opt/venv/bin/python archive/scripts/match_eval_3v3.py \
     --checkpoint runs/hierarchical_soccer_chase_hl/model_500.pt
 ```
 
@@ -339,7 +339,7 @@ python match_1v1_onnx.py --onnx models/chase_v8_policy.onnx --steps 200
 
 ```bash
 # 后台启动基准测试收集器
-/opt/venv/bin/python benchmark_collect.py \
+/opt/venv/bin/python archive/benchmark_collect.py \
     --log /tmp/train_output.log \
     --output benchmark/ \
     --interval 5 &
@@ -437,11 +437,11 @@ bash run_3v3.sh runs/hierarchical_soccer_chase_hl/model_1894.pt 25
 ├── soccer_env_hierarchical.py     # 分层环境（高层 + 冻结行走模型）
 ├── soccer_env_v4.py               # 基础足球环境（扁平策略，v4）
 ├── reward.py                      # 奖励函数（平衡/追球/射门课程）
-├── render_hierarchical.py         # 演示视频渲染
-├── verify_t1_walk.py              # 验证 t1_walk.pt 行走 30 秒不摔倒
+├── render_hierarchical.py         # 演示视频渲染（已归档至 archive/）
+├── verify_t1_walk.py              # 验证 t1_walk.pt 行走 30 秒不摔倒（已归档至 archive/）
 ├── export_onnx.py                 # 标准 ONNX 导出
 ├── export_onnx_mlp.py             # 通过原始 MLP 提取导出 ONNX
-├── benchmark_collect.py           # ROCm GPU 基准测试收集器
+├── benchmark_collect.py           # ROCm GPU 基准测试收集器（已归档至 archive/）
 ├── match_coordinator.py           # 分布式比赛协调器（socket 同步）
 ├── match_worker.py                # 分布式比赛 worker（每进程 1 机器人）
 ├── run_1v1.sh                     # 启动 1v1 对抗（2 个 worker）
@@ -469,7 +469,7 @@ bash run_3v3.sh runs/hierarchical_soccer_chase_hl/model_1894.pt 25
 │   └── soccer_env/
 │       └── soccer_scene.py        # Genesis 足球场场景构建器
 ├── scripts/
-│   └── match_eval_3v3.py         # 比赛评估脚本
+│   └── match_eval_3v3.py         # 比赛评估脚本（已归档至 archive/scripts/）
 ├── tests/
 │   └── test_match_contract.py    # 比赛契约测试
 ├── docs/                          # 技术报告和文档

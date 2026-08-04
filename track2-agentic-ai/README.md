@@ -3,7 +3,7 @@
 [![AMD ROCm](https://img.shields.io/badge/AMD-ROCm%207.2-ED1C24?logo=amd&logoColor=white)](https://www.amd.com/en/products/software/rocm.html)
 [![vLLM](https://img.shields.io/badge/vLLM-ROCm-blue)](https://docs.vllm.ai/)
 [![Qwen2.5](https://img.shields.io/badge/Qwen2.5-7B-6E49C8?logo=huggingface&logoColor=white)](https://huggingface.co/Qwen/Qwen2.5-7B-Instruct)
-[![Tests](https://img.shields.io/badge/Tests-229%20passed-brightgreen)](#-tests)
+[![Tests](https://img.shields.io/badge/Tests-282%20passed-brightgreen)](#-tests)
 [![License](https://img.shields.io/badge/License-Hackathon-lightgrey)](#license)
 
 > A full-chain agentic AI trading system for the Chinese domestic securities market.
@@ -169,7 +169,7 @@ bash scripts/verify_e2e.sh
 ```bash
 # Unit tests (offline, no GPU required)
 python3 -m pytest tests/ --ignore=tests/test_e2e.py -q
-# Result: 229 passed
+# Result: 282 passed
 
 # E2E tests (require running vLLM and API)
 python3 -m pytest tests/test_e2e.py -q

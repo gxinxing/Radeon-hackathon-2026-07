@@ -4,7 +4,7 @@
 [![vLLM](https://img.shields.io/badge/vLLM-ROCm-blue)](https://docs.vllm.ai/)
 [![Qwen2.5](https://img.shields.io/badge/Qwen2.5-7B-6E49C8?logo=huggingface&logoColor=white)](https://huggingface.co/Qwen/Qwen2.5-7B-Instruct)
 [![Gradio](https://img.shields.io/badge/Gradio-Chat%20UI-FF7300)](https://gradio.app/)
-[![Tests](https://img.shields.io/badge/Tests-224%20passed-brightgreen)](#-测试)
+[![Tests](https://img.shields.io/badge/Tests-282%20passed-brightgreen)](#-测试)
 [![License](https://img.shields.io/badge/License-Hackathon-lightgrey)](#license)
 
 [English](./README.md) | [中文](./README_zh.md)
@@ -51,7 +51,7 @@
 - **RL奖励系统** — 8维奖励函数 [-1, +1]，三层反馈：即时prompt注入、经验规则提取、DPO训练对生成
 - **多路RAG检索** — 关键词 + BM25 + 稠密向量 + CrossEncoder重排序，置信度门控（得分<0.45强制neutral，防止幻觉）
 - **意图路由 + 人格化** — 交易查询走完整Agent管道；闲聊走"小R"人格化回复
-- **Dify集成** — 单次HTTP调用（`/api/agent/run`）运行完整管道；3节点Chatflow替代12节点手工配置
+- **Dify集成** — 单次HTTP调用（`/api/agent/run`）运行完整管道；6节点Chatflow替代12节点手工配置
 - **100% AMD GPU** — vLLM推理 + LoRA/DPO微调全部在ROCm上运行
 
 ---
@@ -157,7 +157,7 @@
 ④ 最终决策        只有风控Agent通过才可执行
 ```
 
-### 模式3: Dify Chatflow (3节点)
+### 模式3: Dify Chatflow (6节点)
 
 ```
 Start → Tool(runMultiAgent) → End
@@ -309,7 +309,7 @@ track2-agentic-ai/
 │   └── configs/
 ├── dify/
 │   ├── tools/trading_api_openapi.yml  # 7个OpenAPI操作
-│   └── workflows/SETUP_GUIDE.md      # 3节点Dify Chatflow指南
+│   └── workflows/SETUP_GUIDE.md      # 6节点Dify Chatflow指南
 ├── docs/
 │   ├── technical_report.md          # 完整技术报告 (16个创新点)
 │   ├── lora_training_spec.md        # LoRA训练规范 (4类样本, 防幻觉)
@@ -409,7 +409,7 @@ strategy:
 | `test_rag_retrieval.py` | 10 | RAG关键词/别名匹配, 语义安全 |
 | `test_cn_market.py` | 2 | 国内市场回测确定性 |
 | `test_e2e.py` | 3+2 | 端到端管道 (2个async测试需pytest-asyncio) |
-| **总计** | **224通过** | |
+| **总计** | **282通过** | |
 
 ```bash
 # 运行全部测试

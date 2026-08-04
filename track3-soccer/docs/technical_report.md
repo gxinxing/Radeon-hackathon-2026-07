@@ -487,7 +487,7 @@ python train_hierarchical.py --num_envs 256 --max_iterations 100
 
 ```bash
 # Render single-robot demo
-python render_hierarchical.py --steps 300
+python archive/render_hierarchical.py --steps 300
 
 # Export ONNX
 python export_onnx_mlp.py --model runs/.../model_499.pt --output models/chase_v8_policy.onnx
