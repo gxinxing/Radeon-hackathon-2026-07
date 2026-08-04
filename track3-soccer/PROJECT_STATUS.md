@@ -21,6 +21,7 @@
 5. 远端安装 Hermes Agent v0.20.0；AMD endpoint 曾验证 HTTP 200。
 6. 依据 GeneralCompute Quickstart 配置 MiniMax M2.7；Hermes 已执行任务，但尚未产出可交付 fallback 文件。
 7. 核对远端已有历史 demo metadata：`verified_match`、`verified_short`、`3v3_match_v2`；这些是历史证据，不等于当前共享物理验收。
+8. 最新远端 V2 单步门禁：场景可启动并触发 1 次 kick，球速度发生变化，但六机器人第 1 步全部倒地；`status=observed`、`validation_status=failed`、`score=0:0`。问题已收敛到初始姿态/关节映射/物理稳定性。
 
 ## 当前远端状态
 
@@ -28,6 +29,7 @@
 - 可靠执行入口：JupyterLab/Ego；SSH 宿主通道仍不稳定。
 - Hermes 目标配置：GeneralCompute custom provider + `minimax-m2.7`；密钥不写入 Git、报告或视频元数据。
 - 第三个图形桌面方案已取消，不安装 VNC/noVNC/完整桌面。
+- Hermes GeneralCompute 任务已结束（RC 0），但未生成 `FALLBACK_REPORT.md`、可运行 fallback 脚本或 PNG/MP4 证据，不能视为保底完成。
 
 ## 接下来严格按门禁执行
 
