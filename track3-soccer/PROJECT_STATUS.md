@@ -22,6 +22,7 @@
 6. 依据 GeneralCompute Quickstart 配置 MiniMax M2.7；Hermes 已补齐 Genesis Franka 保底报告和远端状态卡。
 7. 核对远端已有历史 demo metadata：`verified_match`、`verified_short`、`3v3_match_v2`；这些是历史证据，不等于当前共享物理验收。
 8. 最新远端 V2 单步门禁：场景可启动并触发 1 次 kick，球速度发生变化，但六机器人第 1 步全部倒地；`status=observed`、`validation_status=failed`、`score=0:0`。问题已收敛到初始姿态/关节映射/物理稳定性。
+9. Hermes V1 稳定性任务已实际运行并完成，但输出失真且未落盘代码、报告或新门禁结果；未合并任何远端猜测性修改。
 
 ## 当前远端状态
 
