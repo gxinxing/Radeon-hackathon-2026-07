@@ -1,0 +1,8 @@
+{
+  "example": "Genesis Franka official-style minimal scene",
+  "status": "passed",
+  "backend": "gpu",
+  "steps": 5,
+  "entities": 2,
+  "source": "remote Radeon <REDACTED>"
+}
