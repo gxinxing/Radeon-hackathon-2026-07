@@ -67,6 +67,4 @@ track2-agentic-ai/dify/dify-src/
 .DS_Store
 
 # Radeon Cloud SSH private key (recovered 2026-08-04 — never commit)
-radeon_ssh/id_ed25519
-radeon_ssh/id_ed25519.pub
-radeon_ssh/backup.log
+radeon_ssh/
