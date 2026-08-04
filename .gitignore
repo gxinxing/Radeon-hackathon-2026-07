@@ -39,6 +39,7 @@ track3-soccer/models/pretrained/
 .idea/
 .codely/
 .codely-cli/
+.omc/
 .pytest_cache/
 .ipynb_checkpoints/
 
