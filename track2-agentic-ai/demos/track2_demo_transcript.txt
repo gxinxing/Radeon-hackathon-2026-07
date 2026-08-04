@@ -1,0 +1,111 @@
+================================================================
+  AMD AI DevMaster Hackathon 2026 — Track 2: Agentic AI
+  Quantitative Trading Agent on AMD Radeon GPU
+  Model: Qwen2.5-7B (LoRA fine-tuned on ROCm)
+================================================================
+
+>>> Step 1: Unit Tests (282 tests, offline)
+----------------------------------------------------------------
+  /Users/simon/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+282 passed, 1 warning in 2.90s
+
+>>> Step 2: Agent Demo — Intent Routing + RAG + Multi-Tool Pipeline
+----------------------------------------------------------------
+/Users/simon/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+==============================================================================
+▶ [策略生成] 帮我写一个双均线策略：5 日上穿 20 日买入，跌破卖出，仓位 30%，止损 5%
+  route=dsl_pipeline  tool=intent_router  mode=route  (0 ms)
+  ┌─ steps 审计轨迹（评委可见的自主规划）
+  │  {"step": "intent", "intent": "strategy_generation", "confidence": 0.98, "hints": ["策略", "均线", "止损", "仓位", "写一个"]}
+  └─
+  ✅ 预期 route=dsl_pipeline
+==============================================================================
+▶ [行情查询] 510300 最新行情怎么样
+  route=external_fallback  tool=market_data  mode=mock  (0 ms)
+  ┌─ steps 审计轨迹（评委可见的自主规划）
+  │  {"step": "intent", "intent": "info_query", "confidence": 0.86, "hints": ["行情"]}
+  │  {"step": "rag", "hit": false, "context_chars": 366}
+  │  {"step": "fallback_external", "reason": "问题需要实时数据，本地知识库无法提供具体数值", "tool": "market_data", "mode": "mock"}
+  └─
+  └─ market_data: source=Deterministic synthetic (mock)  conf=0.4  ttl~02:57:07  rows=30
+  ✅ 预期 route=external_fallback
+==============================================================================
+▶ [公告查询] 510300 最近有什么公告
+  route=external_fallback  tool=announcement  mode=mock  (0 ms)
+  ┌─ steps 审计轨迹（评委可见的自主规划）
+  │  {"step": "intent", "intent": "info_query", "confidence": 0.86, "hints": ["公告"]}
+  │  {"step": "rag", "hit": false, "context_chars": 366}
+  │  {"step": "fallback_external", "reason": "问题需要实时数据，本地知识库无法提供具体数值", "tool": "announcement", "mode": "mock"}
+  └─
+  └─ announcement: source=Deterministic synthetic (mock)  conf=0.4  ttl~02:52:07  rows=3
+  ✅ 预期 route=external_fallback
+==============================================================================
+▶ [资讯研究] 美联储议息声明，做鹰派鸽派情绪分析
+  route=external_fallback  tool=search  mode=mock  (0 ms)
+  ┌─ steps 审计轨迹（评委可见的自主规划）
+  │  {"step": "intent", "intent": "info_query", "confidence": 0.92, "hints": ["美联储", "议息"]}
+  │  {"step": "rag", "hit": false, "context_chars": 369}
+  │  {"step": "fallback_external", "reason": "问题需要实时数据，本地知识库无法提供具体数值", "tool": "search", "mode": "mock"}
+  └─
+  └─ search: source=Deterministic synthetic (mock)  conf=0.4  ttl~08:52:07  rows=4
+  ✅ 预期 route=external_fallback
+==============================================================================
+▶ [规则知识] A股 T+1 交易规则是什么
+  route=rag  tool=knowledge_base  mode=rag  (0 ms)
+  ┌─ steps 审计轨迹（评委可见的自主规划）
+  │  {"step": "intent", "intent": "info_query", "confidence": 0.92, "hints": ["规则", "T+1"]}
+  │  {"step": "rag", "hit": true, "context_chars": 366}
+  └─
+  ✅ 预期 route=rag
+==============================================================================
+▶ [本地计算] 计算组合的 VaR 和 CVaR
+  route=local_compute  tool=compute/risk_metrics  mode=computed  (1 ms)
+  ┌─ steps 审计轨迹（评委可见的自主规划）
+  │  {"step": "intent", "intent": "local_compute", "confidence": 0.98, "hints": ["VaR", "CVaR", "计算"]}
+  │  {"step": "compute", "kind": "risk_metrics", "local": true, "network": false, "data_source": "mock 510300.SH (demo)"}
+  └─
+  ✅ 预期 route=local_compute
+==============================================================================
+▶ [闲聊] 你好，介绍一下你自己
+  route=general  tool=intent_router  mode=route  (0 ms)
+  ┌─ steps 审计轨迹（评委可见的自主规划）
+  │  {"step": "intent", "intent": "general", "confidence": 0.9, "hints": []}
+  └─
+  ✅ 预期 route=general
+==============================================================================
+结果: 7/7 通过
+候选知识区: 3 条有效快照（TTL 隔离，未自动进长期记忆）
+
+>>> Step 3: E2E Pipeline — NL → DSL → Canonicalize → Validate → Transpile
+----------------------------------------------------------------
+  Strategy: BTC_EMA_Crossover
+  Canonicalization repairs: 3
+    strategy.risk.max_open_trades: None -> 3 (default_fill)
+    strategy.risk.stake_amount: None -> 0.1 (default_fill)
+    strategy.risk.max_position_pct: 0.3 -> None (strip_unknown)
+  Validation: PASS
+  Freqtrade transpile: OK
+  Backtrader transpile: OK
+
+>>> Step 4: Risk Agent — Veto Power (LLM proposes, deterministic code disposes)
+----------------------------------------------------------------
+  Case 1 (valid trade):     allow=False  position=0
+  Case 2 (over limit 45%):   allow=False  vetoed_by=['stop_loss_distance']
+  Case 3 (no stop loss):     allow=False  vetoed_by=['stop_loss_distance']
+  Case 4 (neutral view):     allow=False  position=0
+
+>>> Step 5: RL Reward — 8-Dimensional Strategy Scoring
+----------------------------------------------------------------
+  Good strategy:  reward=0.570  grade=A
+    feedback: Alpha+8.00%跑赢基准；Sharpe 1.50风险调整收益优秀
+  Bad strategy:   reward=-0.120  grade=D
+    feedback: Alpha-5.00%跑输基准；Sharpe -0.50风险调整收益不足
+
+================================================================
+  Demo Complete — AMD Radeon GPU | Qwen2.5-7B | ROCm 7.2
+  282 Tests | ReAct Agent | Risk Veto | RL Reward | DSL Pipeline
+================================================================
