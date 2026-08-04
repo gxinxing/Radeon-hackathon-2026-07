@@ -1,0 +1,12 @@
+{
+  "started_at": 1785875857.7530396,
+  "steps": 300,
+  "frames": 100,
+  "status": "passed",
+  "backend": "gpu",
+  "entities": 3,
+  "robot": "T1",
+  "video": "t1_soccer.mp4",
+  "ended_at": 1785875982.1766531,
+  "duration_s": 124.42361354827881
+}

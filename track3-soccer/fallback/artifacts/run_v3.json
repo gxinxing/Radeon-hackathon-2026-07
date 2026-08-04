@@ -1,0 +1,23 @@
+{
+  "example": "Genesis Franka pick-and-place on AMD ROCm GPU",
+  "started_at": 1785873125.751499,
+  "gpu": "AMD Radeon RX 7900 XT (gfx1100)",
+  "rocm": "7.2.1",
+  "genesis_version": "1.3.1",
+  "steps": 500,
+  "frames_front": 167,
+  "frames_side": 167,
+  "status": "passed",
+  "backend": "gpu",
+  "entities": 4,
+  "phases": [
+    "approach",
+    "grasp_lift",
+    "move_to_target",
+    "release_return"
+  ],
+  "video_front": "franka_v3_front.mp4",
+  "video_side": "franka_v3_side.mp4",
+  "ended_at": 1785873208.8684552,
+  "duration_s": 83.11695623397827
+}
