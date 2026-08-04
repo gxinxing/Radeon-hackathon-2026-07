@@ -242,6 +242,10 @@ def build_parser() -> argparse.ArgumentParser:
                         default=ROOT / "match_logs/shared_physics_3v3.json")
     parser.add_argument("--viewer", action="store_true",
                         help="debug only; acceptance runs leave the viewer disabled")
+    parser.add_argument("--zero-actions", action="store_true",
+                        help="diagnostic mode: advance physics with zero high-level commands")
+    parser.add_argument("--hold-stand", action="store_true",
+                        help="diagnostic mode: hold default joint pose; skip walk-model outputs")
     return parser
 
 
@@ -309,6 +313,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         high_level_decimation=int(high_level.get("decimation", 5)),
         show_viewer=bool(args.viewer),
     )
+    env.hold_stand = bool(args.hold_stand)
 
     # One ONNX session is shared by three independent policy objects.  Their
     # last-action history is separate, so no robot's action leaks into another.
@@ -350,9 +355,12 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                 player.quat = quat[index].copy()
                 player.vel = vel[index].copy()
                 ball_state = BallState(pos=ball.copy(), vel=ball_vel.copy())
-                controller = onnx_policies[index] if index < 3 else rule_policies[index - 3]
-                action = controller.compute(player, ball_state)
-                command = np.asarray(action.velocity_cmd, dtype=np.float32).reshape(-1)
+                if args.zero_actions:
+                    command = np.zeros(3, dtype=np.float32)
+                else:
+                    controller = onnx_policies[index] if index < 3 else rule_policies[index - 3]
+                    action = controller.compute(player, ball_state)
+                    command = np.asarray(action.velocity_cmd, dtype=np.float32).reshape(-1)
                 if command.shape != (3,) or not np.isfinite(command).all():
                     raise ValueError(f"{robot_id} controller returned invalid command {command}")
                 commands.append(command)

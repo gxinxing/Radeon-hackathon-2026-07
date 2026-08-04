@@ -1,0 +1,12 @@
+Pre-fix diagnostic diff snapshot (before path-resolution fix):
+
+- hierarchical_agent.yaml: fall_height 0.8 -> 0.4
+- eval_shared_physics_3v3.py: added --zero-actions and --hold-stand; hold_stand is passed to env
+- soccer_env_3v3.py: hold_stand bypasses walk-model actions and holds default pose
+
+Remote evidence before the next fix:
+
+- gate_v2_fallheight04.json: all six fell in 3 frames even after threshold change.
+- gate_zero_actions.json: all six fell in 2 frames with zero high-level actions.
+- gate_hold_stand.json: all six fell in 3 frames while holding default joint targets.
+- _codex_inspect_pose.ipynb first attempt failed because the notebook import path was missing; the corrected attempt then exposed a robot asset path-resolution error (`/workspace/urdf/t1/t1.urdf`).

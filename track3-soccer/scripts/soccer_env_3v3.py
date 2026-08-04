@@ -154,7 +154,15 @@ class SoccerEnv3v3(SoccerEnv):
             robot = self.robots[i]
             motor_joints = [j for j in robot.joints[1:] if j.n_dofs > 0]
             num_motors = len(motor_joints)
-            local_dof_idx = torch.arange(num_motors, dtype=gs.tc_int, device=dev)
+            # Entity APIs require entity-local DOF indices. ``dof_start`` is
+            # a solver/global offset and can overwrite the floating-base
+            # qpos when passed to set/get/control_dofs_* APIs.
+            local_dof_idx = torch.tensor(
+                [j.dof_idx_local if hasattr(j, "dof_idx_local") else j.dof_start
+                 for j in motor_joints],
+                dtype=gs.tc_int,
+                device=dev,
+            )
             # URDF entities are spawned with zero joint angles.  The frozen
             # T1 walk policy expects the Booster standing pose from the parent
             # environment; using the spawn pose makes all six robots collapse
@@ -258,8 +266,13 @@ class SoccerEnv3v3(SoccerEnv):
         # 6 robots
         robot_path = self.cfg["robot_urdf"]
         if not os.path.isabs(robot_path):
+            project_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", robot_path))
             ga = _genesis_asset(robot_path)
-            robot_path = ga if os.path.exists(ga) else os.path.abspath(robot_path)
+            # Prefer the project-pinned asset.  A stale `/workspace/urdf` can
+            # otherwise shadow the repo copy when launched from a notebook.
+            robot_path = project_path if os.path.exists(project_path) else (
+                ga if os.path.exists(ga) else os.path.abspath(robot_path)
+            )
 
         self.robots = []
         all_starts = LEFT_START + RIGHT_START
@@ -545,7 +558,14 @@ class SoccerEnv3v3(SoccerEnv):
         for _ in range(self.high_level_decimation):
             for i in range(self.num_robots):
                 low_obs = self._build_low_level_obs_for_robot(i)
-                joint_actions = self._run_walk_model(low_obs)
+                if getattr(self, "hold_stand", False):
+                    joint_actions = torch.zeros(
+                        (self.num_envs, len(POLICY_JOINT_NAMES)),
+                        dtype=self.hl_actions.dtype,
+                        device=self.device,
+                    )
+                else:
+                    joint_actions = self._run_walk_model(low_obs)
                 self._low_level_step_robot(i, joint_actions)
 
             for _ in range(DECIMATION):
@@ -717,12 +737,9 @@ class SoccerEnv3v3(SoccerEnv):
                 qpos[0, 3:7] = torch.tensor([1.0, 0, 0, 0], device=self.device)
                 # Set default joint positions
                 meta = self._robot_meta[i]
+                motor_start = int(meta['local_dof_idx'][0].item())
+                qpos[0, motor_start:motor_start + meta['num_motors']] = self.all_default_dof_pos[i]
                 robot.set_qpos(qpos, zero_velocity=True, skip_forward=True)
-                robot.set_dofs_position(
-                    self.all_default_dof_pos[i].unsqueeze(0),
-                    meta['local_dof_idx'],
-                    zero_velocity=True,
-                )
 
             # Reset ball to center
             ball_qpos = self.ball.get_qpos().clone()

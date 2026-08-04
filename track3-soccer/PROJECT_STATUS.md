@@ -1,14 +1,15 @@
 # Track 3 项目状态与接管入口
 
-更新时间：2026-08-04 22:00（Asia/Shanghai）
+更新时间：2026-08-05（Asia/Shanghai）
 
-这是 Track 3 的简明接管入口。新 agent 先读本文件，再读 `CURRENT_STATUS_HANDOFF.md`、`.graph_engine/CODEX_HANDOFF.md` 和 `COMPETITION_ACCEPTANCE.md`。
+这是 Track 3 的简明接管入口。新 agent 先读本文件，再读 `CURRENT_STATUS_HANDOFF.md`、`.graph_engine/CODEX_HANDOFF.md`、`remote_reports/README.md`、`acceptance/diagnostics/README.md` 和 `COMPETITION_ACCEPTANCE.md`。
 
 ## 当前结论
 
 - 主线仍是共享物理 3v3，但当前还没有合格的“六机器人踢球进球”视频。
 - 旧视频源日志没有 `kick/scored` 事件，不能作为最终演示。
 - 共享物理短跑曾观察到六机器人倒地、球无实质运动；长跑曾在 Genesis/GPU 初始化或首步推进阶段无输出。
+- 诊断 notebook 读出：`num_robots=6`、每台 `num_motors=23`，`parent_default` 与 `all_default_dof_pos[0]` 均为非零 standing pose；六台 `initial_pos` 全部重合为 `[0,0,0.2]`，`initial_euler` 异常，`robot[0].get_qpos()` 根部已被关节写入污染。
 - 本地已加入 Booster standing pose fallback 和共享遥测渲染器；本地测试 `151 passed, 1 warning`。
 - 最新本地分支：`codex/track3-final-acceptance`；最新推送提交：`37b661d`。
 
@@ -23,6 +24,13 @@
 7. 核对远端已有历史 demo metadata：`verified_match`、`verified_short`、`3v3_match_v2`；这些是历史证据，不等于当前共享物理验收。
 8. 最新远端 V2 单步门禁：场景可启动并触发 1 次 kick，球速度发生变化，但六机器人第 1 步全部倒地；`status=observed`、`validation_status=failed`、`score=0:0`。问题已收敛到初始姿态/关节映射/物理稳定性。
 9. Hermes V1 稳定性任务已实际运行并完成，但输出失真且未落盘代码、报告或新门禁结果；未合并任何远端猜测性修改。
+10. 根因收敛为 DOF 索引语义错误：entity API 需要 `joint.dof_idx_local`，此前传入 `dof_start`（solver/global offset）污染浮动基座 qpos。已保存修复前 diff，并在本地及远端改为优先使用 `dof_idx_local`；尚未宣称远端通过。
+
+### 本次恢复记录（2026-08-05）
+
+- 后续 notebook 重跑触发同一 Jupyter kernel 的 HIP `unspecified launch failure`；未重启 VM、未运行完整比赛。
+- 修复文件：`scripts/soccer_env_3v3.py`；远端同步路径为 `/workspace/amd-physical-ai-soccer/scripts/soccer_env_3v3.py`。
+- 下一验证只允许先跑单机器人静态 5 步；通过后再跑六机器人 hold-stand 3 步。
 
 ## 当前远端状态
 
@@ -71,3 +79,9 @@ git status --short
 - 不把合成的 goal/kick 写进 telemetry。
 - 不把 `status=observed`/`validation_status=failed` 的 artifact 标成成功。
 - 不把 API key 写入项目文件、Git、notebook 或最终报告。
+
+## 进度追踪协议
+
+- Radeon/Hermes 任务必须在 `remote_reports/` 留下报告，在 `acceptance/diagnostics/` 留下 JSON、日志或 diff；聊天总结不算验收证据。
+- 每次可合并修改都要有独立 Git commit，并同步更新本文件和 `CURRENT_STATUS_HANDOFF.md`。
+- 临时 notebook 只有在报告和原始 artifact 已归档后才能删除。
