@@ -24,7 +24,7 @@ team_size: 3
 robot_urdf: urdf/t1/t1.urdf
 base_init_pos: [0.0, 0.0, 0.6]
 base_init_quat: [1.0, 0.0, 0.0, 0.0]
-fall_height: 0.8
+fall_height: 0.4
 termination_pitch_deg: 30
 termination_roll_deg: 30
 

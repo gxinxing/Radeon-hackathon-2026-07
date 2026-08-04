@@ -26,5 +26,5 @@ COPY . /workspace/radeon-repo
 ENV BOOSTER_ASSETS_PATH=/workspace/booster_assets
 ENV BOOSTER_DEPLOY_PATH=/workspace/booster_deploy
 
-# Entry point: run the training results auditor
-ENTRYPOINT ["python", "audit_results.py"]
+# Entry point: quick training test (256 envs, 100 iterations — ~5 minutes)
+ENTRYPOINT ["python", "train_hierarchical.py", "--num_envs", "256", "--max_iterations", "100"]

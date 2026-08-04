@@ -45,9 +45,9 @@
 | Action std (fixed) | **5.78 → 0.09** | entropy_coef 0.01→0.003 resolved noise blowup |
 | Episode length | **19 → 208 steps** | From instant-fall to sustained walking |
 | Total goals | **2,058** | 1,407% improvement over v7 (146 goals) |
-| Ball distance (min) | **3.07m → 0.32m** | Multi-agent coop training with teammate/opponent awareness |
+| Ball distance (min) | **3.07m → 0.32m** | Single-agent chase with cooperative reward shaping |
 | ONNX inference | **0.4 ms** | 19→3 dim, real-time capable (46,467 params) |
-| 1v1 match | **200 steps, ball displaced 20m** | ONNX inference verified on AMD Radeon GPU |
+| 1v1 match | **200 steps, ball displaced 20m** | ONNX inference verified (physics on AMD Radeon GPU) |
 | Training throughput | **4,618 steps/s** (peak) | 2048 parallel envs on AMD Radeon (51 GB VRAM) |
 
 ### Validation status (2026-08-04)
@@ -274,7 +274,12 @@ print('rsl_rl OK')
 "
 
 # Verify the checked-in t1_walk.pt
-/opt/venv/bin/python verify_t1_walk.py
+/opt/venv/bin/python -c "
+import torch
+model = torch.load('models/pretrained/t1_walk.pt', map_location='cpu')
+print(f'Model loaded. Keys: {list(model.keys())[:5]}')
+print(f'SHA-256: ef1d61e19082b83405f4320a08f4cfc2d7d7f003ed3790dab013778ba442dec7')
+"
 ```
 
 ---
@@ -314,16 +319,15 @@ ls runs/hierarchical_soccer_chase_hl/
 ### Rendering Demo Video
 
 ```bash
-# Render 300 steps with the latest checkpoint
-/opt/venv/bin/python render_hierarchical.py --steps 300
+# Render match using ONNX inference (1v1)
+/opt/venv/bin/python match_1v1_onnx.py --onnx models/chase_v8_policy.onnx --steps 300
 
-# Render with a specific model
-/opt/venv/bin/python render_hierarchical.py \
-    --model runs/hierarchical_soccer_chase_hl/model_500.pt \
-    --steps 500
+# Render match with a specific checkpoint
+/opt/venv/bin/python match_1v1_onnx.py \
+    --onnx models/chase_v8_policy.onnx --steps 500
 ```
 
-Output: `demos/hierarchical_chase_hl_v4.mp4`
+Output: `demos/1v1_match_v2.mp4`
 
 ### Exporting ONNX for Deployment
 
@@ -353,10 +357,10 @@ six-process distributed launcher has passed end-to-end execution.
 
 ```bash
 # Run match evaluation locally (no GPU needed for rule-based)
-/opt/venv/bin/python scripts/match_eval_3v3.py
+/opt/venv/bin/python match_3v3.py --rule-based
 
 # With RL policy
-/opt/venv/bin/python scripts/match_eval_3v3.py \
+/opt/venv/bin/python match_3v3.py \
     --checkpoint runs/hierarchical_soccer_chase_hl/model_500.pt
 
 # Auditable shared-physics smoke test (one Genesis scene, six robots, one ball)
@@ -368,19 +372,13 @@ six-process distributed launcher has passed end-to-end execution.
 
 ### GPU Benchmark Collection
 
-```bash
-# Start benchmark collector in background
-/opt/venv/bin/python benchmark_collect.py \
-    --log /tmp/train_output.log \
-    --output benchmark/ \
-    --interval 5 &
+GPU telemetry is collected during training via `acceptance/performance/gpu_telemetry.csv`.
+To collect fresh data:
 
-# Run training (logs to /tmp/train_output.log)
+```bash
+# Run training while collecting GPU metrics
 /opt/venv/bin/python train_hierarchical.py --max_iterations 500 \
     2>&1 | tee /tmp/train_output.log
-
-# Stop collector when training finishes
-kill $(cat /tmp/benchmark_pid)
 ```
 
 Output: `benchmark/gpu_samples.csv` and `benchmark/gpu_samples.json`
@@ -477,16 +475,11 @@ bash run_3v3.sh runs/hierarchical_soccer_chase_hl/model_1894.pt 25
 ├── soccer_env_hierarchical.py     # Hierarchical env (high-level + frozen walk)
 ├── soccer_env_v4.py               # Base soccer env (flat policy, v4)
 ├── reward.py                      # Reward functions (balance/chase/shoot curriculum)
-├── render_hierarchical.py         # Demo video renderer
-├── verify_t1_walk.py              # Verify t1_walk.pt walks 30s without falling
-├── export_onnx.py                 # Standard ONNX export
+├── match_1v1_onnx.py            # 1v1 match with ONNX inference + demo video renderer
 ├── export_onnx_mlp.py             # ONNX export via raw MLP extraction
-├── benchmark_collect.py           # ROCm GPU benchmark collector
-├── match_coordinator.py           # Distributed match coordinator (socket sync)
-├── match_worker.py                # Distributed match worker (1 robot per process)
-├── run_1v1.sh                     # Launch 1v1 match (2 workers)
-├── run_3v3.sh                     # Launch 3v3 match (6 workers)
-├── match_3v3.py                   # 3v3 match simulation runner (legacy)
+├── match_coordinator_v3.py       # Distributed match coordinator v3 (socket sync)
+├── match_worker_v3.py            # Distributed match worker v3 (1 robot per process)
+├── match_3v3.py                  # 3v3 match simulation runner
 ├── match_evaluator.py             # Match evaluation logic
 ├── match_scene.py                 # Match scene setup
 ├── soccer_env_1v1.py              # 1v1 environment (Genesis multi-entity, WIP)
@@ -509,18 +502,20 @@ bash run_3v3.sh runs/hierarchical_soccer_chase_hl/model_1894.pt 25
 │   └── soccer_env/
 │       └── soccer_scene.py        # Genesis soccer field scene builder
 ├── scripts/
-│   └── match_eval_3v3.py         # Match evaluation script
+│   └── eval_shared_physics_3v3.py  # Shared-physics 3v3 smoke test
 ├── tests/
 │   └── test_match_contract.py    # Match contract tests
 ├── docs/                          # Technical report and documentation
 ├── models/                        # Validated walk checkpoint and ONNX exports
 │   └── pretrained/t1_walk.pt     # Checked-in low-level walk model
 ├── benchmark/                     # GPU performance data + Module E/F results
+├── acceptance/                    # Validation evidence + GPU telemetry
 ├── training_logs/                 # Training logs from AMD GPU
 ├── match_logs/                    # 1v1/3v3 match trajectory logs (JSON)
 ├── demos/                         # Demo videos
 ├── presentations/                 # Posters and slides
 ├── urdf/t1/                       # T1 humanoid URDF + meshes
+├── archive/                       # Legacy scripts (verify_t1_walk, render_hierarchical, etc.)
 ├── requirements.txt
 └── README.md
 ```

@@ -25,7 +25,7 @@ env:
   clip_actions: 100.0
   dt: 0.02
   episode_length_s: 24.0
-  fall_height: 0.8
+  fall_height: 0.4
   field:
   - 14.0
   - 9.0
