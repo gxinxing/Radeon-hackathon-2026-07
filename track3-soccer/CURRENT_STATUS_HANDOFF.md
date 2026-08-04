@@ -2,7 +2,19 @@
 
 > Canonical status entry: [PROJECT_STATUS.md](PROJECT_STATUS.md). 新 agent 先读该文件，再读 `remote_reports/README.md` 和 `acceptance/diagnostics/README.md`。
 
-更新时间：2026-08-05
+更新时间：2026-08-05（Codely 会话恢复）
+
+## 2026-08-05 远端状态检查
+
+- SSH 密钥被拒（Permission denied），通过 JupyterLab API 通道操作远端。
+- GPU 在线：AMD Radeon RX 7900 XT (gfx1100), VRAM 48GB, 已用 ~20GB。
+- V0 门禁通过：`gs.init(backend=gs.gpu)` 成功，Genesis 1.3.1。
+- V1 门禁受阻：`scene.build()` 持续挂起超过 5 分钟，即使杀掉 vLLM 释放 VRAM 后仍然如此。根因是 GPU HIP 执行通道被之前多次失败的任务污染（与项目状态文档记录一致）。
+- Franka fallback 同样挂住（之前曾通过，现在也受 GPU 污染影响）。
+- 已有历史 demo 证据仍然可用：verified_match (validation_status=passed), 3v3_match_v2 (2 goals scored), 2robot_gpu_match, verified_short。
+- vLLM (port 8000) 和 API (port 8080) 已重启，赛道二服务恢复正常。
+- 修复了远端 tokenizer_config.json 的 extra_special_tokens 兼容性问题。
+- 修复了远端 ccxt 缺失依赖。
 
 ## 当前操作原则
 
