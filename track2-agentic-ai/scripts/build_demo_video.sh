@@ -74,8 +74,8 @@ concat_list="$SEGMENTS_DIR/concat.txt"
 > "$concat_list"
 for entry in "${SCENES[@]}"; do
   scene="${entry%%|*}"
-  seg="$SEGMENTS_DIR/${scene%%-*}.mp4"
-  if [[ -f "$seg" ]]; then
+  seg="${scene%%-*}.mp4"
+  if [[ -f "$SEGMENTS_DIR/$seg" ]]; then
     echo "file '$seg'" >> "$concat_list"
   fi
 done
