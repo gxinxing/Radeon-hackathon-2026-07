@@ -50,6 +50,26 @@
 | 1v1 match | **200 steps, ball displaced 20m** | ONNX inference verified on AMD Radeon GPU |
 | Training throughput | **4,618 steps/s** (peak) | 2048 parallel envs on AMD Radeon (51 GB VRAM) |
 
+### Validation status (2026-08-04)
+
+- After the remote AMD GPU returned to idle, the checked-in low-level model
+  `models/pretrained/t1_walk.pt` (SHA-256
+  `ef1d61e19082b83405f4320a08f4cfc2d7d7f003ed3790dab013778ba442dec7`)
+  passed remote A/B validation: stance ran 60 steps with 0 falls; gait ran 150
+  steps with 0 falls and moved +6.423 m.
+- The rule-walk fallback failed both trials: stance and gait each fell at step
+  11. It is not the validated walking path.
+- The current local suite reports **151 tests passed**. The six-process launcher
+  completed its 10 s lifecycle with all workers receiving `END` and no orphan
+  process. A separate single-Genesis-scene AMD GPU smoke test advanced six
+  independently commanded robots and one shared ball for 5 high-level steps.
+  Its construction/stepping smoke succeeded, but the behavior health gate failed:
+  all six bases stayed below the configured 0.8 m fall height and the ball did
+  not materially move. It is not claimed as a successful physical match.
+- This A/B run exercised the `.pt` low-level model directly; it did not revalidate
+  any high-level `.onnx` export. ONNX figures below are retained as earlier 1v1
+  evidence and should not be presented as the 2026-08-04 result.
+
 ---
 
 ## 🔍 Why This Project Exists
@@ -77,7 +97,8 @@ robot policies can be trained without NVIDIA hardware.
 │  │  High-Level   │    │  Low-Level    │                  │
 │  │  PPO Policy   │───▶│  Frozen Walk  │──▶ PD Control   │
 │  │  (19→3 dims)  │    │  (720→21)     │    (50 Hz)       │
-│  │  vx,vy,wz     │    │  t1_walk.pt   │                  │
+│  │  vx,vy,wz     │    │ pretrained/   │                  │
+│  │               │    │ t1_walk.pt    │                  │
 │  └──────┬───────┘    └───────────────┘                  │
 │         │                                                │
 │  ┌──────▼──────────────────────────────────────────┐     │
@@ -106,7 +127,7 @@ The policy is split into two levels:
 | Level | Observation | Action | Frequency | Model |
 |-------|------------|--------|-----------|-------|
 | High-level | 19-dim (ball pos/vel, goal dir, proprioception) | 3-dim (vx, vy, wz) | 10 Hz | Trainable PPO |
-| Low-level | 720-dim (10-frame proprioception history) | 21-dim (joint targets) | 50 Hz | Frozen `t1_walk.pt` |
+| Low-level | 720-dim (10-frame proprioception history) | 21-dim (joint targets) | 50 Hz | Frozen `models/pretrained/t1_walk.pt` |
 
 This design solves a key problem: the original flat policy (720-dim obs) had no ball
 information but was rewarded for approaching the ball. The hierarchical split lets the
@@ -213,16 +234,10 @@ print(f'ROCm version: {torch.version.hip}')
 /opt/venv/bin/pip install -r requirements.txt
 ```
 
-### Step 3: Obtain the Pre-trained Walking Model
-
-The frozen low-level walking model (`t1_walk.pt`) comes from Booster Robotics' deployment
-framework. Clone and set up:
+### Step 3: Install Robot Assets
 
 ```bash
 cd /workspace
-
-# Clone Booster Deploy (contains t1_walk.pt and URDF models)
-git clone https://github.com/BoosterRobotics/booster_deploy.git
 git clone https://github.com/BoosterRobotics/booster_assets.git
 
 # Install booster_assets (provides URDF models)
@@ -230,8 +245,6 @@ cd booster_assets
 /opt/venv/bin/pip install -e .
 cd ..
 
-# Verify the walk model exists
-ls -lh /workspace/booster/booster_deploy/tasks/locomotion/models/t1_walk.pt
 ```
 
 ### Step 4: Clone This Repository
@@ -240,6 +253,10 @@ ls -lh /workspace/booster/booster_deploy/tasks/locomotion/models/t1_walk.pt
 cd /workspace
 git clone https://github.com/gxinxing/radeon-hackathon-2026.git amd-physical-ai-soccer
 cd amd-physical-ai-soccer
+
+# Verify the checked-in frozen low-level model before GPU work.
+sha256sum models/pretrained/t1_walk.pt
+# ef1d61e19082b83405f4320a08f4cfc2d7d7f003ed3790dab013778ba442dec7
 ```
 
 ### Step 5: Verify Environment
@@ -256,7 +273,7 @@ print(f'Genesis {gs.__version__}')
 print('rsl_rl OK')
 "
 
-# Verify t1_walk.pt can walk without falling for 30 seconds
+# Verify the checked-in t1_walk.pt
 /opt/venv/bin/python verify_t1_walk.py
 ```
 
@@ -331,6 +348,9 @@ python match_1v1_onnx.py --onnx models/chase_v8_policy.onnx --steps 200
 
 ### 3v3 Match Evaluation
 
+This evaluates the 3v3 policy/match contract; it is not evidence that the
+six-process distributed launcher has passed end-to-end execution.
+
 ```bash
 # Run match evaluation locally (no GPU needed for rule-based)
 /opt/venv/bin/python scripts/match_eval_3v3.py
@@ -338,6 +358,12 @@ python match_1v1_onnx.py --onnx models/chase_v8_policy.onnx --steps 200
 # With RL policy
 /opt/venv/bin/python scripts/match_eval_3v3.py \
     --checkpoint runs/hierarchical_soccer_chase_hl/model_500.pt
+
+# Auditable shared-physics smoke test (one Genesis scene, six robots, one ball)
+/opt/venv/bin/python scripts/eval_shared_physics_3v3.py --backend gpu --steps 5 \
+    --model models/chase_v8_policy.onnx \
+    --walk-model models/pretrained/t1_walk.pt \
+    --output match_logs/shared_physics_3v3.json
 ```
 
 ### GPU Benchmark Collection
@@ -393,8 +419,11 @@ Key reward shaping techniques:
 
 ## ⚔ Distributed Multi-Robot Match (1v1 / 3v3)
 
-Since Genesis cannot handle multiple robots in one scene on ROCm, we use a
-multi-process distributed architecture:
+Two execution paths are retained. The distributed path is the long-duration
+lifecycle/demo harness. Its workers have independent Genesis scenes, so its
+coordinator trajectory must not be described as shared physics. The acceptance
+smoke path uses `scripts/eval_shared_physics_3v3.py`: one Genesis scene, six
+robots and one physical ball, with the CG constraint solver required by gfx1100.
 
 ```
 ┌──────────────────────────────────────────────────┐
@@ -420,11 +449,12 @@ multi-process distributed architecture:
 bash run_1v1.sh runs/hierarchical_soccer_chase_hl/model_1894.pt 25
 ```
 
-**Launch 3v3 match (distributed, 6 robots):**
+**Distributed 3v3 lifecycle command (6 independent worker scenes):**
 
 > Note: 3v3 distributed match requires 6 Genesis processes to compile kernels
 > simultaneously (2-3 min each). The coordinator uses a 600s accept deadline.
-> 1v1 match above is the verified validation path.
+> This verifies process lifecycle, identities and role assignment. Use the
+> shared-physics command above when making physical-interaction claims.
 ```bash
 bash run_3v3.sh runs/hierarchical_soccer_chase_hl/model_1894.pt 25
 ```
@@ -483,7 +513,8 @@ bash run_3v3.sh runs/hierarchical_soccer_chase_hl/model_1894.pt 25
 ├── tests/
 │   └── test_match_contract.py    # Match contract tests
 ├── docs/                          # Technical report and documentation
-├── models/                        # Trained checkpoints and ONNX exports
+├── models/                        # Validated walk checkpoint and ONNX exports
+│   └── pretrained/t1_walk.pt     # Checked-in low-level walk model
 ├── benchmark/                     # GPU performance data + Module E/F results
 ├── training_logs/                 # Training logs from AMD GPU
 ├── match_logs/                    # 1v1/3v3 match trajectory logs (JSON)
@@ -511,14 +542,17 @@ bash run_3v3.sh runs/hierarchical_soccer_chase_hl/model_1894.pt 25
 
 ## ⚠ Known Limitations
 
-1. **Genesis ROCm multi-entity crash**: Genesis physics engine on AMD ROCm crashes with
-   `hipErrorLaunchFailure` when two or more robot URDF entities are loaded in the same scene.
-   This is a platform-level bug, not a memory issue (VRAM usage only 0.9 GB / 51.5 GB).
+1. **Genesis ROCm multi-entity solver constraint**: the default Newton tiled
+   factorization for the six-humanoid scene requires 66,560 bytes of local
+   memory, above gfx1100's 65,536-byte kernel limit. The verified smoke path uses
+   the Genesis CG constraint solver (`sparse_solve=True`).
 
 2. **Workaround — Distributed multi-process architecture**: Each robot runs in its own
    Genesis process (proven stable with 1 robot). A socket-based coordinator syncs state
    between processes. 1v1 match verified with ONNX inference (200 steps, ball displaced 20m).
-   3v3 distributed match (6 robots) is designed but not yet fully verified at runtime.
+   The 3v3 distributed launcher completed a 10 s lifecycle on AMD GPU. Because
+   workers have independent physics scenes, its video is explicitly labelled an
+   offline coordinator-log visualization, not a Genesis camera render.
 
 3. **Close-range ball control**: When the ball is within ~2m, the velocity-command interface
    cannot express fine motor adjustments needed for ball possession. A residual joint-level
@@ -533,7 +567,7 @@ by the Genesis physics simulation:
 
 | Data | Source | Purpose |
 |------|--------|---------|
-| `t1_walk.pt` | [booster_deploy](https://github.com/BoosterRobotics/booster_deploy) repo | Frozen low-level walking policy (720→21) |
+| `models/pretrained/t1_walk.pt` | Checked-in project artifact; originally from [booster_deploy](https://github.com/BoosterRobotics/booster_deploy) | Frozen low-level walking policy (720→21); validated SHA-256 recorded above |
 | T1 URDF model | [booster_assets](https://github.com/BoosterRobotics/booster_assets) repo | Robot physics model for Genesis |
 | Soccer field | `src/soccer_env/soccer_scene.py` | 14m × 9m RoboCup 3v3 field |
 | Reward function | `reward.py` | Curriculum: balance → chase → shoot |

@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+# GPU task loop: automatically launches next training when current finishes.
+# Monitors running train.py processes, launches next task from queue when slot opens.
+# Run on cloud: nohup bash gpu_task_loop.sh > /tmp/gpu_loop.log 2>&1 &
+
+set -uo pipefail
+source /opt/venv/bin/activate
+cd /workspace/amd-physical-ai-soccer
+export PYTHONPATH=/workspace/amd-physical-ai-soccer
+
+# Task queue: each line = "task num_envs max_iters exp_name"
+TASKS=(
+  "chase 4096 2000 walker_chase_2k"
+  "shoot 4096 2000 walker_shoot_2k"
+  "balance 4096 2000 walker_balance_2k"
+  "chase 4096 5000 walker_chase_5k"
+  "shoot 4096 5000 walker_shoot_5k"
+  "balance 4096 5000 walker_balance_5k"
+)
+
+MAX_PARALLEL=3
+TASK_IDX=0
+RUNNING_PIDS=()
+
+log() { echo "[$(date -u +%H:%M:%S)] $*"; }
+
+count_running() {
+  ps aux | grep "scripts/train.py" | grep -v grep | wc -l
+}
+
+launch_task() {
+  local task_str="$1"
+  local parts=($task_str)
+  local task="${parts[0]}"
+  local envs="${parts[1]}"
+  local iters="${parts[2]}"
+  local exp="${parts[3]}"
+
+  log "Launching: $task $envs envs $iters iters -> $exp"
+  nohup python scripts/train.py --task "$task" --num_envs "$envs" --max_iterations "$iters" -e "$exp" > "/tmp/${exp}.log" 2>&1 &
+  echo $!
+}
+
+log "GPU task loop started. Queue: ${#TASKS[@]} tasks, max parallel: $MAX_PARALLEL"
+
+while [ $TASK_IDX -lt ${#TASKS[@]} ]; do
+  RUNNING=$(count_running)
+  log "Running: $RUNNING/$MAX_PARALLEL, queue pos: $TASK_IDX/${#TASKS[@]}"
+
+  if [ "$RUNNING" -lt "$MAX_PARALLEL" ]; then
+    PID=$(launch_task "${TASKS[$TASK_IDX]}")
+    log "Launched PID=$PID"
+    RUNNING_PIDS+=("$PID")
+    TASK_IDX=$((TASK_IDX + 1))
+    sleep 30  # wait for Genesis init before launching next
+  else
+    sleep 60  # check every minute when full
+  fi
+done
+
+log "All tasks launched. Waiting for completion..."
+while [ $(count_running) -gt 0 ]; do
+  log "Still running: $(count_running) tasks"
+  sleep 120
+done
+
+log "=== ALL TASKS COMPLETE ==="
+log "Checkpoints:"
+find /workspace/amd-physical-ai-soccer/runs -name "model_*.pt" 2>/dev/null | sort | tail -20

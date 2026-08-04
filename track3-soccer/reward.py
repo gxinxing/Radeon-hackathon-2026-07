@@ -218,6 +218,43 @@ TASK_TERMS = {
 }
 
 
+ACCEPTANCE_REWARD_COMPONENTS = (
+    "approach_ball",
+    "ball_control",
+    "ball_contact",
+    "ball_progress",
+    "goal_scored",
+    "fall_penalty",
+)
+
+
+def compute_reward_components(obs: dict, w: dict, task: str) -> dict[str, dict[str, torch.Tensor]]:
+    """Return the acceptance reward terms using the production reward formulas.
+
+    Components not active for ``task`` are omitted rather than reported as
+    synthetic zeroes.  ``fall_penalty`` is unconditional in ``compute_reward``
+    and is therefore always present.
+    """
+    terms = TASK_TERMS.get(task, TASK_TERMS["chase"])
+    raw: dict[str, torch.Tensor] = {}
+    if "approach_ball" in terms:
+        raw["approach_ball"] = r_approach_ball(obs["dist_to_ball"], obs["prev_dist_to_ball"])
+    if "ball_control" in terms:
+        raw["ball_control"] = r_ball_control(obs["dist_to_ball"], w.get("_ball_radius", 0.11))
+    if "ball_contact" in terms:
+        raw["ball_contact"] = r_ball_contact(obs["min_foot_dist"])
+    if "ball_progress" in terms:
+        raw["ball_progress"] = r_ball_progress(obs["ball_goal_dist"], obs["prev_ball_goal_dist"])
+    if "goal_scored" in terms:
+        raw["goal_scored"] = r_goal(obs["scored"])
+    raw["fall_penalty"] = r_fall(obs["fallen"])
+
+    return {
+        name: {"raw": value, "weighted": w[name] * value}
+        for name, value in raw.items()
+    }
+
+
 def compute_reward(obs: dict, action: torch.Tensor, w: dict, task: str) -> torch.Tensor:
     terms = TASK_TERMS.get(task, TASK_TERMS["chase"])
     total = torch.zeros_like(obs["torso_up"])
@@ -244,14 +281,10 @@ def compute_reward(obs: dict, action: torch.Tensor, w: dict, task: str) -> torch
         total += w.get("feet_slip", -0.1) * r_feet_slip(
             obs["feet_pos"], obs["last_feet_pos"], obs["feet_contact"],
             w.get("dt", 0.02), obs["episode_length_buf"])
-    if "approach_ball" in terms:
-        total += w["approach_ball"] * r_approach_ball(obs["dist_to_ball"], obs["prev_dist_to_ball"])
-    if "ball_control" in terms:
-        total += w["ball_control"] * r_ball_control(obs["dist_to_ball"], w.get("_ball_radius", 0.11))
-    if "ball_progress" in terms:
-        total += w["ball_progress"] * r_ball_progress(obs["ball_goal_dist"], obs["prev_ball_goal_dist"])
-    if "ball_contact" in terms:
-        total += w["ball_contact"] * r_ball_contact(obs["min_foot_dist"])
+    components = compute_reward_components(obs, w, task)
+    for name in ("approach_ball", "ball_control", "ball_progress", "ball_contact"):
+        if name in components:
+            total += components[name]["weighted"]
     if "approach_angle" in terms:
         total += w.get("approach_angle", 2.0) * r_approach_angle(
             obs.get("ball_rel_body", torch.zeros_like(obs["torso_up"]).unsqueeze(1).expand(-1, 2)),
@@ -261,8 +294,8 @@ def compute_reward(obs: dict, action: torch.Tensor, w: dict, task: str) -> torch
             obs["min_foot_dist"], obs["ball_vel_to_goal"])
     if "ball_to_goal" in terms:
         total += w["ball_to_goal"] * r_ball_to_goal(obs["ball_vel_to_goal"])
-    if "goal_scored" in terms:
-        total += w["goal_scored"] * r_goal(obs["scored"])
+    if "goal_scored" in components:
+        total += components["goal_scored"]["weighted"]
     if "defensive_position" in terms and "self_xy" in obs:
         total += w["defensive_position"] * r_defensive_position(
             obs["self_xy"], obs["ball_xy"], obs["defend_goal_xy"], obs["in_possession"])
@@ -279,7 +312,7 @@ def compute_reward(obs: dict, action: torch.Tensor, w: dict, task: str) -> torch
     if "orientation" in terms:
         total += w.get("orientation", -5.0) * r_orientation(obs.get("projected_gravity_xy", torch.zeros_like(obs["torso_up"]).unsqueeze(1).expand(-1, 2)))
 
-    total += w["fall_penalty"] * r_fall(obs["fallen"])
+    total += components["fall_penalty"]["weighted"]
     total += w["recovery_bonus"] * r_recovery(obs["just_recovered"])
     total += w["energy_penalty"] * r_energy(action)
 

@@ -1,0 +1,5 @@
+## Decision: Use Genesis CG constraints for the six-robot shared-physics acceptance smoke test
+## Context: Genesis' default Newton tiled factorization compiled to 66,560 bytes of local memory for one scene containing six T1 robots, exceeding gfx1100's 65,536-byte per-kernel limit. The distributed lifecycle path does not share physics and cannot support physical-interaction claims.
+## Alternatives considered: Keep only the distributed six-process demo; reduce collision-pair capacity while retaining Newton; use CPU physics; use the GPU CG constraint solver with sparse solve.
+## Reasoning: Reducing collision-pair capacity did not change the failing Newton kernel. CG built and completed the AMD GPU smoke run with six independently commanded entities and one shared ball while preserving GPU execution.
+## Trade-offs accepted: CG sparse solve is slower on GPU, the accepted artifact is a short 5-step smoke test, and proximity-triggered kick impulses are labelled simulator assistance rather than foot-contact evidence.

@@ -38,9 +38,9 @@ except ImportError:
 
 # Import reward (works both locally and on remote)
 try:
-    from rewards.reward import compute_reward
+    from rewards.reward import compute_reward, compute_reward_components
 except ImportError:
-    from reward import compute_reward
+    from reward import compute_reward, compute_reward_components
 
 
 class SoccerEnvHierarchical(SoccerEnv):
@@ -58,6 +58,17 @@ class SoccerEnvHierarchical(SoccerEnv):
         # Pre-set flag so overridden methods behave correctly during super().__init__
         self._hl_initialized = False
         self.high_level_decimation = high_level_decimation
+
+        # ── Strategy A: rule-walk fallback (bypass mismatched frozen t1_walk.pt) ──
+        # When True, low-level actions come from a deterministic gait (static stance
+        # when idle, phase-driven leg swing scaled by speed) instead of the frozen
+        # walk model. This CANNOT tremble the way the mismatched model does.
+        self.use_rule_walk = bool(env_cfg.get("use_rule_walk", False))
+        self._rule_phase = 0.0
+        self._rule_stride = float(env_cfg.get("rule_stride_period", 1.1))   # s per stride
+        self._rule_step_amp = float(env_cfg.get("rule_step_amp", 0.16))     # rad (hip/knee)
+        self._rule_lift_amp = float(env_cfg.get("rule_lift_amp", 0.22))     # rad (knee lift)
+        self._rule_ankle_amp = float(env_cfg.get("rule_ankle_amp", 0.10))   # rad (ankle)
 
         # Pre-allocate high-level action buffers (needed by overridden _reset_idx)
         device = gs.device if gs is not None else "cpu"
@@ -94,22 +105,27 @@ class SoccerEnvHierarchical(SoccerEnv):
         self.teammate_pos = None
         self.opponent_pos = None
 
-        # Load frozen walking model
-        self.walk_model = torch.jit.load(walk_model_path, map_location=self.device)
-        self.walk_model.eval()
-
-        # Extract normalizer tensors for efficient batch inference
-        try:
-            _norm = self.walk_model.obs_normalizer
-            self._norm_mean = _norm._mean.to(self.device)
-            self._norm_std = torch.clamp(_norm._std, min=1e-8).to(self.device)
-            print(f"[hierarchical] Walk model normalizer loaded: mean={self._norm_mean.shape}")
-        except Exception as e:
-            self._norm_mean = None
-            self._norm_std = None
-            print(f"[hierarchical] Walk model normalizer not available: {e}")
-
-        print(f"[hierarchical] Frozen walk model loaded from {walk_model_path}")
+        # Load frozen walking model (skipped under Strategy A rule-walk fallback)
+        self.walk_model = None
+        self._norm_mean = None
+        self._norm_std = None
+        if self.use_rule_walk:
+            print("[hierarchical] Strategy A: rule-walk fallback ENABLED — frozen walk model NOT loaded")
+        elif walk_model_path:
+            self.walk_model = torch.jit.load(walk_model_path, map_location=self.device)
+            self.walk_model.eval()
+            try:
+                _norm = self.walk_model.obs_normalizer
+                self._norm_mean = _norm._mean.to(self.device)
+                self._norm_std = torch.clamp(_norm._std, min=1e-8).to(self.device)
+                print(f"[hierarchical] Walk model normalizer loaded: mean={self._norm_mean.shape}")
+            except Exception as e:
+                self._norm_mean = None
+                self._norm_std = None
+                print(f"[hierarchical] Walk model normalizer not available: {e}")
+            print(f"[hierarchical] Frozen walk model loaded from {walk_model_path}")
+        else:
+            print("[hierarchical] WARNING: no walk_model_path and rule-walk disabled")
         print(f"[hierarchical] HL obs dim={self.hl_obs_dim}, HL action dim={self.num_actions}")
         print(f"[hierarchical] HL dt={self.high_level_dt:.3f}s, decimation={high_level_decimation}")
         print(f"[hierarchical] HL clip: lin={self.hl_clip_lin} m/s, ang={self.hl_clip_ang} rad/s")
@@ -221,6 +237,7 @@ class SoccerEnvHierarchical(SoccerEnv):
             soccer["scored_my_team"] = soccer["scored"].float()
 
         self.rew_buf = compute_reward(soccer, self.hl_actions, w, self.task)
+        reward_components = compute_reward_components(soccer, w, self.task)
 
         # ── Success metrics → extras["episode"] (rsl_rl logs these to tensorboard) ──
         # Accumulated on GPU, flushed every 10 HL steps — zero per-step sync cost.
@@ -250,6 +267,33 @@ class SoccerEnvHierarchical(SoccerEnv):
             self.episode_length_buf > self.max_episode_length
         ).to(dtype=gs.tc_float)
 
+        # Preserve the post-physics terminal observation before _reset_idx()
+        # restores finished environments to their spawn state.  Consumers such
+        # as the distributed worker can therefore report the state that caused
+        # a fall/goal instead of the freshly reset pose.  Keep the scalar event
+        # flags at the top level for compatibility with lightweight evaluators.
+        terminal_done = self.reset_buf.detach().clone()
+        self.extras["fallen"] = soccer["fallen"].detach().clone()
+        self.extras["scored"] = soccer["scored"].detach().clone()
+        self.extras["done"] = terminal_done
+        self.extras["reward_components"] = {
+            name: {field: value.detach().clone() for field, value in component.items()}
+            for name, component in reward_components.items()
+        }
+        terminal_state = {
+            "fallen": self.extras["fallen"].clone(),
+            "scored": self.extras["scored"].clone(),
+            "done": terminal_done.clone(),
+            "base_pos": self.base_pos.detach().clone(),
+            "base_euler": self.base_euler.detach().clone(),
+            "ball_pos": self.ball_pos.detach().clone(),
+            "ball_vel": self.ball_vel.detach().clone(),
+        }
+        self.extras["terminal_state"] = terminal_state
+        # Keep the short alias for older local evaluators while making the
+        # canonical contract explicit for new telemetry consumers.
+        self.extras["terminal"] = terminal_state
+
         # Reset terminated envs
         self._reset_idx(self.reset_buf)
 
@@ -268,13 +312,68 @@ class SoccerEnvHierarchical(SoccerEnv):
         return self.obs_buf
 
     def _run_walk_model(self, obs_720):
-        """Run frozen walking model: normalize obs → actor → 21-dim joint actions."""
+        """Run frozen walking model: normalize obs → actor → 21-dim joint actions.
+
+        Under Strategy A (use_rule_walk), the mismatched frozen model is bypassed
+        and a deterministic gait is returned instead (no obs needed).
+        """
+        if self.use_rule_walk:
+            return self._rule_walk_actions()
         with torch.no_grad():
             if self._norm_mean is not None:
                 obs_normed = (obs_720 - self._norm_mean) / self._norm_std
             else:
                 obs_normed = obs_720
             return self.walk_model.actor(obs_normed)
+
+    def _rule_walk_actions(self):
+        """Strategy A gait generator. Returns 21-dim joint actions in the SAME space
+        as the frozen walk-model output (target = action*0.25 + policy_default_pos).
+
+        - commands == 0 -> static standing stance (all zeros = default pose, rock steady)
+        - commands != 0 -> phase-driven leg swing scaled by forward/side speed
+
+        Fully deterministic, so it cannot 'tremble' like the mismatched RL model.
+        Balance is preserved by small amplitudes + a double-support bias.
+        """
+        import math as _m
+        actions = torch.zeros((self.num_envs, 21), dtype=gs.tc_float, device=self.device)
+        vx = self.commands[:, 0]
+        vy = self.commands[:, 1]
+        wz = self.commands[:, 2]
+        speed = torch.clamp(torch.sqrt(vx * vx + vy * vy), 0.0, 1.0)
+        if float(speed.max()) < 0.03:
+            return actions  # pure stance
+        self._rule_phase = getattr(self, "_rule_phase", 0.0) + self.dt
+        stride = getattr(self, "_rule_stride", 1.1)
+        step_amp = getattr(self, "_rule_step_amp", 0.16)
+        lift_amp = getattr(self, "_rule_lift_amp", 0.22)
+        ank_amp = getattr(self, "_rule_ankle_amp", 0.10)
+        phi = 2.0 * _m.pi * (self._rule_phase / stride)
+        s = torch.sin(torch.tensor(phi, dtype=gs.tc_float, device=self.device))
+        A_step = speed * step_amp
+        A_lift = speed * lift_amp
+        A_ank = speed * ank_amp
+        sL = torch.where(s > 0, s, torch.zeros_like(s))
+        sR = torch.where(s < 0, -s, torch.zeros_like(s))
+        # Hip pitch: thrust swing leg forward, stance leg eases back slightly
+        actions[:, 5] = A_step * (sL - 0.3 * sR)    # Left_Hip_Pitch
+        actions[:, 6] = A_step * (sR - 0.3 * sL)    # Right_Hip_Pitch
+        # Knee: lift the swinging foot
+        actions[:, 15] = A_lift * sL                # Left_Knee_Pitch
+        actions[:, 16] = A_lift * sR                # Right_Knee_Pitch
+        # Ankle pitch: compensate to keep foot ~level
+        actions[:, 17] = -A_ank * sL                # Left_Ankle_Pitch
+        actions[:, 18] = -A_ank * sR                # Right_Ankle_Pitch
+        # Hip/ankle roll: keep feet under CoM (tiny)
+        actions[:, 9] = -0.05 * A_step * (sL - sR)  # Left_Hip_Roll
+        actions[:, 10] = -0.05 * A_step * (sR - sL)  # Right_Hip_Roll
+        actions[:, 19] = 0.05 * A_step * (sL - sR)  # Left_Ankle_Roll
+        actions[:, 20] = 0.05 * A_step * (sR - sL)  # Right_Ankle_Roll
+        # Turning (wz): gentle weight shift
+        actions[:, 13] = 0.1 * wz                   # Left_Hip_Yaw
+        actions[:, 14] = -0.1 * wz                  # Right_Hip_Yaw
+        return actions
 
     def _low_level_step(self, joint_actions):
         """Execute one low-level control step (DECIMATION physics substeps)."""

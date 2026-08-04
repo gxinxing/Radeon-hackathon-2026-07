@@ -4,27 +4,22 @@ Fixes:
   - SIGPIPE ignored
   - BrokenPipeError caught
   - Graceful shutdown on MSG_END or socket close
-  - 20s match (1000 HL steps at 10Hz)
+  - Match lifetime is controlled by MSG_END from the coordinator, or an
+    explicitly configured ``--max-steps`` guard.
 """
-import argparse, socket, struct, time, sys, os, signal, math
+import argparse, hashlib, socket, time, sys, os, signal, math
 import numpy as np
 import torch
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-MSG_STATE = 1
-MSG_BALL = 2
-MSG_CMD = 3
-MSG_END = 4
-MSG_WORLD = 5  # Global perception: all robots + ball in one message
+from match_protocol import (
+    MSG_STATE, MSG_BALL, MSG_CMD, MSG_END, MSG_WORLD, MSG_HELLO,
+    pack_handshake, pack_state, recv_msg, identity_for_role,
+    capture_terminal_telemetry,
+)
 
 DEFAULT_PORT = 9876
-N_STEPS = 200  # 20s at 10Hz (HL decimation=5, 50Hz physics)
-
-
-def pack_state(msg_type, data):
-    payload = struct.pack(f'<{len(data)}f', *data) if data else b''
-    return struct.pack('<BI', msg_type, len(data)) + payload
 
 
 def recv_all(sock, n):
@@ -32,6 +27,8 @@ def recv_all(sock, n):
     while len(data) < n:
         try:
             chunk = sock.recv(n - len(data))
+        except socket.timeout:
+            raise
         except (ConnectionResetError, OSError):
             return None
         if not chunk:
@@ -40,26 +37,21 @@ def recv_all(sock, n):
     return data
 
 
-def recv_msg(sock):
-    header = recv_all(sock, 5)
-    if not header:
-        return None, None
-    msg_type, length = struct.unpack('<BI', header)
-    if length == 0:
-        return msg_type, []
-    data = recv_all(sock, length * 4)
-    if not data:
-        return None, None
-    return msg_type, struct.unpack(f'<{length}f', data)
-
-
 class MatchWorker:
-    def __init__(self, role, has_ball, port, model_path, init_pos, team_id=0, onnx_path=None):
+    def __init__(self, role, has_ball, port, model_path, init_pos, team_id=0,
+                 onnx_path=None, rule_walk=False, max_steps=None):
         self.role = role
         self.has_ball = has_ball
         self.port = port
         self.model_path = model_path
         self.onnx_path = onnx_path
+        self.rule_walk = rule_walk
+        if max_steps is not None and max_steps < 1:
+            raise ValueError('max_steps must be positive when configured')
+        self.max_steps = max_steps
+        self.max_steps_reached = False
+        self.received_end = False
+        self.failed = False
         self.init_pos = init_pos
         self.team_id = team_id
         self.running = False
@@ -68,6 +60,21 @@ class MatchWorker:
         self.ball_pos = np.array([0.0, 0.0, 0.11])
         self.ball_vel = np.array([0.0, 0.0, 0.0])
         self.collision_push = np.array([0.0, 0.0, 0.0])
+        self.walk_model_path = None
+        self.model_sha = None
+        self.identity = identity_for_role(
+            self.role, self.team_id, 'ONNX' if onnx_path else 'Rule', 'unknown',
+            self.has_ball)
+
+    @staticmethod
+    def _sha256_file(path):
+        if not path or not os.path.isfile(path):
+            return 'unknown'
+        digest = hashlib.sha256()
+        with open(path, 'rb') as handle:
+            for chunk in iter(lambda: handle.read(1024 * 1024), b''):
+                digest.update(chunk)
+        return digest.hexdigest()
 
     def setup(self):
         import yaml
@@ -80,13 +87,35 @@ class MatchWorker:
             cfg = yaml.safe_load(f)
         env_cfg = dict(cfg['env'])
         env_cfg['task'] = 'chase_hl'
+        env_cfg['use_rule_walk'] = self.rule_walk
         hl_cfg = cfg.get('high_level', {})
+        project_dir = os.path.dirname(os.path.abspath(__file__))
+        project_walk_model = os.path.join(project_dir, 'models', 'pretrained', 't1_walk.pt')
+        configured_walk_model = hl_cfg.get('walk_model_path')
+        if configured_walk_model and not os.path.isabs(configured_walk_model):
+            configured_walk_model = os.path.join(project_dir, configured_walk_model)
+        walk_model_path = (
+            project_walk_model if os.path.isfile(project_walk_model)
+            else configured_walk_model
+        )
+        if not self.rule_walk and (not walk_model_path or not os.path.isfile(walk_model_path)):
+            raise FileNotFoundError(
+                'low-level walk model not found; expected '
+                f'{project_walk_model} or configured path {configured_walk_model}'
+            )
+        self.walk_model_path = walk_model_path
+        controller = 'ONNX' if self.onnx_path else 'Rule'
+        model_path_for_identity = self.onnx_path or walk_model_path
+        model_sha = self._sha256_file(model_path_for_identity)
+        if self.rule_walk and not self.onnx_path:
+            model_sha = hashlib.sha256(b'rule-walk').hexdigest()
+        self.model_sha = model_sha
 
         from soccer_env_hierarchical import SoccerEnvHierarchical
         self.env = SoccerEnvHierarchical(
             num_envs=1, env_cfg=env_cfg, obs_cfg=cfg['obs'],
             reward_cfg=cfg['reward'], command_cfg=cfg['command'],
-            walk_model_path=hl_cfg.get('walk_model_path'),
+            walk_model_path=walk_model_path,
             high_level_decimation=hl_cfg.get('decimation', 5),
             show_viewer=False)
 
@@ -97,7 +126,7 @@ class MatchWorker:
 
         self.cfg = cfg
 
-        # Three inference paths: ONNX (preferred) → .pt (legacy) → rule
+        # Inference paths: ONNX policy when provided, otherwise deterministic rule.
         self.policy = None
         self.onnx_policy = None
 
@@ -106,6 +135,10 @@ class MatchWorker:
             sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'src'))
             from match_3v3.policy import SharedRLPolicy
             self.onnx_policy = SharedRLPolicy(onnx_path=self.onnx_path)
+            if not self.onnx_policy.onnx_loaded or self.onnx_policy.mode != 'onnx_vs_rule':
+                raise RuntimeError(
+                    'ONNX requested but SharedRLPolicy did not load a real ONNX session'
+                )
             print(f'[{self.role}] Using ONNX model: {self.onnx_path} (mode={self.onnx_policy.mode})')
         elif self.model_path:
             # .pt path removed — convert to ONNX first, then use --onnx
@@ -113,8 +146,14 @@ class MatchWorker:
             print(f'[{self.role}] Convert: python export_onnx_mlp.py --model {self.model_path} --output models/chase_policy.onnx')
             sys.exit(1)
 
+        # Declare identity only after the requested controller has actually
+        # loaded; this prevents reporting ONNX while silently using RulePolicy.
+        self.identity = identity_for_role(
+            self.role, self.team_id, controller, model_sha, self.has_ball)
+
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.connect(('localhost', self.port))
+        self.sock.sendall(pack_handshake(self.identity))
         print(f'[{self.role}] Connected to coordinator')
 
     def run(self):
@@ -128,17 +167,22 @@ class MatchWorker:
         self.env._read_state()
         step = 0
 
-        while self.running and step < N_STEPS:
+        # The coordinator owns match lifetime and sends MSG_END when its
+        # duration elapses. ``max_steps`` is an optional local safety/CI
+        # guard; there is deliberately no implicit fixed step limit here.
+        while self.running and (self.max_steps is None or step < self.max_steps):
             # Receive world state from coordinator
             self.sock.settimeout(120.0)
             try:
                 msg_type, data = recv_msg(self.sock)
                 if msg_type == MSG_END:
                     print(f'[{self.role}] Received END signal at step {step}')
+                    self.received_end = True
                     self.running = False
                     break
                 elif msg_type is None:
                     print(f'[{self.role}] Connection lost before step {step}')
+                    self.failed = True
                     self.running = False
                     break
                 elif msg_type == MSG_WORLD and data:
@@ -162,11 +206,13 @@ class MatchWorker:
                 # Read collision push (if sent separately)
                 msg_type2, data2 = recv_msg(self.sock)
                 if msg_type2 == MSG_END:
+                    self.received_end = True
                     self.running = False
                     break
                 elif msg_type2 == MSG_CMD and data2:
                     self.collision_push = np.array(data2[:3])
                 elif msg_type2 is None:
+                    self.failed = True
                     self.running = False
                     break
             except socket.timeout:
@@ -176,7 +222,7 @@ class MatchWorker:
             if not self.running:
                 break
 
-            # Compute action — three paths: ONNX → .pt → rule
+            # Compute action — ONNX policy when configured, otherwise rule.
             if self.onnx_policy:
                 # ONNX Runtime inference: build PlayerState + BallState from env
                 from match_3v3.scene import PlayerState, BallState, Team, Role
@@ -243,42 +289,76 @@ class MatchWorker:
             obs, rew, done, extras = self.env.step(action)
             step += 1
 
+            # Capture terminal values before the environment resets a finished
+            # episode.  Older environments may not expose these extras, so the
+            # live state remains the compatibility fallback.
+            telemetry = capture_terminal_telemetry(
+                extras,
+                self.env.base_pos[0].cpu().numpy(),
+                self.env.base_euler[0].cpu().numpy(),
+                self.env.ball_pos[0].cpu().numpy(),
+                self.env.ball_vel[0].cpu().numpy(),
+            )
+            fallen = telemetry['fallen']
+            scored = telemetry['scored']
+            agent_pos = np.asarray(telemetry['base_pos'], dtype=np.float32)
+            agent_euler = np.asarray(telemetry['base_euler'], dtype=np.float32)
+
             # Send our state
-            agent_pos = self.env.base_pos[0].cpu().numpy()
-            agent_pitch = self.env.base_euler[0, 1].item()
-            agent_roll = self.env.base_euler[0, 0].item()
+            agent_pitch = float(agent_euler[1]) if len(agent_euler) > 1 else float(self.env.base_euler[0, 1].item())
+            agent_roll = float(agent_euler[0]) if len(agent_euler) > 0 else float(self.env.base_euler[0, 0].item())
             try:
                 self.sock.sendall(pack_state(MSG_STATE, [
                     float(agent_pos[0]), float(agent_pos[1]), float(agent_pos[2]),
-                    agent_pitch, agent_roll
+                    agent_pitch, agent_roll, float(fallen), float(scored)
                 ]))
             except (BrokenPipeError, ConnectionResetError, OSError):
                 print(f'[{self.role}] Connection lost at step {step}')
+                self.failed = True
+                self.running = False
                 break
 
             # Send ball state if authority
             if self.has_ball:
-                ball_pos = self.env.ball_pos[0].cpu().numpy()
-                ball_vel = self.env.ball_vel[0].cpu().numpy()
+                ball_pos = np.asarray(telemetry['ball_pos'], dtype=np.float32)
+                ball_vel = np.asarray(telemetry['ball_vel'], dtype=np.float32)
                 try:
                     self.sock.sendall(pack_state(MSG_BALL, [
                         float(ball_pos[0]), float(ball_pos[1]), float(ball_pos[2]),
                         float(ball_vel[0]), float(ball_vel[1]), float(ball_vel[2])
                     ]))
                 except (BrokenPipeError, ConnectionResetError, OSError):
+                    self.failed = True
+                    self.running = False
                     break
 
             # Log
             if step % 50 == 0:
                 ball_d = np.linalg.norm(agent_pos[:2] - self.ball_pos[:2])
-                print(f'[{self.role}] step {step}/{N_STEPS}: h={agent_pos[2]:.3f} '
+                limit = self.max_steps if self.max_steps is not None else 'MSG_END'
+                print(f'[{self.role}] step {step}/{limit}: h={agent_pos[2]:.3f} '
                       f'ball_d={ball_d:.2f} rew={rew.mean().item():.3f}')
 
-        print(f'[{self.role}] Finished after {step} steps')
+        # Reaching the local guard is intentionally distinguishable from a
+        # coordinator MSG_END.  The launcher may explicitly allow this in a
+        # bounded test run, but a normal match must be considered incomplete.
+        self.max_steps_reached = (
+            self.max_steps is not None and step >= self.max_steps and self.running
+        )
+        if self.failed:
+            print(f'[{self.role}] Incomplete: connection lost before MSG_END')
+        elif self.max_steps_reached:
+            print(f'[{self.role}] Incomplete: max_steps={self.max_steps} reached '
+                  'before MSG_END')
+        else:
+            print(f'[{self.role}] Finished after {step} steps')
         try:
             self.sock.close()
         except:
             pass
+        if self.failed:
+            return 1
+        return 3 if self.max_steps_reached else 0
 
 
 if __name__ == '__main__':
@@ -288,14 +368,29 @@ if __name__ == '__main__':
     parser.add_argument('--role', required=True)
     parser.add_argument('--has-ball', action='store_true')
     parser.add_argument('--port', type=int, default=DEFAULT_PORT)
-    parser.add_argument('--model', default=None, help='Path to .pt checkpoint (rsl_rl)')
-    parser.add_argument('--onnx', default=None, help='Path to ONNX model (preferred over --model)')
+    parser.add_argument('--model', default=None,
+                        help='Deprecated .pt checkpoint argument; use --onnx')
+    parser.add_argument('--onnx', default=None, help='Path to a .onnx policy model')
+    parser.add_argument('--max-steps', type=int, default=None,
+                        help='Optional local step limit; default is coordinator MSG_END')
     parser.add_argument('--init-pos', type=float, nargs=3, default=[0, 0, 0.7])
+    parser.add_argument('--rule-walk', dest='rule_walk', action='store_true', default=False,
+                        help='Diagnostic only: use deterministic rule-walk instead of pretrained t1_walk.pt')
+    parser.add_argument('--no-rule-walk', dest='rule_walk', action='store_false',
+                        help='Use the pretrained t1_walk.pt low-level walk model (default)')
     args = parser.parse_args()
+
+    if args.max_steps is not None and args.max_steps < 1:
+        parser.error('--max-steps must be a positive integer')
+    if args.onnx is not None:
+        if not args.onnx.endswith('.onnx'):
+            parser.error('--onnx must point to a .onnx file')
+        if not os.path.isfile(args.onnx):
+            parser.error(f'ONNX model not found: {args.onnx}')
 
     worker = MatchWorker(
         role=args.role, has_ball=args.has_ball, port=args.port,
         model_path=args.model, init_pos=args.init_pos,
-        onnx_path=args.onnx)
+        onnx_path=args.onnx, rule_walk=args.rule_walk, max_steps=args.max_steps)
     worker.setup()
-    worker.run()
+    sys.exit(worker.run())

@@ -14,6 +14,8 @@ from __future__ import annotations
 import math, os, torch
 import numpy as np
 
+from control_utils import compose_full_joint_targets, store_robot_actions
+
 try:
     import genesis as gs
 except Exception:
@@ -31,6 +33,7 @@ try:
     from envs.soccer_env import SoccerEnv
 except ImportError:
     from soccer_env_v4 import SoccerEnv
+from soccer_env_v4 import POLICY_JOINT_NAMES
 
 try:
     from rewards.reward import compute_reward
@@ -46,6 +49,14 @@ GOAL_W = 2.6
 GOAL_HALF = GOAL_W / 2
 BALL_R = 0.11
 ROBOT_HEIGHT = 0.72
+
+# Kick tuning (was hardcoded 0.3 / 3.0 / 1.0 magic numbers in two places)
+# Distance (m) from robot base to ball center under which a kick may fire.
+# Raised from 0.3 -> 0.5: a humanoid's foot only reaches the ball at ~0.45-0.5m
+# center distance, so the old 0.3m threshold almost never triggered a real kick.
+KICK_DISTANCE = 0.5
+KICK_IMPULSE = 3.0    # m/s impulse applied to ball toward opponent goal
+KICK_COOLDOWN = 0.5   # seconds between kicks (was 1.0)
 
 # 6 robot starting positions
 # Left team (attacks +x): [attacker, defender, keeper]
@@ -73,9 +84,11 @@ class SoccerEnv3v3(SoccerEnv):
         self.num_rl_robots = 3  # left team
 
         device = gs.device if gs is not None else "cpu"
-        # High-level actions for left team (3 robots × 3 dims)
-        self.hl_actions = torch.zeros((num_envs, 3, 3), dtype=gs.tc_float, device=device)
-        self.last_hl_actions = torch.zeros((num_envs, 3, 3), dtype=gs.tc_float, device=device)
+        # High-level actions for every entity (6 robots × 3 dims).  The legacy
+        # ``step((N, 3))`` API still addresses robot 0; ``step_multi`` accepts
+        # one independently computed command for each of the six robots.
+        self.hl_actions = torch.zeros((num_envs, 6, 3), dtype=gs.tc_float, device=device)
+        self.last_hl_actions = torch.zeros((num_envs, 6, 3), dtype=gs.tc_float, device=device)
 
         # Call parent init — sets up physics, scene, buffers, calls reset()
         super().__init__(num_envs, env_cfg, obs_cfg, reward_cfg, command_cfg, show_viewer)
@@ -140,33 +153,37 @@ class SoccerEnv3v3(SoccerEnv):
         for i in range(self.num_robots):
             robot = self.robots[i]
             motor_joints = [j for j in robot.joints[1:] if j.n_dofs > 0]
-            motors_dof_idx = torch.tensor([j.dof_start for j in motor_joints],
-                                          dtype=gs.tc_int, device=dev)
-            base_dof_start = int(motors_dof_idx[0].item())
             num_motors = len(motor_joints)
-            default_pos = robot.get_dofs_position(motors_dof_idx)[0].clone()
-            actions_dof_idx = torch.argsort(motors_dof_idx)
+            local_dof_idx = torch.arange(num_motors, dtype=gs.tc_int, device=dev)
+            default_pos = robot.get_dofs_position(local_dof_idx)[0].clone()
+            all_joint_names = [j.name for j in motor_joints]
+            policy_joint_indices = torch.tensor(
+                [all_joint_names.index(name) for name in POLICY_JOINT_NAMES],
+                dtype=gs.tc_int,
+                device=dev,
+            )
 
             self.all_dof_pos.append(torch.zeros((n, num_motors), dtype=gs.tc_float, device=dev))
             self.all_dof_vel.append(torch.zeros((n, num_motors), dtype=gs.tc_float, device=dev))
-            self.all_last_actions.append(torch.zeros((n, num_motors), dtype=gs.tc_float, device=dev))
+            self.all_last_actions.append(torch.zeros(
+                (n, len(POLICY_JOINT_NAMES)), dtype=gs.tc_float, device=dev
+            ))
             self.all_default_dof_pos.append(default_pos)
 
             # Set PD gains
             kp = self.cfg.get("kp", 200.0)
             kd = self.cfg.get("kd", 5.0)
-            robot.set_dofs_kp([kp] * num_motors, motors_dof_idx)
-            robot.set_dofs_kv([kd] * num_motors, motors_dof_idx)
+            robot.set_dofs_kp([kp] * num_motors, local_dof_idx)
+            robot.set_dofs_kv([kd] * num_motors, local_dof_idx)
 
             # Store per-robot metadata
             if not hasattr(self, '_robot_meta'):
                 self._robot_meta = []
             self._robot_meta.append({
                 'motor_joints': motor_joints,
-                'motors_dof_idx': motors_dof_idx,
-                'base_dof_start': base_dof_start,
+                'local_dof_idx': local_dof_idx,
                 'num_motors': num_motors,
-                'actions_dof_idx': actions_dof_idx,
+                'policy_joint_indices': policy_joint_indices,
             })
 
         # Filtered velocity for each robot (for observation)
@@ -191,7 +208,20 @@ class SoccerEnv3v3(SoccerEnv):
         self.scene = gs.Scene(
             sim_options=gs.options.SimOptions(dt=PHYSICS_DT, substeps=1),
             rigid_options=gs.options.RigidOptions(
-                enable_self_collision=False, tolerance=1e-5, max_collision_pairs=256),
+                enable_self_collision=False,
+                # gfx1100 has a 64 KiB local-memory ceiling per kernel.  A
+                # 4096-pair solver specialization exceeds it for six T1s;
+                # 1024 retains ample headroom over the observed active pairs.
+                max_collision_pairs=1024,
+                # Newton's tiled factorization compiles to 66,560 bytes of
+                # local memory for this six-humanoid scene, above gfx1100's
+                # 65,536-byte limit. CG avoids that architecture-specific
+                # kernel while retaining contact constraints.
+                constraint_solver=gs.constraint_solver.CG,
+                sparse_solve=True,
+                tolerance=1e-4,
+                iterations=50,
+            ),
             viewer_options=gs.options.ViewerOptions(
                 camera_pos=(0, -12, 8), camera_lookat=(0, 0, 0.5), camera_fov=50),
             vis_options=gs.options.VisOptions(
@@ -235,6 +265,12 @@ class SoccerEnv3v3(SoccerEnv):
                                   fixed=False, merge_fixed_links=False))
             self.robots.append(robot)
 
+        # The parent SoccerEnv constructor initializes its legacy single-robot
+        # buffers immediately after _build_scene().  Point that compatibility
+        # API at robot 0; this subclass replaces the buffers with six-robot
+        # versions once the parent constructor returns.
+        self.robot = self.robots[0]
+
         # Ball
         ball_path = os.path.join(os.path.dirname(__file__), "..", "assets", "ball.urdf")
         if not os.path.exists(ball_path):
@@ -263,8 +299,8 @@ class SoccerEnv3v3(SoccerEnv):
                     inv_quat(torch.tensor([1.0, 0, 0, 0], device=self.device)),
                     robot.get_quat()), rpy=True, degrees=True)
             meta = self._robot_meta[i]
-            self.all_dof_pos[i] = robot.get_dofs_position(meta['motors_dof_idx'])
-            self.all_dof_vel[i] = robot.get_dofs_velocity(meta['motors_dof_idx'])
+            self.all_dof_pos[i] = robot.get_dofs_position(meta['local_dof_idx'])
+            self.all_dof_vel[i] = robot.get_dofs_velocity(meta['local_dof_idx'])
 
         # Ball
         self.ball_pos = self.ball.get_pos()
@@ -324,16 +360,19 @@ class SoccerEnv3v3(SoccerEnv):
         goal_x = -self.goal_x  # negative for right team
         to_goal = torch.tensor([goal_x, 0.0], device=self.device).expand(self.num_envs, -1) - pos[:, :2]
 
-        # Simple: move toward ball, if close move toward goal
-        vx = torch.where(dist.squeeze(-1) > 0.3,
-                        direction[:, 0] * 0.4,
-                        torch.sign(to_goal[:, 0]) * 0.5)
-        vy = torch.where(dist.squeeze(-1) > 0.3,
-                        direction[:, 1] * 0.4,
-                        to_goal[:, 1] * 0.3)
-        wz = torch.where(dist.squeeze(-1) > 0.3,
-                        torch.clamp(torch.atan2(to_ball[:, 1], to_ball[:, 0]) * 0.3, -0.5, 0.5),
-                        torch.zeros_like(vx))
+        # Always chase the ball. When within KICK_DISTANCE, keep pushing INTO the
+        # ball (faster) instead of diverting to goal — diverting made the robot
+        # abandon the ball and the <0.3m kick trigger was never held. The actual
+        # goal-ward velocity is imparted by _execute_kick's ball impulse.
+        close = dist.squeeze(-1) < KICK_DISTANCE
+        speed = torch.where(
+            close,
+            torch.full_like(close, 0.55, dtype=direction.dtype),
+            torch.full_like(close, 0.4, dtype=direction.dtype),
+        )
+        vx = direction[:, 0] * speed
+        vy = direction[:, 1] * speed
+        wz = torch.clamp(torch.atan2(to_ball[:, 1], to_ball[:, 0]) * 0.3, -0.5, 0.5)
 
         actions = torch.stack([
             torch.clamp(vx, -self.hl_clip_lin, self.hl_clip_lin),
@@ -353,6 +392,10 @@ class SoccerEnv3v3(SoccerEnv):
         last_act = self.all_last_actions[i]
         cmd = self.all_commands[:, i, :]
         default_pos = self.all_default_dof_pos[i]
+        policy_idx = meta['policy_joint_indices']
+        policy_dof_pos = dof_pos[:, policy_idx]
+        policy_dof_vel = dof_vel[:, policy_idx]
+        policy_default_pos = default_pos[policy_idx]
 
         inv_bq = inv_quat(quat)
         lin_vel = self.all_filtered_lin_vel[:, i, :]
@@ -366,9 +409,9 @@ class SoccerEnv3v3(SoccerEnv):
             ang_vel * self.obs_scales["ang_vel"],         # 3
             grav,                                          # 3
             cmd,                                           # 3
-            (dof_pos - default_pos) * self.obs_scales["dof_pos"],  # N
-            dof_vel * self.obs_scales["dof_vel"],         # N
-            last_act,                                     # N
+            (policy_dof_pos - policy_default_pos) * self.obs_scales["dof_pos"],  # 21
+            policy_dof_vel * self.obs_scales["dof_vel"],  # 21
+            last_act,                                     # 21
         ], dim=-1)
 
         # Pad to 72 dims if needed
@@ -399,25 +442,31 @@ class SoccerEnv3v3(SoccerEnv):
         actions = torch.clip(joint_actions, -self.clip_actions, self.clip_actions)
         exec_actions = self.all_last_actions[i] if self.simulate_action_latency else actions
 
-        target_dof_pos = self.all_default_dof_pos[i].unsqueeze(0).expand(self.num_envs, -1).clone()
-        policy_targets = exec_actions * self.action_scale + self.all_default_dof_pos[i].unsqueeze(0)
-        # Only set the policy-controlled joints
-        motor_start = meta['base_dof_start']
+        full_targets = compose_full_joint_targets(
+            exec_actions,
+            self.action_scale,
+            self.all_default_dof_pos[i],
+            meta['policy_joint_indices'],
+        )
         robot.control_dofs_position(
-            target_dof_pos[:, meta['actions_dof_idx']],
-            slice(motor_start, motor_start + n_motors),
+            full_targets,
+            meta['local_dof_idx'],
         )
 
-        self.all_last_actions[i] = actions
+        store_robot_actions(self.all_last_actions, i, actions)
 
     def _execute_kick(self, robot_idx):
-        """Apply kick impulse to ball if robot is close enough."""
+        """Apply kick impulse to ball if robot is close enough.
+
+        Returns a per-environment boolean mask so callers can record an
+        explicit kick/contact event without guessing from the ball trajectory.
+        """
         i = robot_idx
         pos = self.all_base_pos[:, i, :]
         ball_pos = self.ball_pos
 
         dist = torch.norm(ball_pos[:, :2] - pos[:, :2], dim=1)
-        can_kick = (dist < 0.3) & (self.kick_cooldown[:, i] < 0.01)
+        can_kick = (dist < KICK_DISTANCE) & (self.kick_cooldown[:, i] < 0.01)
 
         if can_kick.any():
             # Kick direction: toward opponent goal
@@ -428,7 +477,7 @@ class SoccerEnv3v3(SoccerEnv):
 
             goal_dir = torch.stack([goal_x - pos[:, 0], -pos[:, 1]], dim=1)
             goal_dir_norm = goal_dir / (torch.norm(goal_dir, dim=1, keepdim=True) + 1e-6)
-            impulse = goal_dir_norm * 3.0  # 3 m/s kick
+            impulse = goal_dir_norm * KICK_IMPULSE  # m/s kick
 
             # Apply to ball velocity
             ball_qvel = self.ball.get_dofs_velocity().clone()
@@ -436,42 +485,54 @@ class SoccerEnv3v3(SoccerEnv):
             ball_qvel[can_kick, 1] = impulse[can_kick, 1]
             ball_qvel[can_kick, 2] = 0.0
             self.ball.set_dofs_velocity(ball_qvel)
-            self.kick_cooldown[can_kick, i] = 1.0
+            self.kick_cooldown[can_kick, i] = KICK_COOLDOWN
 
         self.kick_cooldown[:, i] = torch.clamp(
             self.kick_cooldown[:, i] - self.high_level_dt, min=0.0)
+        return can_kick
 
-    def step(self, hl_actions):
-        """High-level step: run all 6 robots for N low-level steps.
+    def _normalise_commands(self, hl_actions, *, legacy: bool = False):
+        """Return a finite ``(num_envs, 6, 3)`` command tensor.
 
-        Args:
-            hl_actions: (num_envs, 3) velocity commands for RL robot (robot 0)
+        ``legacy=True`` preserves the old renderer contract where only the
+        left attacker was supplied and the remaining five entities followed
+        the built-in rule chase.  The acceptance evaluator calls
+        :meth:`step_multi` and therefore exercises independent control of all
+        six robots in this one scene.
         """
-        # Set RL robot commands (robot 0 = left attacker)
-        rl_cmd = torch.stack([
-            torch.clamp(hl_actions[:, 0], -self.hl_clip_lin, self.hl_clip_lin),
-            torch.clamp(hl_actions[:, 1], -self.hl_clip_lin, self.hl_clip_lin),
-            torch.clamp(hl_actions[:, 2], -self.hl_clip_ang, self.hl_clip_ang),
-        ], dim=1)
-        rl_cmd = torch.where(torch.abs(rl_cmd) < 0.05, torch.zeros_like(rl_cmd), rl_cmd)
-        self.all_commands[:, 0, :] = rl_cmd
-        self.all_last_hl_actions[:, 0, :] = self.hl_actions[:, 0, :].clone()
-        self.hl_actions[:, 0, :] = rl_cmd
+        actions = torch.as_tensor(hl_actions, dtype=self.hl_actions.dtype, device=self.device)
+        if actions.ndim == 2 and actions.shape == (self.num_envs, 3):
+            commands = torch.zeros_like(self.hl_actions)
+            commands[:, 0, :] = actions
+            legacy = True
+        elif actions.ndim == 3 and actions.shape == (self.num_envs, self.num_robots, 3):
+            commands = actions.clone()
+        else:
+            raise ValueError(
+                "3v3 high-level actions must have shape "
+                f"({self.num_envs}, 3) or ({self.num_envs}, 6, 3), got {tuple(actions.shape)}"
+            )
 
-        # Left team robots 1,2: simple chase-ball rule
-        for i in range(1, 3):
-            cmd = self._compute_rule_actions(i)
-            self.all_commands[:, i, :] = cmd
-            self.all_last_hl_actions[:, i, :] = self.hl_actions[:, i, :].clone()
-            self.hl_actions[:, i, :] = cmd
+        if legacy:
+            # The compatibility path deliberately keeps the historical rule
+            # behaviour for robots 1..5.  No worker or coordinator is involved.
+            for i in range(1, self.num_robots):
+                commands[:, i, :] = self._compute_rule_actions(i)
 
-        # Right team: rule-based
-        for i in range(3, 6):
-            cmd = self._compute_rule_actions(i)
-            self.all_commands[:, i, :] = cmd
-            self.all_last_hl_actions[:, i, :] = self.hl_actions[:, i, :].clone()
-            self.hl_actions[:, i, :] = cmd
+        commands = torch.nan_to_num(commands, nan=0.0, posinf=0.0, neginf=0.0)
+        commands[..., :2] = torch.clamp(commands[..., :2], -self.hl_clip_lin, self.hl_clip_lin)
+        commands[..., 2] = torch.clamp(commands[..., 2], -self.hl_clip_ang, self.hl_clip_ang)
+        commands = torch.where(torch.abs(commands) < 0.05, torch.zeros_like(commands), commands)
+        return commands
 
+    def _apply_commands(self, commands):
+        """Install per-robot commands while preserving previous-action state."""
+        self.all_commands.copy_(commands)
+        self.all_last_hl_actions.copy_(self.hl_actions)
+        self.hl_actions.copy_(commands)
+
+    def _physics_step(self):
+        """Advance the single Genesis scene and return all six robot actions."""
         # Run N low-level steps
         for _ in range(self.high_level_decimation):
             for i in range(self.num_robots):
@@ -496,11 +557,17 @@ class SoccerEnv3v3(SoccerEnv):
                 self.all_filtered_lin_vel[:, i, :] = lin_vel * fw + self.all_filtered_lin_vel[:, i, :] * (1 - fw)
                 self.all_filtered_ang_vel[:, i, :] = ang_vel * fw + self.all_filtered_ang_vel[:, i, :] * (1 - fw)
 
-                self.all_last_actions[i] = joint_actions
-
-        # Kick logic for all robots
+        # Kick logic for all robots.  ``last_kick_events`` is retained as an
+        # explicit event stream for the acceptance log; physics remains the
+        # sole authority for ball state.
+        self.last_kick_events = torch.zeros(
+            (self.num_envs, self.num_robots), dtype=gs.tc_bool, device=self.device
+        )
         for i in range(self.num_robots):
-            self._execute_kick(i)
+            self.last_kick_events[:, i] = self._execute_kick(i)
+
+    def _compute_step_telemetry(self):
+        """Compute reward, terminal flags, and pre-reset state telemetry."""
 
         # Build high-level observation for RL robot
         self._update_observation()
@@ -526,25 +593,81 @@ class SoccerEnv3v3(SoccerEnv):
             "just_recovered": torch.zeros(self.num_envs, dtype=gs.tc_bool, device=self.device),
         }
 
-        w = dict(self.reward_scales) if self.reward_scales else {"upright": 1.0, "alive": 0.1}
-        w["_ball_radius"] = self.ball_radius
-        w["dt"] = self.high_level_dt
-        self.rew_buf = compute_reward(soccer, self.hl_actions[:, 0, :], w, "chase_hl")
+        # The shared-match evaluator reports a transparent task metric instead
+        # of invoking the training reward, whose chase_hl contract requires
+        # foot/contact/history tensors that this six-entity harness does not
+        # fabricate.  This value is descriptive and is not presented as the
+        # PPO training objective.
+        self.rew_buf = (
+            torch.exp(-soccer["dist_to_ball"])
+            + 0.1 * (~soccer["fallen"]).to(dtype=gs.tc_float)
+            + 5.0 * soccer["scored"].to(dtype=gs.tc_float)
+        )
 
         # Termination
         self.reset_buf = self.episode_length_buf > self.max_episode_length
-        self.reset_buf |= soccer["scored"]
+        scored_left = (self.ball_pos[:, 0] > self.goal_x) & (torch.abs(self.ball_pos[:, 1]) < self.goal_half)
+        scored_right = (self.ball_pos[:, 0] < -self.goal_x) & (torch.abs(self.ball_pos[:, 1]) < self.goal_half)
+        self.reset_buf |= scored_left | scored_right
         for i in range(self.num_robots):
             self.reset_buf |= torch.abs(self.all_base_euler[:, i, 1]) > self.term_pitch
             self.reset_buf |= torch.abs(self.all_base_euler[:, i, 0]) > self.term_roll
         self.reset_buf |= self.scene.rigid_solver.get_error_envs_mask()
-        self.extras = {"time_outs": (self.episode_length_buf > self.max_episode_length).to(dtype=gs.tc_float)}
+        fallen = self.all_base_pos[:, :, 2] < self.fall_height
+        fallen |= torch.abs(self.all_base_euler[:, :, 1]) > self.term_pitch
+        fallen |= torch.abs(self.all_base_euler[:, :, 0]) > self.term_roll
+        timeout = self.episode_length_buf > self.max_episode_length
+        # Clone before _reset_idx: the canonical evaluator must never log the
+        # reset pose as the terminal state.
+        terminal_state = {
+            "all_base_pos": self.all_base_pos.detach().clone(),
+            "all_base_quat": self.all_base_quat.detach().clone(),
+            "all_base_euler": self.all_base_euler.detach().clone(),
+            "all_filtered_lin_vel": self.all_filtered_lin_vel.detach().clone(),
+            "ball_pos": self.ball_pos.detach().clone(),
+            "ball_vel": self.ball_vel.detach().clone(),
+            "fallen": fallen.detach().clone(),
+            "scored_left": scored_left.detach().clone(),
+            "scored_right": scored_right.detach().clone(),
+        }
+        self.extras = {
+            "time_outs": timeout.to(dtype=gs.tc_float),
+            "fallen": fallen.any(dim=1),
+            "scored": (scored_left | scored_right),
+            "terminal_state": terminal_state,
+            "kick_events": self.last_kick_events.detach().clone(),
+        }
 
         if self.reset_buf.any():
             self._reset_idx(self.reset_buf)
 
         obs_dict = TensorDict({"policy": self._compute_rl_obs(0)}, batch_size=[self.num_envs])
         return obs_dict, self.rew_buf, self.reset_buf, self.extras
+
+    def step_multi(self, hl_actions):
+        """Advance six independently controlled robots in the same scene.
+
+        Args:
+            hl_actions: velocity commands shaped ``(num_envs, 6, 3)``.  Robot
+                indices are fixed as ``A_attacker, A_defender, A_keeper,
+                B_attacker, B_defender, B_keeper``.  All entities share the
+                same Genesis scene, ball, solver, and clock.
+        """
+        commands = self._normalise_commands(hl_actions)
+        self._apply_commands(commands)
+        self._physics_step()
+        return self._compute_step_telemetry()
+
+    def step(self, hl_actions):
+        """Backward-compatible single-attacker step.
+
+        New evaluation code should call :meth:`step_multi`; retaining this
+        adapter keeps the existing PPO renderer and training utilities intact.
+        """
+        commands = self._normalise_commands(hl_actions, legacy=True)
+        self._apply_commands(commands)
+        self._physics_step()
+        return self._compute_step_telemetry()
 
     def _update_observation(self):
         """Update the observation buffer for RL robot."""
@@ -557,12 +680,25 @@ class SoccerEnv3v3(SoccerEnv):
         return TensorDict({"policy": self._compute_rl_obs(0)}, batch_size=[self.num_envs])
 
     def reset(self):
+        # ``SoccerEnv.__init__`` invokes ``self.reset()`` before this subclass
+        # has discovered the six robots' motor layouts.  Defer that first
+        # call; __init__ below performs the real reset after buffers exist.
+        if not self._hl_initialized:
+            return None
         self._reset_idx()
         self._read_all_robot_states()
         return self.get_observations()
 
     def _reset_idx(self, envs_idx=None):
         """Reset all robots to starting positions."""
+        # Partial reset was never implemented for this single-scene evaluator.
+        # With one env, a terminal mask is equivalent to resetting the scene.
+        if envs_idx is not None:
+            try:
+                if bool(torch.as_tensor(envs_idx).any().item()):
+                    envs_idx = None
+            except Exception:
+                envs_idx = None
         if envs_idx is None:
             # Reset all
             for i, robot in enumerate(self.robots):
@@ -573,10 +709,12 @@ class SoccerEnv3v3(SoccerEnv):
                 qpos[0, 3:7] = torch.tensor([1.0, 0, 0, 0], device=self.device)
                 # Set default joint positions
                 meta = self._robot_meta[i]
-                motor_start = meta['base_dof_start']
-                n_motors = meta['num_motors']
-                qpos[0, motor_start:motor_start + n_motors] = self.all_default_dof_pos[i]
                 robot.set_qpos(qpos, zero_velocity=True, skip_forward=True)
+                robot.set_dofs_position(
+                    self.all_default_dof_pos[i].unsqueeze(0),
+                    meta['local_dof_idx'],
+                    zero_velocity=True,
+                )
 
             # Reset ball to center
             ball_qpos = self.ball.get_qpos().clone()

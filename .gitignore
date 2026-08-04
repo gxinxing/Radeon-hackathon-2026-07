@@ -64,3 +64,8 @@ track3-soccer/match_logs/match_20260731_032656.json
 # Track 2 Dify source (large, not authored)
 track2-agentic-ai/dify/dify-src/
 .DS_Store
+
+# Radeon Cloud SSH private key (recovered 2026-08-04 — never commit)
+radeon_ssh/id_ed25519
+radeon_ssh/id_ed25519.pub
+radeon_ssh/backup.log

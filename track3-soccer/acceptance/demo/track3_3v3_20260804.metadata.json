@@ -1,0 +1,90 @@
+{
+  "artifact_type": "offline_match_log_visualization",
+  "source_log": "acceptance/remote/match_20260804_115349.json",
+  "source_log_sha256": "9a494e2f00cc751df2090339c2f7b2e3e99c75333fd6a3f2f4e8d6ef598ac2be",
+  "source_stdout_log": "acceptance/remote/codex_3v3_acceptance.log",
+  "source_stdout_sha256": "ce0c2795f76e3257fa99b5bd9eac5f278df221fa669d319a571969ac02bcceac",
+  "model": "models/chase_v8_policy.onnx",
+  "model_sha256": "6d7ce9121116663eaca7d14ab7d845d6f951a9c5c55521d88483f0e6d7c3fab5",
+  "video_sha256": "dda524468be2e4703b2b49ce09db8030c49df016bcef3f5b21aa67362e6973f4",
+  "renderer_sha256": "0b39b45b6c3af467a68301cc9683c22d3b9ec167601ed0e43a1c7f6c4ee04cea",
+  "command": "python3 scripts/render_match_log_video.py --input acceptance/remote/match_20260804_115349.json --output acceptance/demo/track3_3v3_20260804.mp4 --metadata acceptance/demo/track3_3v3_20260804.metadata.json --model models/chase_v8_policy.onnx --stdout-log acceptance/remote/codex_3v3_acceptance.log --fps 10 --width 1280 --height 720",
+  "frame_count": 97,
+  "fps": 10,
+  "duration_seconds": 9.506,
+  "first_sample_t": 0.0,
+  "last_sample_t": 9.506,
+  "resolution": [
+    1280,
+    720
+  ],
+  "source_samples": 20,
+  "source_sync_hz": 2.0,
+  "role_mapping_basis": "identities embedded in the same source match log",
+  "role_mapping": {
+    "client_0": {
+      "team": "A",
+      "role": "attacker",
+      "controller": "ONNX",
+      "model_sha": "6d7ce9121116663eaca7d14ab7d845d6f951a9c5c55521d88483f0e6d7c3fab5",
+      "ball_authority": true
+    },
+    "client_1": {
+      "team": "A",
+      "role": "keeper",
+      "controller": "ONNX",
+      "model_sha": "6d7ce9121116663eaca7d14ab7d845d6f951a9c5c55521d88483f0e6d7c3fab5",
+      "ball_authority": false
+    },
+    "client_2": {
+      "team": "B",
+      "role": "defender",
+      "controller": "Rule",
+      "model_sha": "ef1d61e19082b83405f4320a08f4cfc2d7d7f003ed3790dab013778ba442dec7",
+      "ball_authority": false
+    },
+    "client_3": {
+      "team": "B",
+      "role": "keeper",
+      "controller": "Rule",
+      "model_sha": "ef1d61e19082b83405f4320a08f4cfc2d7d7f003ed3790dab013778ba442dec7",
+      "ball_authority": false
+    },
+    "client_4": {
+      "team": "A",
+      "role": "defender",
+      "controller": "ONNX",
+      "model_sha": "6d7ce9121116663eaca7d14ab7d845d6f951a9c5c55521d88483f0e6d7c3fab5",
+      "ball_authority": false
+    },
+    "client_5": {
+      "team": "B",
+      "role": "attacker",
+      "controller": "Rule",
+      "model_sha": "ef1d61e19082b83405f4320a08f4cfc2d7d7f003ed3790dab013778ba442dec7",
+      "ball_authority": false
+    }
+  },
+  "identity_source": "worker-declared handshake",
+  "event_summary": {
+    "fallen": [
+      "client_0"
+    ],
+    "scored": []
+  },
+  "identity_model_sha256": [
+    "6d7ce9121116663eaca7d14ab7d845d6f951a9c5c55521d88483f0e6d7c3fab5",
+    "ef1d61e19082b83405f4320a08f4cfc2d7d7f003ed3790dab013778ba442dec7"
+  ],
+  "tool_versions": {
+    "python": "3.9.6",
+    "imageio": "2.37.2",
+    "matplotlib": "3.9.4",
+    "ffmpeg": "7.1"
+  },
+  "limitations": [
+    "This is a linear interpolation of real remote coordinator trajectory samples.",
+    "This is not a camera render or a replay of the Genesis physics simulation.",
+    "Startup zero positions are retained because they occur in the source log before all workers report state."
+  ]
+}
