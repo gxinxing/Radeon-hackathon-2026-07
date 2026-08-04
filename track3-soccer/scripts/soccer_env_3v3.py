@@ -155,7 +155,15 @@ class SoccerEnv3v3(SoccerEnv):
             motor_joints = [j for j in robot.joints[1:] if j.n_dofs > 0]
             num_motors = len(motor_joints)
             local_dof_idx = torch.arange(num_motors, dtype=gs.tc_int, device=dev)
-            default_pos = robot.get_dofs_position(local_dof_idx)[0].clone()
+            # URDF entities are spawned with zero joint angles.  The frozen
+            # T1 walk policy expects the Booster standing pose from the parent
+            # environment; using the spawn pose makes all six robots collapse
+            # before the first high-level command.
+            parent_default = getattr(self, "default_dof_pos", None)
+            if parent_default is not None and int(parent_default.numel()) == num_motors:
+                default_pos = parent_default.detach().clone()
+            else:
+                default_pos = robot.get_dofs_position(local_dof_idx)[0].clone()
             all_joint_names = [j.name for j in motor_joints]
             policy_joint_indices = torch.tensor(
                 [all_joint_names.index(name) for name in POLICY_JOINT_NAMES],
