@@ -1,0 +1,164 @@
+Reward module patched as rewards.reward
+Env created. goal_x=7.0, goal_half=1.30
+Walk model loaded with normalizer: mean=torch.Size([1, 720])
+Camera: <gs.vis.camera.Camera>, resolution from env.cam
+Ball placed at (2.0, 0.0). Robot at [0.0625     0.         0.94299996]
+Step   1/300: fallen=0 robot_disp=0.00m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.94m frame_diff=0.0
+Step   2/300: fallen=0 robot_disp=0.01m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.95m frame_diff=0.0
+Step   3/300: fallen=0 robot_disp=0.01m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.95m frame_diff=0.0
+Step   4/300: fallen=0 robot_disp=0.01m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.95m frame_diff=0.0
+Step   5/300: fallen=0 robot_disp=0.01m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.95m frame_diff=0.0
+Step   6/300: fallen=0 robot_disp=0.01m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.95m frame_diff=0.0
+Step   7/300: fallen=0 robot_disp=0.01m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.95m frame_diff=0.0
+Step   8/300: fallen=0 robot_disp=0.01m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.94m frame_diff=0.0
+Step   9/300: fallen=0 robot_disp=0.00m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.94m frame_diff=0.0
+Step  10/300: fallen=0 robot_disp=0.01m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.93m frame_diff=0.0
+Step  11/300: fallen=0 robot_disp=0.01m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.93m frame_diff=0.0
+Step  12/300: fallen=0 robot_disp=0.02m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.92m frame_diff=0.0
+Step  13/300: fallen=0 robot_disp=0.03m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.92m frame_diff=0.0
+Step  14/300: fallen=0 robot_disp=0.03m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.91m frame_diff=0.0
+Step  15/300: fallen=0 robot_disp=0.04m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.91m frame_diff=0.0
+Step  16/300: fallen=0 robot_disp=0.04m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.90m frame_diff=0.0
+Step  17/300: fallen=0 robot_disp=0.05m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.90m frame_diff=0.0
+Step  18/300: fallen=0 robot_disp=0.06m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.89m frame_diff=0.0
+Step  19/300: fallen=0 robot_disp=0.06m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.88m frame_diff=0.0
+Step  20/300: fallen=0 robot_disp=0.07m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.87m frame_diff=0.0
+Step  21/300: fallen=0 robot_disp=0.08m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.87m frame_diff=0.0
+Step  22/300: fallen=0 robot_disp=0.09m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.86m frame_diff=0.0
+Step  23/300: fallen=0 robot_disp=0.09m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.85m frame_diff=0.0
+Step  24/300: fallen=0 robot_disp=0.10m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.84m frame_diff=0.0
+Step  25/300: fallen=0 robot_disp=0.11m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.83m frame_diff=0.0
+Step  26/300: fallen=0 robot_disp=0.12m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.82m frame_diff=0.0
+Step  27/300: fallen=0 robot_disp=0.13m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.82m frame_diff=0.0
+Step  28/300: fallen=0 robot_disp=0.14m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.80m frame_diff=0.0
+Step  29/300: fallen=0 robot_disp=0.15m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.79m frame_diff=0.0
+Step  30/300: fallen=0 robot_disp=0.16m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.78m frame_diff=0.0
+Step  31/300: fallen=0 robot_disp=0.17m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.77m frame_diff=0.0
+Step  32/300: fallen=0 robot_disp=0.18m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.76m frame_diff=0.0
+Step  33/300: fallen=0 robot_disp=0.19m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.75m frame_diff=0.0
+Step  34/300: fallen=0 robot_disp=0.20m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.74m frame_diff=0.0
+Step  35/300: fallen=0 robot_disp=0.21m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.73m frame_diff=0.0
+Step  36/300: fallen=0 robot_disp=0.22m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.72m frame_diff=0.0
+Step  37/300: fallen=0 robot_disp=0.23m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.71m frame_diff=0.0
+Step  38/300: fallen=0 robot_disp=0.24m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.69m frame_diff=0.0
+Step  39/300: fallen=0 robot_disp=0.25m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.68m frame_diff=0.0
+Step  40/300: fallen=0 robot_disp=0.27m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.67m frame_diff=0.0
+Step  41/300: fallen=0 robot_disp=0.28m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.66m frame_diff=0.0
+Step  42/300: fallen=0 robot_disp=0.29m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.65m frame_diff=0.0
+Step  43/300: fallen=0 robot_disp=0.30m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.64m frame_diff=0.0
+Step  44/300: fallen=0 robot_disp=0.31m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.63m frame_diff=0.0
+Step  45/300: fallen=0 robot_disp=0.32m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.61m frame_diff=0.0
+Step  46/300: fallen=0 robot_disp=0.34m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.60m frame_diff=0.1
+Step  47/300: fallen=0 robot_disp=0.35m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.59m frame_diff=0.9
+Step  48/300: fallen=0 robot_disp=0.37m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.57m frame_diff=1.2
+Step  49/300: fallen=0 robot_disp=0.38m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.56m frame_diff=1.0
+Step  50/300: fallen=0 robot_disp=0.40m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.54m frame_diff=1.0
+Step  51/300: fallen=0 robot_disp=0.42m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.52m frame_diff=2.1
+Step  52/300: fallen=0 robot_disp=0.43m ball_disp=1.00m ball_x=1.00 kicks=0 dist=0.51m frame_diff=2.1
+  *** KICK #1 at step 53: dir=(1.00,0.00) dist=0.50m
+Step  53/300: fallen=0 robot_disp=0.45m ball_disp=1.00m ball_x=1.00 kicks=1 dist=0.50m frame_diff=3.9 [KICK]
+Step  54/300: fallen=0 robot_disp=0.46m ball_disp=1.08m ball_x=1.08 kicks=1 dist=0.56m frame_diff=6.8
+Step  55/300: fallen=0 robot_disp=0.47m ball_disp=1.16m ball_x=1.16 kicks=1 dist=0.63m frame_diff=6.2
+Step  56/300: fallen=0 robot_disp=0.49m ball_disp=1.23m ball_x=1.23 kicks=1 dist=0.69m frame_diff=6.8
+Step  57/300: fallen=0 robot_disp=0.50m ball_disp=1.31m ball_x=1.31 kicks=1 dist=0.76m frame_diff=7.1
+Step  58/300: fallen=0 robot_disp=0.52m ball_disp=1.39m ball_x=1.39 kicks=1 dist=0.82m frame_diff=9.1
+Step  59/300: fallen=0 robot_disp=0.53m ball_disp=1.46m ball_x=1.46 kicks=1 dist=0.87m frame_diff=8.6
+Step  60/300: fallen=0 robot_disp=0.55m ball_disp=1.54m ball_x=1.54 kicks=1 dist=0.93m frame_diff=8.7
+Step  61/300: fallen=0 robot_disp=0.57m ball_disp=1.61m ball_x=1.61 kicks=1 dist=0.99m frame_diff=8.3
+Step  62/300: fallen=0 robot_disp=0.59m ball_disp=1.68m ball_x=1.68 kicks=1 dist=1.04m frame_diff=8.5
+Step  63/300: fallen=0 robot_disp=0.60m ball_disp=1.76m ball_x=1.76 kicks=1 dist=1.10m frame_diff=7.0
+Step  64/300: fallen=0 robot_disp=0.62m ball_disp=1.83m ball_x=1.83 kicks=1 dist=1.15m frame_diff=6.8
+Step  65/300: fallen=0 robot_disp=0.63m ball_disp=1.90m ball_x=1.90 kicks=1 dist=1.21m frame_diff=6.3
+Step  66/300: fallen=0 robot_disp=0.65m ball_disp=1.98m ball_x=1.98 kicks=1 dist=1.27m frame_diff=5.6
+Step  67/300: fallen=0 robot_disp=0.67m ball_disp=2.05m ball_x=2.05 kicks=1 dist=1.32m frame_diff=5.7
+Step  68/300: fallen=0 robot_disp=0.69m ball_disp=2.12m ball_x=2.12 kicks=1 dist=1.37m frame_diff=6.8
+Step  69/300: fallen=0 robot_disp=0.71m ball_disp=2.19m ball_x=2.19 kicks=1 dist=1.42m frame_diff=8.3
+Step  70/300: fallen=0 robot_disp=0.74m ball_disp=2.27m ball_x=2.27 kicks=1 dist=1.47m frame_diff=9.1
+Step  71/300: fallen=0 robot_disp=0.76m ball_disp=2.34m ball_x=2.34 kicks=1 dist=1.52m frame_diff=8.4
+Step  72/300: fallen=0 robot_disp=0.79m ball_disp=2.41m ball_x=2.41 kicks=1 dist=1.57m frame_diff=7.8
+Step  73/300: fallen=0 robot_disp=0.81m ball_disp=2.49m ball_x=2.49 kicks=1 dist=1.62m frame_diff=7.2
+Step  74/300: fallen=0 robot_disp=0.82m ball_disp=2.56m ball_x=2.56 kicks=1 dist=1.68m frame_diff=6.3
+Step  75/300: fallen=0 robot_disp=0.84m ball_disp=2.63m ball_x=2.63 kicks=1 dist=1.74m frame_diff=5.6
+Step  76/300: fallen=0 robot_disp=0.85m ball_disp=2.71m ball_x=2.71 kicks=1 dist=1.80m frame_diff=5.2
+Step  77/300: fallen=0 robot_disp=0.87m ball_disp=2.78m ball_x=2.78 kicks=1 dist=1.86m frame_diff=4.4
+Step  78/300: fallen=0 robot_disp=0.88m ball_disp=2.85m ball_x=2.85 kicks=1 dist=1.92m frame_diff=3.6
+Step  79/300: fallen=0 robot_disp=0.89m ball_disp=2.93m ball_x=2.93 kicks=1 dist=1.98m frame_diff=3.6
+Step  80/300: fallen=0 robot_disp=0.91m ball_disp=3.00m ball_x=3.00 kicks=1 dist=2.04m frame_diff=3.4
+Step  81/300: fallen=0 robot_disp=0.92m ball_disp=3.07m ball_x=3.07 kicks=1 dist=2.10m frame_diff=3.0
+Step  82/300: fallen=0 robot_disp=0.94m ball_disp=3.15m ball_x=3.15 kicks=1 dist=2.16m frame_diff=3.0
+Step  83/300: fallen=0 robot_disp=0.95m ball_disp=3.22m ball_x=3.22 kicks=1 dist=2.21m frame_diff=2.8
+Step  84/300: fallen=0 robot_disp=0.97m ball_disp=3.29m ball_x=3.29 kicks=1 dist=2.27m frame_diff=2.6
+Step  85/300: fallen=0 robot_disp=0.99m ball_disp=3.37m ball_x=3.37 kicks=1 dist=2.32m frame_diff=2.2
+Step  86/300: fallen=0 robot_disp=1.01m ball_disp=3.44m ball_x=3.44 kicks=1 dist=2.37m frame_diff=1.9
+Step  87/300: fallen=0 robot_disp=1.04m ball_disp=3.51m ball_x=3.51 kicks=1 dist=2.42m frame_diff=1.7
+Step  88/300: fallen=0 robot_disp=1.06m ball_disp=3.59m ball_x=3.59 kicks=1 dist=2.47m frame_diff=1.6
+Step  89/300: fallen=0 robot_disp=1.09m ball_disp=3.66m ball_x=3.66 kicks=1 dist=2.51m frame_diff=1.5
+Step  90/300: fallen=0 robot_disp=1.12m ball_disp=3.73m ball_x=3.73 kicks=1 dist=2.56m frame_diff=1.7
+Step  91/300: fallen=0 robot_disp=1.14m ball_disp=3.81m ball_x=3.81 kicks=1 dist=2.61m frame_diff=1.9
+Step  92/300: fallen=0 robot_disp=1.16m ball_disp=3.88m ball_x=3.88 kicks=1 dist=2.66m frame_diff=2.2
+Step  93/300: fallen=0 robot_disp=1.19m ball_disp=3.95m ball_x=3.95 kicks=1 dist=2.71m frame_diff=2.2
+Step  94/300: fallen=0 robot_disp=1.21m ball_disp=4.03m ball_x=4.03 kicks=1 dist=2.76m frame_diff=2.2
+Step  95/300: fallen=0 robot_disp=1.23m ball_disp=4.10m ball_x=4.10 kicks=1 dist=2.81m frame_diff=2.2
+Step  96/300: fallen=0 robot_disp=1.25m ball_disp=4.17m ball_x=4.17 kicks=1 dist=2.86m frame_diff=2.2
+Step  97/300: fallen=0 robot_disp=1.27m ball_disp=4.25m ball_x=4.25 kicks=1 dist=2.92m frame_diff=2.2
+Step  98/300: fallen=0 robot_disp=1.29m ball_disp=4.32m ball_x=4.32 kicks=1 dist=2.97m frame_diff=2.1
+Step  99/300: fallen=0 robot_disp=1.31m ball_disp=4.39m ball_x=4.39 kicks=1 dist=3.03m frame_diff=2.1
+Step 100/300: fallen=0 robot_disp=1.33m ball_disp=4.47m ball_x=4.47 kicks=1 dist=3.08m frame_diff=2.0
+Step 101/300: fallen=0 robot_disp=1.34m ball_disp=4.54m ball_x=4.54 kicks=1 dist=3.14m frame_diff=1.8
+Step 102/300: fallen=0 robot_disp=1.36m ball_disp=4.61m ball_x=4.61 kicks=1 dist=3.20m frame_diff=1.6
+Step 103/300: fallen=0 robot_disp=1.38m ball_disp=4.69m ball_x=4.69 kicks=1 dist=3.25m frame_diff=1.6
+Step 104/300: fallen=0 robot_disp=1.40m ball_disp=4.76m ball_x=4.76 kicks=1 dist=3.31m frame_diff=1.5
+Step 105/300: fallen=0 robot_disp=1.42m ball_disp=4.83m ball_x=4.83 kicks=1 dist=3.36m frame_diff=1.2
+Step 106/300: fallen=0 robot_disp=1.44m ball_disp=4.90m ball_x=4.90 kicks=1 dist=3.41m frame_diff=1.1
+Step 107/300: fallen=0 robot_disp=1.46m ball_disp=4.98m ball_x=4.98 kicks=1 dist=3.47m frame_diff=1.0
+Step 108/300: fallen=0 robot_disp=1.48m ball_disp=5.05m ball_x=5.05 kicks=1 dist=3.52m frame_diff=0.9
+Step 109/300: fallen=0 robot_disp=1.50m ball_disp=5.12m ball_x=5.12 kicks=1 dist=3.57m frame_diff=0.9
+Step 110/300: fallen=0 robot_disp=1.52m ball_disp=5.20m ball_x=5.20 kicks=1 dist=3.62m frame_diff=0.8
+Step 111/300: fallen=0 robot_disp=1.54m ball_disp=5.27m ball_x=5.27 kicks=1 dist=3.67m frame_diff=0.8
+Step 112/300: fallen=0 robot_disp=1.57m ball_disp=5.34m ball_x=5.34 kicks=1 dist=3.73m frame_diff=0.9
+Step 113/300: fallen=0 robot_disp=1.59m ball_disp=5.42m ball_x=5.42 kicks=1 dist=3.78m frame_diff=0.9
+Step 114/300: fallen=0 robot_disp=1.61m ball_disp=5.49m ball_x=5.49 kicks=1 dist=3.83m frame_diff=0.9
+Step 115/300: fallen=0 robot_disp=1.63m ball_disp=5.56m ball_x=5.56 kicks=1 dist=3.88m frame_diff=0.9
+Step 116/300: fallen=0 robot_disp=1.65m ball_disp=5.62m ball_x=5.62 kicks=1 dist=3.92m frame_diff=0.9
+Step 117/300: fallen=0 robot_disp=1.67m ball_disp=5.69m ball_x=5.69 kicks=1 dist=3.97m frame_diff=0.8
+Step 118/300: fallen=0 robot_disp=1.70m ball_disp=5.76m ball_x=5.76 kicks=1 dist=4.01m frame_diff=0.9
+Step 119/300: fallen=0 robot_disp=1.72m ball_disp=5.83m ball_x=5.83 kicks=1 dist=4.06m frame_diff=0.9
+Step 120/300: fallen=0 robot_disp=1.74m ball_disp=5.90m ball_x=5.90 kicks=1 dist=4.10m frame_diff=1.0
+Step 121/300: fallen=0 robot_disp=1.77m ball_disp=5.97m ball_x=5.97 kicks=1 dist=4.15m frame_diff=1.1
+Step 122/300: fallen=0 robot_disp=1.79m ball_disp=6.03m ball_x=6.03 kicks=1 dist=4.19m frame_diff=1.0
+Step 123/300: fallen=0 robot_disp=1.81m ball_disp=6.10m ball_x=6.10 kicks=1 dist=4.24m frame_diff=1.0
+Step 124/300: fallen=0 robot_disp=1.83m ball_disp=6.17m ball_x=6.17 kicks=1 dist=4.29m frame_diff=0.9
+Step 125/300: fallen=0 robot_disp=1.85m ball_disp=6.24m ball_x=6.24 kicks=1 dist=4.33m frame_diff=1.0
+Step 126/300: fallen=0 robot_disp=1.87m ball_disp=6.30m ball_x=6.30 kicks=1 dist=4.38m frame_diff=0.8
+Step 127/300: fallen=0 robot_disp=1.90m ball_disp=6.37m ball_x=6.37 kicks=1 dist=4.43m frame_diff=0.8
+Step 128/300: fallen=0 robot_disp=1.92m ball_disp=6.44m ball_x=6.44 kicks=1 dist=4.47m frame_diff=0.8
+Step 129/300: fallen=0 robot_disp=1.94m ball_disp=6.50m ball_x=6.50 kicks=1 dist=4.51m frame_diff=0.7
+Step 130/300: fallen=0 robot_disp=1.97m ball_disp=6.56m ball_x=6.56 kicks=1 dist=4.55m frame_diff=0.7
+Step 131/300: fallen=0 robot_disp=1.99m ball_disp=6.63m ball_x=6.63 kicks=1 dist=4.59m frame_diff=0.6
+Step 132/300: fallen=0 robot_disp=2.02m ball_disp=6.69m ball_x=6.69 kicks=1 dist=4.62m frame_diff=0.6
+Step 133/300: fallen=0 robot_disp=2.04m ball_disp=6.75m ball_x=6.75 kicks=1 dist=4.66m frame_diff=0.4
+Step 134/300: fallen=0 robot_disp=2.07m ball_disp=6.82m ball_x=6.82 kicks=1 dist=4.70m frame_diff=0.4
+Step 135/300: fallen=0 robot_disp=2.09m ball_disp=6.88m ball_x=6.88 kicks=1 dist=4.74m frame_diff=0.4
+Step 136/300: fallen=0 robot_disp=2.11m ball_disp=6.94m ball_x=6.94 kicks=1 dist=4.78m frame_diff=0.5
+Step 137/300: fallen=0 robot_disp=2.13m ball_disp=7.00m ball_x=7.00 kicks=1 dist=4.82m frame_diff=0.5
+  *** SCORED at step 138! ball=(7.06,0.00)
+Step 138/300: fallen=0 robot_disp=2.15m ball_disp=7.06m ball_x=7.06 kicks=1 dist=4.86m frame_diff=0.5 SCORED!
+Step 139/300: fallen=0 robot_disp=2.17m ball_disp=7.12m ball_x=7.12 kicks=1 dist=4.90m frame_diff=0.4 SCORED!
+Step 140/300: fallen=0 robot_disp=2.19m ball_disp=7.17m ball_x=7.17 kicks=1 dist=4.94m frame_diff=0.4 SCORED!
+Step 141/300: fallen=0 robot_disp=2.21m ball_disp=7.23m ball_x=7.23 kicks=1 dist=4.97m frame_diff=0.5 SCORED!
+Step 142/300: fallen=0 robot_disp=2.23m ball_disp=7.29m ball_x=7.29 kicks=1 dist=5.01m frame_diff=0.6 SCORED!
+Step 143/300: fallen=0 robot_disp=2.26m ball_disp=7.35m ball_x=7.35 kicks=1 dist=5.05m frame_diff=0.4 SCORED!
+  Stopping at step 143 (5 frames after score)
+
+Video: 134 frames → match_1v1_shoot_20260805.mp4
+
+============================================================
+Task-B Result: PASSED
+  fallen=0 (==0: ✅)
+  kicks=1 (≥1: ✅)
+  ball_disp=7.35m (≥2m: ✅)
+  ball_x_disp=7.35m (should be positive, toward +x goal)
+  scored=True
+  mean_frame_diff=2.06 (>2: ✅)
+  per-step print + JSON + mp4: ✅
+============================================================
