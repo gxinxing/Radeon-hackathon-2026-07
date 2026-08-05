@@ -1,252 +1,134 @@
-# ⚽ Humanoid Robot Soccer Policy Training on AMD Radeon GPU
+# ⚽ Humanoid Robot Soccer — AMD Radeon GPU (Track 3)
 
 [![AMD ROCm](https://img.shields.io/badge/AMD-ROCm%207.2.1-ED1C24?logo=amd&logoColor=white)](https://www.amd.com/en/products/software/rocm.html)
-[![PyTorch](https://img.shields.io/badge/PyTorch-2.9.1+ROCm-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org/)
 [![Genesis](https://img.shields.io/badge/Genesis-1.3.1-blue)](https://genesis-embodied-ai.github.io/)
 [![rsl_rl](https://img.shields.io/badge/rsl__rl-5.4.2-green)](https://github.com/leggedrobotics/rsl_rl)
-[![Tests](https://img.shields.io/badge/tests-151%20passed-brightgreen)](#-tests)
 
-**AMD AI DevMaster Hackathon 2026 — Track 3: Physical AI**
+**AMD AI DevMaster Hackathon 2026 — Track 3: Physical AI (Humanoid Robot Soccer)**
 
-Train humanoid robot soccer policies (balance, chase, shoot) using the Genesis physics
-engine and ROCm PyTorch on AMD Radeon GPUs — the **first AMD-GPU humanoid soccer training
-pipeline**, proving competitive robot policies can be trained without NVIDIA hardware.
+Hierarchical robot-soccer training on AMD Radeon (ROCm): a high-level PPO policy learns
+balance → chase → kick, driving a frozen locomotion walk model inside the Genesis physics
+engine. No NVIDIA hardware involved.
 
-## Highlights
+## Project Status (2026-08-06, 10h race window)
 
-| Metric | Value | Note |
-|--------|-------|------|
-| Reward improvement | **-24 → +93** | 500-iteration PPO training |
-| Episode length | **19 → 208 steps** | From instant-fall to sustained walking |
-| Ball distance (min) | **3.07m → 0.14m** | Single-agent chase, 100 steps, 0 falls |
-| Ball displacement | **12.05m** | Extended chase, 200 steps, 0 falls |
-| ONNX inference | **0.19 ms** | 19→3 dim, real-time capable (46,467 params) |
-| Training throughput | **4,618 steps/s** (peak) | 2048 parallel envs on AMD Radeon (51 GB VRAM) |
-| Reward components | **5/5 observed** | approach_ball, ball_control, ball_progress, goal_scored, fall_penalty |
-| Real goal scored | **scored=True** | Single-robot shoot: chase → kick → ball 7.35m into goal, 0 falls |
+| Stream | Status | Evidence |
+|--------|--------|----------|
+| **Primary submission (Path-B): single-robot shoot** | ✅ **PASSED** | chase → kick → goal (`scored=True`, ball 7.35m), 0 falls, `demos/exp/match_1v1_shoot_20260805.mp4` |
+| **Task-9 10h race training (v2 params)** | 🔄 In progress | P1 no-opponent chase: per-episode falls 1.0→0.8, mean reward ~300, episode length ~188/200 (`training_logs/task9_p1.log`) |
+| Baseline (pre-training, for comparison) | ❌ FAILED | `fallen=300`, `robot_disp=0.78m`, `kicks=0` — see `reports/task9_baseline/` |
+| 3v3 shared-physics scene | ⚠️ Demo-level | 6-robot rule-walk demo renders (green field); neural-walk multi-robot robustness still limited |
 
-## Demo Video
-
-**Final film (4:37, 1080p):** `acceptance/final_video/track3_final_20260806.mp4`
-
-<video src="demos/match_1v1_shoot_20260805.mp4" controls></video>
-
-**Single-robot shoot demo (30s)** — real goal (`scored=True`): chase → kick → ball rolls 7.35m into the goal, 0 falls, ONNX policy + frozen walk model on AMD Radeon GPU.
-
-<video src="demos/match_1v1_20260805.mp4" controls></video>
-
-**Single-robot chase demo** — 200 steps, 0 falls, ball displacement 12m.
-
-<video src="demo_artifacts/match_rule_walk.mp4" controls></video>
-
-**3v3 rule-walk demo (100 frames)** — field render fix applied (`plane_reflection` off): full 6-robot scene, green field, no blue ground.
+**Submission strategy**: the single-robot shoot video is the guaranteed deliverable; the
+10h Task-9 window trains toward 3v3 stability (fall reduction + displacement + kicks),
+with hard stop-losses and gates defined in `SPEC.md` §3 (Task-9-v2).
 
 ## Architecture
 
 ```text
-High-Level PPO Policy (19-dim obs → 3-dim action: vx, vy, wz @ 10Hz)
-    │  velocity commands
+High-Level PPO policy (19-dim obs → 3-dim action: vx, vy, wz @ 10 Hz)
+    │  velocity commands (clipped: lin/ang ≤ 0.6)
     ▼
-Frozen t1_walk.pt (720-dim obs → 21-dim joint actions @ 50Hz)
-    │  joint targets: target = action × 0.25 + policy_default_pos
+Frozen walk model t1_walk.pt (720-dim obs → 21-dim joint targets @ 50 Hz)
+    │  action_scale=0.16, clip_actions=1.2
     ▼
-Genesis Physics (AMD Radeon GPU, gfx1100, ROCm 7.2.1)
+Genesis physics on AMD Radeon GPU (ROCm 7.2.1, gfx1100, 2048 parallel envs)
 ```
 
-### Observation (19-dim, body frame)
+### Task-9-v2 reward / hyper-parameter snapshot (authoritative: `configs/hierarchical_agent.yaml`)
 
-| Dims | Content |
-|------|---------|
-| 0-2 | ball position (body frame) |
-| 3-5 | ball velocity (body frame) |
-| 6-8 | goal direction (body frame) |
-| 9 | distance to ball |
-| 10 | distance to goal |
-| 11-13 | base angular velocity |
-| 14-16 | projected gravity |
-| 17-18 | last velocity command (vx, wz) |
+| Key | Value | Purpose |
+|-----|-------|---------|
+| `hl_clip_lin / hl_clip_ang` | **0.6 / 0.6** | Cap high-level speed, suppress sprint-falls |
+| `action_scale` / `clip_actions` | **0.16 / 1.2** | Constrain low-level joint targets |
+| `fall_penalty` | **-14.0** | Strong disincentive to fall |
+| `alive` / `upright` | **0.35 / 1.3** | Reward staying upright |
+| `action_rate` / `energy_penalty` | **-2.0 / -0.02** | Penalize jitter |
+| `approach_ball` / `ball_progress` / `ball_to_goal` | **5.0 / 6.0 / 5.0** | Chase + advance the ball |
+| `goal_scored` | **30.0** | Terminal goal reward |
+| `learning_rate` | **0.00015 (1.5e-4, LOCKED)** | Stability; never raised |
+| `episode_length_s` | 20.0 | Shorten episodes, less garbage data |
 
-### Reward Structure
+## 10h Race Schedule (A → B → C)
 
-| Component | Weight | Description |
-|-----------|--------|-------------|
-| approach_ball | 10 | tanh(prev_dist - current_dist), soft-clamped |
-| ball_progress | 10 | Potential-based: ball→goal distance reduction |
-| ball_to_goal | 8 | Ball velocity toward goal |
-| goal_scored | 30 | Binary, episode ends on goal |
-| directed_contact | 5 | Foot near ball + ball moving toward goal |
-| approach_angle | 3 | Approach from goal-opposite side |
-| ball_control | 2 | Foot within 0.15m of ball |
-| upright | 0.5 | Torso up projection clamp |
-| fall_penalty | -5 | Binary, base height < fall_height |
+| Phase | Window | Task | Hard rules |
+|-------|--------|------|------------|
+| A (P1) | 0–4h | No-opponent chase (`task=chase_hl`, 2048 envs) | Checkpoint every 25 iters → `models/task9_p1.pt`; stop-loss if `per_ep fallen > 80` (raise `fall_penalty=-18`, cut `hl_clip=0.5`) |
+| B (1v1) | 4–8h | 1v1 adversarial training | **No 3v3 / no coop training**; gate to enter: `fallen < 60` & `robot_disp ≥ 1.8m` |
+| C (Eval) | 8–10h | Freeze weights, batch 3v3 evaluation only | No further weight updates; save `models/task9_1v1.pt` |
 
-## Track 3 Submission Alignment
+Checkpoints (local time): 2h = 04:37 · 4h = 06:37 · 8h = 10:37 · 10h = 12:37.
 
-| # | Official requirement | Where |
-|---|---------------------|-------|
-| 1 | **Technical Report** — architecture, training, AMD usage, innovations | [`docs/technical_report.md`](./docs/technical_report.md) |
-| 2 | **Source Code + Docker** | This repository; `Dockerfile` at root |
-| 3 | **Reproducibility README** | This README (`## Quick Start` below) |
-| 4 | **Demo Video** (3-5 min) | `demos/match_1v1_20260805.mp4` |
-| 5 | **Supplementary materials** | `demos/` directory with multiple evaluation videos |
+## Demos
 
-## Quick Start
+| Video | Path | Content |
+|-------|------|---------|
+| Single-robot shoot (primary) | `demos/exp/match_1v1_shoot_20260805.mp4` | chase → kick → goal, 0 falls |
+| Final film (4:37, 1080p) | `acceptance/final_video/track3_final_20260806.mp4` | narration, no black/blue frames |
+| Single-robot chase | `demos/match_1v1_20260805.mp4` | 200 steps, 0 falls, ball 12m |
+| 3v3 rule-walk | `demo_artifacts/match_rule_walk.mp4` | 6-robot scene, green field, 100 frames |
 
-### Prerequisites
-
-- AMD GPU with ROCm 7.2.1+ (gfx1100 or compatible)
-- Python 3.12+
-- Key packages: Genesis 1.3.1, PyTorch 2.9.1 (HIP), rsl_rl, onnxruntime
-
-### On the AMD GPU Server
+## Quick Start (on the AMD instance, `/workspace`)
 
 ```bash
-# 1. Install Genesis
-pip install genesis-world 'numpy<2'
-
-# 2. Run single-robot evaluation (100 steps)
-cd /workspace
-python eval_hierarchical_short.py \
-  --controller onnx --steps 100 --backend gpu \
-  --output eval_result.json
-
-# 3. Run extended chase demo (200 steps, with video)
-python match_1v1_video.py --steps 200
-
-# 4. Run 3v3 match (6 robots)
-python run_booster_match.py
+# P1 training (no opponent, Task-9-v2 params)
+/opt/venv/bin/python3.12 run_task9_p1.py --max_iterations 240 --num_envs 2048 --phase A
+# resume from latest checkpoint
+/opt/venv/bin/python3.12 run_task9_p1.py --max_iterations 240 --num_envs 2048 --phase A --resume
+# single-scene evaluation of the trained policy (300 steps)
+/opt/venv/bin/python3.12 run_task9_eval.py --ckpt runs/task9_p1/model_latest.pt --steps 300
+# single-robot shoot demo (Path-B)
+/opt/venv/bin/python3.12 run_1v1_shoot.py
 ```
 
-### Locally (no GPU required)
+Locally (no GPU): `python3 -m pytest track3-soccer/tests/ --ignore=tests/test_e2e.py -q`.
 
-```bash
-cd track3-soccer
-python3 -m pytest tests/ --ignore=tests/test_e2e.py -q
-# Result: 151 passed
+## Directory Layout (official: `SPEC.md` §1.2 / §12)
+
+```text
+track3-soccer/
+├── SPEC.md                  # single source of truth (tasks, gates, stop-losses)
+├── FILES_MANIFEST.md        # real-path index + dead-path blacklist
+├── run_task9_p1.py          # P1 training script (rsl_rl 5.4.2, resume support)
+├── run_task9_eval.py        # single-scene policy evaluation
+├── configs/                 # hierarchical_agent.yaml (v2 params)
+├── scripts/                 # soccer_env_v4.py, soccer_env_3v3.py, reward.py, ...
+├── demos/                   # submission videos (match_1v1_*, exp/)
+├── demo_artifacts/          # 3v3 match outputs (protected)
+├── reports/                 # task9_baseline/, checkpoints, evidence
+├── acceptance/              # final film, acceptance evidence
+└── docs/                    # technical_report.md etc.
 ```
 
-## Training
+Persistent (survives instance rebuilds): `/workspace/persistent/track3/` on the remote —
+scripts, configs, checkpoints, logs, baseline and `FILES_MANIFEST.md` are mirrored there.
 
-| Parameter | Value |
-|-----------|-------|
-| Method | PPO (rsl_rl) on T1 humanoid |
-| Epochs | 500 (PPO) |
-| Batch size | 2048 envs (PPO) |
-| Final reward | +93.07 (PPO) |
-| Peak GPU memory | 23.7 GB (PPO) |
-| Training time | 5723s (PPO, 500 iterations) |
-| Training throughput | 4,618 steps/s peak |
-
-## 3v3 Strategy (Booster-style)
-
-Based on the [Booster official 3v3 baseline](https://github.com/BoosterRobotics/booster_studio),
-adapted for Genesis + AMD ROCm:
-
-```
-strategy/
-├── param.py     ← Parameters (kick/dribble/chase/role/pass/avoidance)
-├── player.py    ← Actions (chase/attack/dribble/guard/support/defend)
-└── match.py     ← Decision (Phase state machine / role assignment / Match controller)
-```
-
-**Strategy core**: closest player chases ball, Guard defends goal, Support provides passing option.
-
-## Tests
-
-```bash
-python3 -m pytest tests/ --ignore=tests/test_e2e.py -q
-# Result: 151 passed
-```
-
-## Judging Criteria Alignment
-
-### Functional Completeness
-
-| Criterion | Implementation | Status |
-|-----------|---------------|--------|
-| RL training | PPO 500 iterations, reward -24→+93 | ✅ |
-| Balance/chase/shoot | Hierarchical policy (19→3 + 720→21) | ✅ |
-| Multi-robot | 6 robots, 3 roles (attacker/defender/keeper) | ✅ |
-| Reward components | 5 components with audit trail | ✅ |
-| Baseline comparison | ONNX vs Rule, fall_count + distance | ✅ |
-
-### AMD ROCm Optimization
-
-| Criterion | Implementation | Status |
-|-----------|---------------|--------|
-| vLLM/Genesis on ROCm | Genesis 1.3.1 on gfx1100 | ✅ |
-| LoRA training | FP16 LoRA on ROCm | ✅ |
-| GPU telemetry | 612 samples, peak 100% util | ✅ |
-| ONNX inference | 0.19ms on AMD GPU | ✅ |
-
-## Known Limitations
-
-- **3v3 walk model stability**: The frozen `t1_walk.pt` walking model was trained in a
-  single-robot environment. In the 3v3 shared-physics scene (6 robots), multi-robot
-  contact perturbations cause instability after ~15 steps. A deterministic `rule_walk`
-  fallback now runs the full 3v3 scene (100-frame video, green field), but multi-robot
-  contact robustness of the neural walk model remains a known limitation. The single-robot
-  shoot path is the primary submission line.
-- **Close-range ball control** (~2m): lacks fine motor adjustments for precise dribbling.
-- **Genesis ROCm multi-entity solver**: Newton solver exceeds gfx1100 local memory limit
-  for 6 robots; CG solver used as fallback (slower but functional).
-
-## Validation Status
+## Validation Status (verified)
 
 | Check | Result |
 |-------|--------|
 | Local tests | 151 passed |
-| Walk model (stance) | 60 steps, 0 falls |
-| Walk model (gait) | 150 steps, 0 falls, 6.4m displacement |
-| Single-agent eval | 100 steps, 0 falls, ball 1.04m, 5 reward components |
-| Extended chase | 200 steps, 0 falls, ball 12m |
-| Single-robot shoot (Task-B) | 300 steps, 0 falls, **scored=True**, ball 7.35m +x, 30s 720p video |
-| Field render fix (08-06) | `plane_reflection` off → 3v3 near-cam green 0.541; `match_rule_walk.mp4` 100/100 frames green |
-| Final film | `track3_final_20260806.mp4`, 4:37, 1920×1080@30, AAC narration, no black/blue frames |
-| 3v3 scene | 6 robots loaded, CG solver passed, camera working |
-| 3v3 ang_vel fix | Verified: obs non-zero after step 3, robots move 0.338m/30 steps |
-| 3v3 walk stability | Known limitation: robots fall after ~15 steps without reset |
-| Multi-robot lifecycle | 10s clean exit, no orphan processes |
-| 3v3 rule_walk (08-05) | 100 steps, **1 kick, ball 5.26m** (首个 3v3 踢球); 待办: fallen 6/6→≤2, 相机渲染出视频 |
+| Single-robot shoot (Task-B) | 300 steps, 0 falls, **scored=True**, ball 7.35m |
+| Single-robot chase | 200 steps, 0 falls, ball 12m |
+| P1 training throughput | ~4,600 steps/s, 2048 envs on AMD Radeon |
+| 3v3 rule-walk demo | 100-frame green-field video |
+| Baseline (pre-training) | fallen=300 / disp=0.78m / kicks=0 — FAILED (backup in `reports/task9_baseline/`) |
 
-## Key Files
+## Known Limitations
 
-| File | Role |
-|------|------|
-| `soccer_env_hierarchical.py` | Hierarchical env: frozen walk + trainable HL |
-| `soccer_env_v4.py` | Base env: scene, robot, ball, obs (720-dim) |
-| `reward.py` | 8-dimensional reward function |
-| `configs/hierarchical_agent.yaml` | PPO config, reward scales, env params |
-| `scripts/eval_hierarchical_short.py` | Single-robot eval harness (ONNX/Rule) |
-| `match_1v1_onnx.py` | 1v1 match: ONNX agent vs rule opponent |
-| `scripts/soccer_env_3v3.py` | 3v3 shared-physics env |
-| `models/pretrained/t1_walk.pt` | Frozen walking model (720→21) |
-| `models/chase_v8_policy.onnx` | Exported high-level policy (19→3) |
-| `strategy/{param,player,match}.py` | Booster-style 3v3 strategy |
+- **3v3 neural-walk robustness**: the frozen walk model was trained single-robot; shared-physics
+  contact perturbation still causes falls in 6-robot scenes. Task-9 (1v1 + disturbance) targets
+  this; the single-robot shoot path remains the guaranteed submission.
+- **Close-range ball control** (~2m): no fine dribbling.
+- **ROCm solver**: Newton solver exceeds gfx1100 local-memory limits for 6 robots; CG solver
+  fallback is slower but functional.
 
-## Documentation
+## Submission Alignment
 
-- [Technical report](./docs/technical_report.md)
-- [RoboCup + Booster reference guide](./docs/robocup_reference.md)
-- [Project status](./PROJECT_STATUS.md)
-- [SPEC (execution guide)](./SPEC.md) — **读 SPEC 前先读 [MEMORY.md](./MEMORY.md)**
-- [Session memory (current state)](./MEMORY.md)
-- [Competition acceptance criteria](./COMPETITION_ACCEPTANCE.md)
-
-## Disclaimers
-
-- All training and inference on **AMD GPU (gfx1100, ROCm 7.2.1)**.
-- Track 2 submission is in a [separate repository](https://github.com/gxinxing/Radeon-hackathon-2026-07).
-
-## Team
-
-- **Team Name:** Radeon ROCm Raiders
-- **Member:** Simon Xing
-
-## License
-
-Hackathon project — AMD AI DevMaster Hackathon 2026.
-
----
-
-Suggested PR title: `Track 3, Radeon ROCm Raiders, Humanoid Robot Soccer on AMD Radeon GPU`
+| Official requirement | Where |
+|----------------------|-------|
+| Technical report | `docs/technical_report.md` |
+| Source code + Docker | this repo + `Dockerfile` |
+| Reproducibility | `## Quick Start` above |
+| Demo video | `demos/exp/match_1v1_shoot_20260805.mp4` (+ final film) |
+| Supplementary | `demos/`, `acceptance/`, `reports/task9_baseline/` |
