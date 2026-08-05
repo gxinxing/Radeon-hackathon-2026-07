@@ -175,6 +175,27 @@ ang_vel = transform_by_quat(self.robots[i].get_ang(), inv_quat(quat))
 **时间盒**: 从开工起 1 小时；超时按 §14 Go/No-Go 评估回退。
 **止损线（主控定，2026-08-05 19:50）**: 21:00 北京时间仍未达标 → 立即锁定保底视频（现有 `demos/match_task7b.mp4` 或单机器人 `demos/match_1v1_20260805.mp4`），走路径 B 提交，不再加赛。当前进度：kicks=2/球 2.92m ✅，fallen=5 ❌（6 机器人全涌向球互撞，已改 `step_multi` 角色分工 + 移除踢后指令归零，迭代中）。
 
+### Task-7d (P0 · 时间盒至 21:00 止损): 最近者追球 + 指令提速
+
+**现状**（Task-7c 9 轮迭代，2026-08-05 20:05 结论）:
+- 步态 v7 本身能走（0.031m/step），但 Match 控制器 `Player.attack()` 指令太弱 → 实际仅 ~0.01m/step → 100 步走不完到球的 1m
+- 全队追球 → 6 机器人互撞摔倒（fallen=5）；全部静止 → 追不到球（kicks=0）
+- 最佳轮 v7b（v7 步态 + speed=0.6 + 全追）: kicks=2, ball_disp=2.92m ✅ 但 fallen=5 ❌
+- Task-7c 验收：2/4 过（fallen=2 ✅ / 每步打印 ✅；robot_disp=0.78m、kicks=0、frame_diff=0.18 ❌）
+
+**做法**（每轮只改一个东西，复跑 100 步）:
+1. **指令提速（先做）**: 读 `strategy/player.py` 的 `attack()`，把追球前向速度指令放大到接近上限（vx ∈ [1.0, 1.2]，clip ±1.2 内）
+2. **分工防撞（再做）**: `_compute_rule_actions` 或 Match 分工只让离球最近的 1-2 个左队机器人追球，其余站桩/回位，防 6 人互撞
+3. 踢球保持 KICK_IMPULSE=2.5（v7b 已验证能踢出 2.92m）
+
+**验收**（同 Task-7c，全过才算 passed）:
+1. 100 步 fallen ≤ 2
+2. robot_disp ≥ 2m，kicks ≥ 1，ball_disp ≥ 2m
+3. mean_frame_diff > 2
+4. 每步打印 fallen/位移/kicks；产出 `match_task7d_result.json` + `match_task7d.mp4`
+
+**时间盒**: 至 **21:00 北京时间**；21:00 未达标 → 主控立即锁定保底视频（`match_task7b.mp4` / 单机器人视频），走 §14 路径 B，不再加赛。
+
 ### Task-8 (P1): 踢球瞄准对方球门
 
 **现状**: 踢球把球往 +y 侧向踢（球滚到 (2.72, 4.50)），没朝对方球门 +x
