@@ -196,6 +196,19 @@ ang_vel = transform_by_quat(self.robots[i].get_ang(), inv_quat(quat))
 
 **时间盒**: 至 **21:00 北京时间**；21:00 未达标 → 主控立即锁定保底视频（`match_task7b.mp4` / 单机器人视频），走 §14 路径 B，不再加赛。
 
+### Task-7d 执行记录（主控审核：驳回 · 21:00 止损锁定 Path-B）
+
+**结果**（`match_task7d_result.json`，2026-08-05 20:55 远端，walk model 终局轮）:
+- `fallen=2` ✅ / `kicks=15` ✅ / `robot_disp=1.72m` ❌（需 ≥2m）/ `ball_disp=0.83m` ❌（球被反复踢回）/ `mean_frame_diff=0.57` ❌
+- 最佳球距轮：v7g 配置（KICK_IMPULSE=5.0, KICK_DIST=1.1, 仅 0 号追球）→ `ball_disp=23.5m`、kicks=6、fallen=0，但 robot_disp=0.11m
+- 结论：rule_walk 步态太弱（原地挪）、walk model 走得好但 0 号步 31 摔倒且球被追回，100 步窗口内无法同时满足 4 条
+- codely 自评 `"status":"failed"` 正确（含逐条 acceptance 审计）
+
+**21:00 止损执行（主控）**: 3v3 达标目标放弃加赛，**锁定 Path-B（单机器人）提交**。
+- 保底视频：`demos/match_1v1_20260805.mp4`（200 步/0 倒/球 12m）+ `demos/eval_soccer_20260805.mp4`
+- 3v3 证据保留：`match_task7d.mp4`（100 帧，含 15 次踢球）作 known-limitation 说明材料
+- 下一个优先级：**Task-B（单机器人射门 Demo，21:00 后启动）**
+
 ### Task-B (P1 · 路径 B 提交物升级 · 21:00 后启动): 单机器人射门 Demo
 
 **定位**: 路径 B（单机器人）提交后第 1 优先级。单机走+追球已验证稳（200 步/0 倒/球 12m），只差"射门方向"未验证，成功率高、耗时短，显著提升"机器人能力表现"维度说服力（演示 追球→带球→射门 全流程）。
