@@ -56,7 +56,7 @@
 | 问题 | 根因 | 修复方案 | 状态 |
 |------|------|---------|------|
 | **3v3 机器人不动** | `_build_low_level_obs_for_robot()` 用了滤波角速度(初始为零)，walk model 训练时用的是原始角速度 | 改用 `robot.get_ang()` 原始值 | ✅ 已修复 (本地+远端 py_compile PASS) |
-| **3v3 walk model 不稳定** | t1_walk.pt 在 3v3 多机器人场景泛化不足，站立约15步(1.5s)后倾斜倒地 | 需接触鲁棒微调 (T07, 超出当前时限) | Known limitation, 单机器人提交 |
+| **3v3 步态过慢追不到球** | v7 步态太保守（hip=7°/knee=9°），100 步净位移 0.78m，最近距球 0.88m > 0.5m，kicks=0 | Task-7c：提速 + 追球启动 + 踢球触发 | 进行中 |
 | **GitHub 未推送** | 网络超时 | 重试 | ✅ 已推送 |
 
 ### 2.3 实例状态
@@ -151,6 +151,28 @@ ang_vel = transform_by_quat(self.robots[i].get_ang(), inv_quat(quat))
 
 **验收**: 同 Task-7 三条（fallen ≤ 2 / frame_diff > 2 / 每步打印），`match_task7b_result.json` 写入真实指标。
 **时间盒**: 1 小时；超时按 §14 Go/No-Go 评估回退。
+
+### Task-7c (P0 · 时间盒 1 小时): 步态提速 + 追球踢球达标
+
+**现状**（Task-7b 实测 2026-08-05 19:01，`match_task7b_result.json`）:
+- `fallen=1` ✅（v7 稳定性修复生效，摔倒已不是主要问题）
+- 但步态过保守：hip_amp=0.5(≈7°)、knee=0.6(≈9°)、freq=1.5Hz → 机器人原地振荡不前进，100 步净位移仅 0.78m，前 20 步几乎不动
+- 追不到球：`min_dist=0.88m` > KICK_DISTANCE(0.5m) → `kicks=0`、`ball_disp=0`、`mean_frame_diff=0.53` → 视频静止，无说服力
+- codely 自评 `"status":"failed"` 正确（本次无放水），继续
+
+**做法**（候选，**每轮只改一个参数**，改完立即复跑 100 步看 fallen，再叠加）:
+1. **步态提速（主）**: `_rule_walk_actions()` 里 hip_amp 0.5→0.7~0.8、knee 0.6→0.7、freq 1.5→1.8~2.0Hz；目标 100 步 robot_disp ≥ 2m（≥1m/s）。若 fallen 超 2 回退幅度。
+2. **追球尽早启动**: 确认第 1 步就有 chase 指令（obs 缓冲 warmup 后立即输出 cmd，不要等十几步）；dead-band 0.05 不得吃掉小速度指令；检查追球目标点是否让机器人直线朝球。
+3. **踢球触发**: 确保某机器人进入 0.5m 内触发 kick；KICK_IMPULSE=1.5 踢不动球就上调（≥2.5），踢后球滚 >2m。
+4. **视频**: 100 步出 mp4，画面持续运动。
+
+**验收**（§9 3v3 rule_walk + Task-7 三条，**全过才算 passed**）:
+1. 100 步 fallen ≤ 2
+2. robot_disp ≥ 2m，kicks ≥ 1，ball_disp ≥ 2m
+3. mean_frame_diff > 2
+4. 每步打印 fallen / 位移 / kicks（终端可见）；产出 `match_task7c_result.json` + `match_task7c.mp4`
+
+**时间盒**: 从开工起 1 小时；超时按 §14 Go/No-Go 评估回退。
 
 ### Task-8 (P1): 踢球瞄准对方球门
 
