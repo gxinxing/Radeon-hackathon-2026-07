@@ -532,3 +532,15 @@ strategy/
 | **总计** | **79** | **100** |
 
 **先试 A（5分钟），失败转 B（1小时）。**
+
+### 12.3 Lane 增补与派发记录（2026-08-06 01:15 · 主控）
+
+| Lane | 主题 | 执行 Agent | 状态 | 目标 / 验收 |
+|------|------|-----------|------|------------|
+| Lane-D | 球场贴图"地面变蓝"修复（严静线移交 Locke） | Locke | 进行中 | 全量 3v3 近景渲染绿色占比>40% + 白线可见；修复同步本地+远端；不 commit |
+| Lane-E | 成片视频重剪（Palmier Pro 线移交 Pasteur） | Pasteur | 进行中 | 删除 3v3 摔倒片段与"只追球不踢球"片段；以 Task-B 射门进球（demos/exp/match_1v1_shoot_20260805.mp4，scored=true）为核心证明；节奏/包装达标；导出新片 |
+| Lane-F | 赛道二验收（测试 + 动效） | Aquinas / Euclid | 进行中 | ① E2E 测试：网站可打开、可回复、可提问，报告 PASS/FAIL（/tmp/track2_test_report.md）；② Border Beam 动效：Open Web UI 注入片段 + landing/index.html 光束边框（docs/openwebui-border-beam.md） |
+
+**派发记录**：
+- 01:14 主控以 `codely --resume-session 5aff1ac0-...` 派发 Task-B-v2（/tmp/taskb_v2_dispatch.log）；若 resume 未生效（远端文件 30 分钟内无变化）→ 新开会话并在此登记新会话 id。
+- 01:15 派发 Lane-D/E/F（子 agent：Locke/Pasteur/Aquinas/Euclid）。
