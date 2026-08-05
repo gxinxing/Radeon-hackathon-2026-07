@@ -173,6 +173,7 @@ ang_vel = transform_by_quat(self.robots[i].get_ang(), inv_quat(quat))
 4. 每步打印 fallen / 位移 / kicks（终端可见）；产出 `match_task7c_result.json` + `match_task7c.mp4`
 
 **时间盒**: 从开工起 1 小时；超时按 §14 Go/No-Go 评估回退。
+**止损线（主控定，2026-08-05 19:50）**: 21:00 北京时间仍未达标 → 立即锁定保底视频（现有 `demos/match_task7b.mp4` 或单机器人 `demos/match_1v1_20260805.mp4`），走路径 B 提交，不再加赛。当前进度：kicks=2/球 2.92m ✅，fallen=5 ❌（6 机器人全涌向球互撞，已改 `step_multi` 角色分工 + 移除踢后指令归零，迭代中）。
 
 ### Task-8 (P1): 踢球瞄准对方球门
 
