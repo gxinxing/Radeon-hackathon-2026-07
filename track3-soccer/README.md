@@ -194,6 +194,7 @@ python3 -m pytest tests/ --ignore=tests/test_e2e.py -q
 | 3v3 ang_vel fix | Verified: obs non-zero after step 3, robots move 0.338m/30 steps |
 | 3v3 walk stability | Known limitation: robots fall after ~15 steps without reset |
 | Multi-robot lifecycle | 10s clean exit, no orphan processes |
+| 3v3 rule_walk (08-05) | 100 steps, **1 kick, ball 5.26m** (首个 3v3 踢球); 待办: fallen 6/6→≤2, 相机渲染出视频 |
 
 ## Key Files
 
