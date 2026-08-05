@@ -1,0 +1,18 @@
+{
+  "started_at": 1785924608.4255953,
+  "gpu": "AMD Radeon RX 7900 XT (gfx1100)",
+  "mode": "rule_walk_v3",
+  "status": "passed",
+  "steps": 100,
+  "frames": 0,
+  "kicks": 1,
+  "score": {
+    "left": 0,
+    "right": 0
+  },
+  "ball_displacement": 5.26,
+  "robot_displacement": 0.86,
+  "num_robots": 6,
+  "ended_at": 1785924859.115932,
+  "duration_s": 250.69033670425415
+}

@@ -98,6 +98,8 @@ class SoccerEnv3v3(SoccerEnv):
         self.hl_clip_lin = env_cfg.get("hl_clip_lin", 1.2)
         self.hl_clip_ang = env_cfg.get("hl_clip_ang", 1.2)
         self.high_level_dt = self.dt * high_level_decimation
+        self.use_rule_walk = env_cfg.get("use_rule_walk", False)
+        self._rule_walk_phase = 0.0
 
         # High-level obs: 19 dims per robot, 3 robots = 57 dims
         # But we only run RL policy for 1 robot at a time (attacker),
@@ -444,6 +446,103 @@ class SoccerEnv3v3(SoccerEnv):
         self.all_obs_history[i] = torch.cat([self.all_obs_history[i][:, 1:], per_frame.unsqueeze(1)], dim=1)
         return self.all_obs_history[i].reshape(self.num_envs, -1)  # 720
 
+    def _rule_walk_actions(self, cmd, robot_idx):
+        """Deterministic gait controller — bypasses t1_walk.pt.
+
+        Produces 21-dim joint actions (same interface as _run_walk_model).
+        Uses a proper bipedal gait: alternating stance/swing phases with
+        hip pitch, knee flex, ankle push-off, and arm counter-swing.
+
+        The action is scaled by action_scale (0.25) then added to default
+        pose in _low_level_step_robot, so:
+          target = action * 0.25 + default_pos
+
+        POLICY_JOINT_NAMES indices:
+          0=L_ShPit 1=R_ShPit 2=Waist 3=L_ShRol 4=R_ShRol
+          5=L_HipPit 6=R_HipPit 7=L_ElbPit 8=R_ElbPit
+          9=L_HipRol 10=R_HipRol 11=L_ElbYaw 12=R_ElbYaw
+          13=L_HipYaw 14=R_HipYaw 15=L_KneePit 16=R_KneePit
+          17=L_AnkPit 18=R_AnkPit 19=L_AnkRol 20=R_AnkRol
+
+        Default standing pose (relevant joints):
+          L_HipPit=-0.2, R_HipPit=-0.2, L_Knee=0.4, R_Knee=0.4,
+          L_AnkPit=-0.2, R_AnkPit=-0.2
+        """
+        n = self.num_envs
+        dev = self.device
+        n_joints = len(POLICY_JOINT_NAMES)
+
+        vx = float(cmd[0, 0].item())
+        vy = float(cmd[0, 1].item())
+        wz = float(cmd[0, 2].item())
+        speed = math.sqrt(vx * vx + vy * vy)
+        moving = speed > 0.05
+
+        # Advance phase only once per low-level step (robot 0 call)
+        if robot_idx == 0:
+            freq = 2.5  # Hz — ~2.5 steps/s
+            self._rule_walk_phase += freq * self.dt
+
+        phase = self._rule_walk_phase
+        speed_norm = min(speed, 1.0)
+
+        actions = torch.zeros((n, n_joints), dtype=gs.tc_float, device=dev)
+
+        if not moving:
+            return actions  # standing pose = all zeros
+
+        # ---- Bipedal gait ----
+        # Left leg: stance when sin(phase) > 0, swing when < 0
+        # Right leg: opposite phase
+        lh = math.sin(phase)          # left hip oscillator
+        rh = math.sin(phase + math.pi) # right hip oscillator (opposite)
+
+        # Hip pitch: swing leg goes forward (positive), stance leg pushes back
+        # Need large enough amplitude for real steps.
+        # action * 0.25 = joint offset, so action=3.0 → 0.75 rad
+        hip_amp = 3.0 * speed_norm    # 0..3.0 → 0..0.75 rad swing
+        left_hip = hip_amp * lh       # L_Hip_Pitch (idx 5)
+        right_hip = hip_amp * rh      # R_Hip_Pitch (idx 6)
+
+        # Knee: bend during swing (when hip is forward = positive)
+        # action=4.0 → 1.0 rad knee flex
+        knee_amp = 4.0 * speed_norm
+        left_knee = knee_amp * max(0.0, lh)    # L_Knee_Pitch (idx 15)
+        right_knee = knee_amp * max(0.0, rh)   # R_Knee_Pitch (idx 16)
+
+        # Ankle: push-off during stance (when hip is back = negative)
+        ankle_amp = 2.0 * speed_norm
+        left_ankle = -ankle_amp * min(0.0, lh)   # L_Ankle_Pitch (idx 17)
+        right_ankle = -ankle_amp * min(0.0, rh)  # R_Ankle_Pitch (idx 18)
+
+        # Hip roll: slight lateral shift for balance
+        roll_amp = 0.5 * speed_norm
+        left_roll = roll_amp * lh     # L_Hip_Roll (idx 9)
+        right_roll = -roll_amp * lh   # R_Hip_Roll (idx 10) — opposite
+
+        # Arm swing (opposite to legs)
+        arm_amp = 1.5 * speed_norm
+        left_arm = -arm_amp * lh      # L_Shoulder_Pitch (idx 0)
+        right_arm = -arm_amp * rh     # R_Shoulder_Pitch (idx 1)
+
+        # Yaw
+        yaw_offset = wz * 0.5
+
+        actions[:, 0] = left_arm
+        actions[:, 1] = right_arm
+        actions[:, 5] = left_hip
+        actions[:, 6] = right_hip
+        actions[:, 9] = left_roll
+        actions[:, 10] = right_roll
+        actions[:, 13] = yaw_offset   # L_Hip_Yaw
+        actions[:, 14] = yaw_offset   # R_Hip_Yaw
+        actions[:, 15] = left_knee
+        actions[:, 16] = right_knee
+        actions[:, 17] = left_ankle
+        actions[:, 18] = right_ankle
+
+        return actions
+
     def _run_walk_model(self, obs_720):
         """Run frozen walking model."""
         with torch.no_grad():
@@ -557,14 +656,17 @@ class SoccerEnv3v3(SoccerEnv):
         # Run N low-level steps
         for _ in range(self.high_level_decimation):
             for i in range(self.num_robots):
-                low_obs = self._build_low_level_obs_for_robot(i)
-                if getattr(self, "hold_stand", False):
+                if getattr(self, "use_rule_walk", False):
+                    cmd = self.all_commands[:, i, :]
+                    joint_actions = self._rule_walk_actions(cmd, i)
+                elif getattr(self, "hold_stand", False):
                     joint_actions = torch.zeros(
                         (self.num_envs, len(POLICY_JOINT_NAMES)),
                         dtype=self.hl_actions.dtype,
                         device=self.device,
                     )
                 else:
+                    low_obs = self._build_low_level_obs_for_robot(i)
                     joint_actions = self._run_walk_model(low_obs)
                 self._low_level_step_robot(i, joint_actions)
 

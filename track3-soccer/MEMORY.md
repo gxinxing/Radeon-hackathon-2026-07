@@ -204,14 +204,23 @@ _low_level_step_robot(i, joint_actions)  # 不变，接受 21 维关节目标
 
 ## 11. 会话断点
 
-**当前断点**: rule_walk 实现准备阶段。用户已确认走 Strategy A（rule_walk），尚未开始写代码。
+**当前断点**: rule_walk v3 已跑通 3v3 球位移=5.26m。待修复视频渲染(env.cam 缺失)。
+
+### rule_walk v3 实测结果 (2026-08-05)
+- 100步: **1 kick, ball_disp=5.26m, robot_disp=0.86m**
+- fallen=6 (步态幅度大导致倒地, 但球被踢走了)
+- frames=0 (env.cam 属性不存在, 需要用 scene.camera 或其他方式渲染)
+- 球被踢后持续滚动 (kick impulse 有效)
+
+### 待修复
+1. **视频渲染**: env 没有 cam 属性, 需要检查 scene.camera 或 Genesis 渲染 API
+2. **减少摔倒**: 步态幅度可适当降低, 但当前 ball_disp=5.26m 已满足 Task-3 要求(>0.5m)
+3. **增加 kicks**: 当前只有 1 kick, 可通过增加步数或调整 KICK_DISTANCE 来增加
 
 **恢复后应做**:
-1. 读 SPEC.md 确认任务
-2. 读本 MEMORY.md 恢复上下文
-3. 在 `scripts/soccer_env_3v3.py` 中实现 `_rule_walk_actions()` + `use_rule_walk` 标志
-4. 上传到远端
-5. 跑 100 步 3v3 验证
-6. 下载视频
-7. 更新 SPEC + MEMORY + README
-8. 推送 GitHub
+1. 读 SPEC.md + 本 MEMORY.md
+2. 修复视频渲染 (查找 Genesis 渲染 API)
+3. 跑 100 步 3v3 + 视频
+4. 下载视频 + JSON
+5. 更新 SPEC + MEMORY + README
+6. 推送 GitHub
