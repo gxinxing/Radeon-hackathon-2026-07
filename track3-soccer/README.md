@@ -23,12 +23,23 @@ pipeline**, proving competitive robot policies can be trained without NVIDIA har
 | ONNX inference | **0.19 ms** | 19→3 dim, real-time capable (46,467 params) |
 | Training throughput | **4,618 steps/s** (peak) | 2048 parallel envs on AMD Radeon (51 GB VRAM) |
 | Reward components | **5/5 observed** | approach_ball, ball_control, ball_progress, goal_scored, fall_penalty |
+| Real goal scored | **scored=True** | Single-robot shoot: chase → kick → ball 7.35m into goal, 0 falls |
 
 ## Demo Video
 
+**Final film (4:37, 1080p):** `acceptance/final_video/track3_final_20260806.mp4`
+
+<video src="demos/match_1v1_shoot_20260805.mp4" controls></video>
+
+**Single-robot shoot demo (30s)** — real goal (`scored=True`): chase → kick → ball rolls 7.35m into the goal, 0 falls, ONNX policy + frozen walk model on AMD Radeon GPU.
+
 <video src="demos/match_1v1_20260805.mp4" controls></video>
 
-**Single-robot chase demo** — 200 steps, 0 falls, ball displacement 12m, ONNX policy + frozen walk model on AMD Radeon GPU.
+**Single-robot chase demo** — 200 steps, 0 falls, ball displacement 12m.
+
+<video src="demo_artifacts/match_rule_walk.mp4" controls></video>
+
+**3v3 rule-walk demo (100 frames)** — field render fix applied (`plane_reflection` off): full 6-robot scene, green field, no blue ground.
 
 ## Architecture
 
@@ -172,11 +183,10 @@ python3 -m pytest tests/ --ignore=tests/test_e2e.py -q
 
 - **3v3 walk model stability**: The frozen `t1_walk.pt` walking model was trained in a
   single-robot environment. In the 3v3 shared-physics scene (6 robots), multi-robot
-  contact perturbations cause instability after ~15 steps (1.5s). The `ang_vel` obs fix
-  (filtered→raw `get_ang()`) improved initial stability (0 falls in first 10 steps), but
-  long-term contact robustness requires fine-tuning with disturbance injection (T07,
-  beyond the hackathon timeline). A deterministic `rule_walk` fallback is being implemented
-  to enable 3v3 match demos without the neural walk model.
+  contact perturbations cause instability after ~15 steps. A deterministic `rule_walk`
+  fallback now runs the full 3v3 scene (100-frame video, green field), but multi-robot
+  contact robustness of the neural walk model remains a known limitation. The single-robot
+  shoot path is the primary submission line.
 - **Close-range ball control** (~2m): lacks fine motor adjustments for precise dribbling.
 - **Genesis ROCm multi-entity solver**: Newton solver exceeds gfx1100 local memory limit
   for 6 robots; CG solver used as fallback (slower but functional).
@@ -190,6 +200,9 @@ python3 -m pytest tests/ --ignore=tests/test_e2e.py -q
 | Walk model (gait) | 150 steps, 0 falls, 6.4m displacement |
 | Single-agent eval | 100 steps, 0 falls, ball 1.04m, 5 reward components |
 | Extended chase | 200 steps, 0 falls, ball 12m |
+| Single-robot shoot (Task-B) | 300 steps, 0 falls, **scored=True**, ball 7.35m +x, 30s 720p video |
+| Field render fix (08-06) | `plane_reflection` off → 3v3 near-cam green 0.541; `match_rule_walk.mp4` 100/100 frames green |
+| Final film | `track3_final_20260806.mp4`, 4:37, 1920×1080@30, AAC narration, no black/blue frames |
 | 3v3 scene | 6 robots loaded, CG solver passed, camera working |
 | 3v3 ang_vel fix | Verified: obs non-zero after step 3, robots move 0.338m/30 steps |
 | 3v3 walk stability | Known limitation: robots fall after ~15 steps without reset |

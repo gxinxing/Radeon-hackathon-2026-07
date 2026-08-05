@@ -548,3 +548,43 @@ single AMD GPU. 1v1 and 2v2 matches were verified with ONNX inference (200 steps
 displaced 20m in 1v1; 2v2 match with 1245 steps logged). 3v3 match with 6 robots at
 distinct positions is future work. All engineering deliverables — benchmark data, ONNX
 deployment model, demo videos, match logs, and reproducible code — are archived on GitHub.
+
+---
+
+## 15. 2026-08-06 Final Update (Submission Day)
+
+### 15.1 Single-Robot Shoot — Real Goal Scored (Task-B)
+
+Final acceptance run (`demos/exp/match_1v1_shoot_result.json`, status `passed`):
+
+| Criterion | Required | Measured | Result |
+|-----------|----------|----------|--------|
+| Falls | = 0 | 0 (300 steps; goal at step 138) | ✅ |
+| Kick / ball displacement | ≥ 1 kick, ball along +x ≥ 2m | kicks=1, ball 7.35m along +x, **scored=True** | ✅ |
+| Video motion | frame_diff > 2 | mean 2.06 (max 9.14, 32.3% frames > 2) | ✅ |
+| Artifacts | JSON + mp4 | `demos/exp/match_1v1_shoot_result.json` + 30s 720p mp4 | ✅ |
+
+The 30-second re-edited clip (`demos/match_1v1_shoot_20260805.mp4`) shows the full
+chase → kick → goal sequence on the green field.
+
+### 15.2 3v3 Field Render Fix (Blue-Ground Resolved)
+
+Root cause: semi-transparent robot links (19/25 at 0.3 alpha) × `plane_reflection=True`
+reflection pass made the near-camera ground render blue after physics steps. Fix:
+`plane_reflection: True → False` (pure rendering option; V1/V2 same-color check confirmed
+no visual impact on the field). Verified: full 3v3 env one-frame green ratio **0.541**
+(acceptance > 0.40); re-rendered `demo_artifacts/match_rule_walk.mp4` — **100/100 frames
+green (0.542–0.546)**, 4 kicks, ball displacement 12.75m. Local and remote
+`scripts/soccer_env_3v3.py` byte-identical.
+
+### 15.3 Final Film
+
+`acceptance/final_video/track3_final_20260806.mp4` — 4:37, 1920×1080@30fps, H.264 + AAC
+narration (mean −23 dB), 7 chapters; content spot-check: no black frames, no blue-ground
+frames.
+
+### 15.4 Submission Note
+
+The single-robot shoot line is the primary submission path (Path B); 3v3 multi-robot
+neural-walk stability remains a documented known limitation (§11), with the rule-walk
+fallback now producing a full 100-frame 3v3 video. Full task/lane records in `SPEC.md`.
