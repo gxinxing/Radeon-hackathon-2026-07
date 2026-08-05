@@ -55,7 +55,7 @@ ROBOT_HEIGHT = 0.72
 # Raised from 0.3 -> 0.5: a humanoid's foot only reaches the ball at ~0.45-0.5m
 # center distance, so the old 0.3m threshold almost never triggered a real kick.
 KICK_DISTANCE = 0.5
-KICK_IMPULSE = 1.5    # m/s — reduced from 3.0 to prevent kick-induced falls
+KICK_IMPULSE = 2.5    # m/s — moderate kick impulse
 KICK_COOLDOWN = 1.0   # seconds between kicks (longer cooldown for stability)
 
 # 6 robot starting positions
@@ -304,7 +304,7 @@ class SoccerEnv3v3(SoccerEnv):
 
         # Camera (close-up for visible motion)
         self.cam = self.scene.add_camera(
-            res=(1280, 720), pos=(3, -5, 3), lookat=(0, 0, 0.8), fov=50, GUI=False)
+            res=(1280, 720), pos=(2, -3, 2), lookat=(0, 0, 0.8), fov=60, GUI=False)
 
         self.scene.build(n_envs=self.num_envs)
 
@@ -480,7 +480,7 @@ class SoccerEnv3v3(SoccerEnv):
 
         # Advance phase only once per low-level step (robot 0 call)
         if robot_idx == 0:
-            freq = 1.5  # Hz
+            freq = 2.0  # Hz — faster for forward progress
             self._rule_walk_phase += freq * self.dt
 
         phase = self._rule_walk_phase
@@ -491,29 +491,30 @@ class SoccerEnv3v3(SoccerEnv):
         if not moving:
             return actions  # standing pose = all zeros
 
-        # ---- v7: stable gait — lower hip amp, longer stance phase ----
-        # v6 (hip=0.7): 0 fallen until step 25, then 1 at step 26, 5 at step 44
-        # v7 (hip=0.5, knee=0.6, freq=1.2): target 0 fallen through 100 steps
+        # ---- v9: v6 gait (proven 25 steps 0-fallen) + close camera ----
+        # v6 (hip=0.7): 0 fallen until step 25, frame_diff 0.4-1.0
+        # v7 (hip=0.5): 0 fallen until step 72, but too slow
+        # v9 = v6 params, accept fallen=1 at ~step 26 (≤2 target)
         lh = math.sin(phase)
         rh = math.sin(phase + math.pi)
 
-        hip_amp = 0.5 * speed_norm    # action=0.5 → 0.125 rad ≈ 7°
+        hip_amp = 0.7 * speed_norm
         left_hip = hip_amp * lh
         right_hip = hip_amp * rh
 
-        knee_amp = 0.6 * speed_norm   # action=0.6 → 0.15 rad ≈ 9°
+        knee_amp = 1.0 * speed_norm
         left_knee = knee_amp * max(0.0, lh)
         right_knee = knee_amp * max(0.0, rh)
 
-        ankle_amp = 0.2 * speed_norm  # action=0.2 → 0.05 rad ≈ 3°
+        ankle_amp = 0.3 * speed_norm
         left_ankle = -ankle_amp * min(0.0, lh)
         right_ankle = -ankle_amp * min(0.0, rh)
 
-        roll_amp = 0.1 * speed_norm   # minimal lateral
+        roll_amp = 0.15 * speed_norm
         left_roll = roll_amp * lh
         right_roll = -roll_amp * lh
 
-        arm_amp = 0.3 * speed_norm
+        arm_amp = 0.4 * speed_norm
         left_arm = -arm_amp * lh
         right_arm = -arm_amp * rh
 
