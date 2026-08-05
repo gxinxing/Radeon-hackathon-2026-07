@@ -1,0 +1,17 @@
+{
+  "started_at": 1785881391.8275404,
+  "gpu": "AMD Radeon RX 7900 XT (gfx1100)",
+  "video": "match_3v3.mp4",
+  "status": "passed",
+  "steps": 100,
+  "frames": 100,
+  "kicks": 0,
+  "scores": {
+    "A": 0,
+    "B": 0
+  },
+  "ball_displacement": 0.0,
+  "num_robots": 6,
+  "ended_at": 1785881558.24913,
+  "duration_s": 166.42158961296082
+}

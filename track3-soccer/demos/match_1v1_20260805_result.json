@@ -1,0 +1,10 @@
+{
+  "status": "passed",
+  "steps": 200,
+  "frames": 100,
+  "falls": 0,
+  "kicks": 0,
+  "ball_displacement": 12.046,
+  "rl_reward": 77.86,
+  "video": "match_1v1.mp4"
+}
