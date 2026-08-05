@@ -303,7 +303,7 @@ class SoccerEnv3v3(SoccerEnv):
         self.ball = self.scene.add_entity(gs.morphs.URDF(file=os.path.abspath(ball_path)))
 
         # Camera (broadcast angle)
-        self.scene.add_camera(
+        self.cam = self.scene.add_camera(
             res=(1280, 720), pos=(0, -12, 8), lookat=(0, 0, 0.5), fov=50, GUI=False)
 
         self.scene.build(n_envs=self.num_envs)

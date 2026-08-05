@@ -105,13 +105,106 @@ ang_vel = transform_by_quat(self.robots[i].get_ang(), inv_quat(quat))
 - 已有视频 + JSON 足够提交
 - 诚实标注 3v3 为 known limitation
 
+### Task-6 (P0): 修 3v3 相机渲染 — 出视频
+
+**文件**: 远端 `/workspace/scripts/soccer_env_3v3.py`
+**问题**: `'SoccerEnv3v3' object has no attribute 'cam'`，3v3 env 没创建相机，所有 run frames=0
+**做法**: 参照单机版 `soccer_env_v4.py` 的相机创建，给 3v3 env 加 cam
+**验收**: rule_walk 跑 100 步能输出 mp4（比赛要 3-5 分钟视频）
+
+### Task-7 (P0): 降摔倒 — 步态稳定性
+
+**现状**: v3 已能走+踢球（ball 5.26m, kicks 1），但第 10 步 6 个全倒
+**做法**: 步态平衡调优（振幅/频率/踝补偿/支撑相），保持速度同时不倒
+**验收**: 100 步 fallen ≤ 2
+
+### Task-8 (P1): 踢球瞄准对方球门
+
+**现状**: 踢球把球往 +y 侧向踢（球滚到 (2.72, 4.50)），没朝对方球门 +x
+**做法**: 修踢球方向/追球策略，让球朝对方球门方向位移
+**验收**: ball 主要沿 +x 位移，尽量进球（score > 0）
+
 ### Task-5: 推送 GitHub
 
 无论 Task-3 还是 Task-4，都要推送。
 
 ---
 
-## 4. 策略架构（Booster 风格）
+## 4. 系统架构
+
+分层数据流（自上而下）：
+
+```
+高层策略 (19 obs → 3 action: vx, vy, wz)
+  ↓ 速度指令（clip ±1.2）
+低层控制器（二选一）
+  ├─ rule_walk：正弦步态（确定性，无模型，稳定优先）
+  └─ t1_walk.pt：冻结 RL 行走模型（720 obs → 21 joint）
+  ↓ joint targets × action_scale(0.25) + default_pos → PD 控制
+Genesis 物理（AMD Radeon GPU，单场景 6 机器人 + 1 球）
+```
+
+- 3v3 = **单场景 6 机器人**（左队 3 + 右队 3，共 1 个球），非并行 env
+- 决策层：左队 RL 策略 / 右队规则策略；步态层在 rule_walk 模式下全部用规则步态
+- Match 控制器每步 `act()` 产出 6×3 指令，`env.step()` 转关节目标
+- 踢球：距球 < 0.5m 且冷却 0.5s → 朝对方球门施加 3.0 m/s 冲量
+
+## 5. 模块划分
+
+| 模块 | 路径 | 职责 |
+|------|------|------|
+| 3v3 环境 | `scripts/soccer_env_3v3.py` | 单场景、6 机器人、步态、踢球、obs、step |
+| 单机父类 | `scripts/soccer_env_v4.py` | 720 obs / walk model / 单机器人接口 |
+| 策略层 | `strategy/{param,player,match}.py` | 决策、角色分配、比赛控制 |
+| 奖励 | `reward.py` | `compute_reward(obs, action, w, task)` |
+| 控制工具 | `scripts/control_utils.py` | `compose_full_joint_targets` 等 |
+| 比赛入口 | `run_rule_walk_match.py` / `run_booster_match.py` | 跑比赛、写结果 JSON、渲染 |
+| 配置 | `configs/hierarchical_agent.yaml` | env/obs/reward/command 参数 |
+
+## 6. 接口
+
+- `SoccerEnv3v3(num_envs, env_cfg, obs_cfg, reward_cfg, command_cfg, walk_model_path, high_level_decimation=5, show_viewer=False)`
+- `step(hl_actions: (1,3) | (1,6,3)) → (obs, reward, done, extras)`；`extras` 含 `kick_events`、`terminal_state`
+- `reset() → TensorDict{"policy": (1,19)}`；`get_observations()`
+- `Match(env).act() → (1,6,3)`；`check_events(extras) → (kicks:int, scored:bool)`；`get_robot_stats() → [{fallen,...}]`
+- `compute_reward(obs: dict, action: Tensor, w: dict, task: str) → Tensor`
+- 低层：`_rule_walk_actions(cmd, robot_idx) → (1,21)`；`_run_walk_model(obs_720) → (1,21)`
+
+## 7. 数据模型
+
+- **HL obs 19 维**：lin_vel(3) + ang_vel(3) + gravity_xy(2) + ball_rel_body(2) + ball_vel_body(2) + dist_to_ball(1) + goal_dir(2) + goal_dist(1) + last_hl_action(3)
+- **HL action 3 维**：`[vx, vy, wz]` ∈ [-1.2, 1.2]
+- **LL obs 720 维 / LL action 21 维**（`POLICY_JOINT_NAMES`）
+- **结果 JSON**：`{started_at, gpu, mode, status, steps, frames, kicks, score{left,right}, ball_displacement, robot_displacement, num_robots, ended_at, duration_s}`
+- 状态缓冲：`all_base_pos (1,6,3)`、`all_base_quat (1,6,4)`、球位置/速度 `(1,3)`
+
+## 8. 边界条件
+
+| 项 | 值 |
+|----|----|
+| 场地 | 14 × 9 m，球门宽 2.6 m，球半径 0.11 m，机器人高 0.72 m |
+| 摔倒判据 | base 高度 < 0.4 m（`fall_height`） |
+| 终止条件 | pitch/roll 30°（rule_walk 模式可关） |
+| 踢球 | 距离 < 0.5 m，冷却 0.5 s，冲量 3.0 m/s |
+| 指令裁剪 | 线速度 ±1.2 m/s，角速度 ±1.2 rad/s |
+| 控制周期 | dt 0.02 s（physics 0.002 × 10），高层 decimation 5 |
+| action 缩放 | 0.25（低层 joint target） |
+| 初始站位 | 左队 [-1, -3.5, -6.5]，右队 [1, 3.5, 6.5]（x 对称，见代码） |
+| 球出界 | 无特殊处理，按物理继续滚 |
+
+## 9. 验收标准（可测量）
+
+| 项 | 标准 |
+|----|------|
+| 环境加载 | 6 机器人 + 1 球，Genesis 启动 < 60s，干净退出 |
+| 低层门禁 | t1_walk stance 60 步 / 0 跌倒 |
+| 单机评估 | 100 步 0 跌倒，球位移 ≥ 1m |
+| 3v3 rule_walk | 100 步 fallen ≤ 2，robot_disp ≥ 2m，kicks ≥ 1，ball_disp ≥ 2m |
+| 视频 | 100 步出 mp4（≥30 帧）；比赛成片 3-5 分钟 |
+| 踢球瞄准 | 球主要沿 +x 位移，尽量 score > 0 |
+| 结果文件 | 每次 run 输出 JSON（§7 schema）+ 视频 + 进度文件 |
+
+## 10. 策略架构（Booster 风格）
 
 参考 Booster 官方 3v3 基线，已创建三个文件：
 
@@ -135,7 +228,7 @@ strategy/
 
 ---
 
-## 5. 技术参考（详见链接）
+## 11. 技术参考（详见链接）
 
 ### 5.1 Booster 官方基线
 
@@ -165,7 +258,7 @@ strategy/
 
 ---
 
-## 6. 工作规则
+## 12. 工作规则
 
 1. **方向调整必须跟用户确认**
 2. **每轮只改一个东西**
@@ -174,12 +267,15 @@ strategy/
 5. **不堆砌文档**，以本 SPEC 为唯一指引
 6. **每轮开工先读第 3 节任务清单**，任务完成回写状态+关键数字
 7. **所有改动/实验在终端运行，输出可见**（不用 nohup/后台/静默）
-8. **时间盒交付**：超时按第 8 节 Go/No-Go 回退备用方案
+8. **时间盒交付**：超时按第 14 节 Go/No-Go 回退备用方案
 9. **本 SPEC 同步到远端 `/workspace/SPEC.md`**，codely 每轮必读
+10. **进度更新即同步 README**：每完成一个任务，先更新对应 README 的项目状态再跑下一个
+11. **清理过时内容**：明显过时/无价值的文件、日志、中间产物及时删除或归档，不留垃圾
+12. **文件归位**：产出放固定目录（`demos/`、`acceptance/`、`reports/`、`scripts/`），不散落在 /workspace 根目录
 
 ---
 
-## 7. 已有资产清单
+## 13. 已有资产清单
 
 | 文件 | 路径 |
 |------|------|
@@ -199,7 +295,7 @@ strategy/
 
 ---
 
-## 8. Go/No-Go 清单
+## 14. Go/No-Go 清单
 
 | # | 检查项 | 状态 |
 |---|-------|------|
@@ -208,7 +304,7 @@ strategy/
 | 3 | 低层行走门禁 | ✅ stance 60步/0跌倒 |
 | 4 | 单 Agent 足球评估 | ✅ 0跌倒, 球1.04m |
 | 5 | 多机器人生命周期 | ✅ 10s 干净退出 |
-| 6 | 完整演示视频 | ✅ 单机器人(200步/0跌倒/球12m); 3v3 rule_walk(100步/1踢/球5.26m, 视频渲染待修) |
+| 6 | 完整演示视频 | ✅ 单机器人(200步/0跌倒/球12m) + 3v3 rule_walk(100步/1踢/球5.77m/50帧/1280×720) |
 | 7 | 奖励曲线和任务指标 | ✅ training_curve.csv + 5分量 |
 | 8 | ROCm 性能 | ✅ 4618 steps/s, 23.7GB VRAM |
 | 9 | README 命令匹配 | ✅ |
@@ -216,7 +312,7 @@ strategy/
 
 ---
 
-## 9. 评分预估
+## 15. 评分预估
 
 ### 路径 A: 3v3 修复成功
 

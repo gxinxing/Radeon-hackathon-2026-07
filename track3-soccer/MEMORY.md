@@ -204,23 +204,21 @@ _low_level_step_robot(i, joint_actions)  # 不变，接受 21 维关节目标
 
 ## 11. 会话断点
 
-**当前断点**: rule_walk v3 已跑通 3v3 球位移=5.26m。待修复视频渲染(env.cam 缺失)。
+**当前断点**: Task-6 (相机修复) 完成。Task-7 (降摔倒) 和 Task-8 (踢球方向) 待执行。
 
-### rule_walk v3 实测结果 (2026-08-05)
-- 100步: **1 kick, ball_disp=5.26m, robot_disp=0.86m**
-- fallen=6 (步态幅度大导致倒地, 但球被踢走了)
-- frames=0 (env.cam 属性不存在, 需要用 scene.camera 或其他方式渲染)
-- 球被踢后持续滚动 (kick impulse 有效)
+### Task-6 实测结果 (2026-08-05)
+- 修复: `self.cam = self.scene.add_camera(...)` (之前缺 `self.cam =`)
+- 100步: **1 kick, ball_disp=5.77m, 50 frames, 1280×720 mp4 (307KB)**
+- fallen=6 (步态幅度大导致倒地)
+- SPEC Task-3 全部阈值已满足 ✅
 
-### 待修复
-1. **视频渲染**: env 没有 cam 属性, 需要检查 scene.camera 或 Genesis 渲染 API
-2. **减少摔倒**: 步态幅度可适当降低, 但当前 ball_disp=5.26m 已满足 Task-3 要求(>0.5m)
-3. **增加 kicks**: 当前只有 1 kick, 可通过增加步数或调整 KICK_DISTANCE 来增加
+### 待执行 (SPEC Task-7/Task-8)
+1. **Task-7 (P0)**: 降摔倒 — 调步态振幅/频率/踝补偿, 验收 fallen ≤ 2
+2. **Task-8 (P1)**: 踢球朝球门 — 球当前往 +y 方向滚, 需朝 +x (对方球门)
 
 **恢复后应做**:
-1. 读 SPEC.md + 本 MEMORY.md
-2. 修复视频渲染 (查找 Genesis 渲染 API)
-3. 跑 100 步 3v3 + 视频
-4. 下载视频 + JSON
-5. 更新 SPEC + MEMORY + README
-6. 推送 GitHub
+1. 读远端 SPEC.md 第3节 Task-7
+2. 调 _rule_walk_actions 步态参数
+3. 跑 100 步验证 fallen ≤ 2
+4. 执行 Task-8 修踢球方向
+5. 最终推送 GitHub
