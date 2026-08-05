@@ -302,9 +302,9 @@ class SoccerEnv3v3(SoccerEnv):
             ball_path = "/workspace/assets/ball.urdf"
         self.ball = self.scene.add_entity(gs.morphs.URDF(file=os.path.abspath(ball_path)))
 
-        # Camera (broadcast angle)
+        # Camera (close-up for visible motion)
         self.cam = self.scene.add_camera(
-            res=(1280, 720), pos=(0, -12, 8), lookat=(0, 0, 0.5), fov=50, GUI=False)
+            res=(1280, 720), pos=(3, -5, 3), lookat=(0, 0, 0.8), fov=50, GUI=False)
 
         self.scene.build(n_envs=self.num_envs)
 
@@ -480,7 +480,7 @@ class SoccerEnv3v3(SoccerEnv):
 
         # Advance phase only once per low-level step (robot 0 call)
         if robot_idx == 0:
-            freq = 2.5  # Hz — ~2.5 steps/s
+            freq = 1.5  # Hz
             self._rule_walk_phase += freq * self.dt
 
         phase = self._rule_walk_phase
@@ -491,42 +491,33 @@ class SoccerEnv3v3(SoccerEnv):
         if not moving:
             return actions  # standing pose = all zeros
 
-        # ---- Bipedal gait ----
-        # Left leg: stance when sin(phase) > 0, swing when < 0
-        # Right leg: opposite phase
-        lh = math.sin(phase)          # left hip oscillator
-        rh = math.sin(phase + math.pi) # right hip oscillator (opposite)
+        # ---- v6: stable gait with visible motion ----
+        # v5 (hip=0.5, knee=0.8): fallen=1 at step 53, but frame_diff=0.1 (too static)
+        # v6 (hip=0.7, knee=1.0, freq=1.5): increase amplitude slightly for motion visibility
+        lh = math.sin(phase)
+        rh = math.sin(phase + math.pi)
 
-        # Hip pitch: swing leg goes forward (positive), stance leg pushes back
-        # Need large enough amplitude for real steps.
-        # action * 0.25 = joint offset, so action=3.0 → 0.75 rad
-        hip_amp = 3.0 * speed_norm    # 0..3.0 → 0..0.75 rad swing
-        left_hip = hip_amp * lh       # L_Hip_Pitch (idx 5)
-        right_hip = hip_amp * rh      # R_Hip_Pitch (idx 6)
+        hip_amp = 0.7 * speed_norm    # action=0.7 → 0.175 rad ≈ 10°
+        left_hip = hip_amp * lh
+        right_hip = hip_amp * rh
 
-        # Knee: bend during swing (when hip is forward = positive)
-        # action=4.0 → 1.0 rad knee flex
-        knee_amp = 4.0 * speed_norm
-        left_knee = knee_amp * max(0.0, lh)    # L_Knee_Pitch (idx 15)
-        right_knee = knee_amp * max(0.0, rh)   # R_Knee_Pitch (idx 16)
+        knee_amp = 1.0 * speed_norm   # action=1.0 → 0.25 rad ≈ 14°
+        left_knee = knee_amp * max(0.0, lh)
+        right_knee = knee_amp * max(0.0, rh)
 
-        # Ankle: push-off during stance (when hip is back = negative)
-        ankle_amp = 2.0 * speed_norm
-        left_ankle = -ankle_amp * min(0.0, lh)   # L_Ankle_Pitch (idx 17)
-        right_ankle = -ankle_amp * min(0.0, rh)  # R_Ankle_Pitch (idx 18)
+        ankle_amp = 0.3 * speed_norm
+        left_ankle = -ankle_amp * min(0.0, lh)
+        right_ankle = -ankle_amp * min(0.0, rh)
 
-        # Hip roll: slight lateral shift for balance
-        roll_amp = 0.5 * speed_norm
-        left_roll = roll_amp * lh     # L_Hip_Roll (idx 9)
-        right_roll = -roll_amp * lh   # R_Hip_Roll (idx 10) — opposite
+        roll_amp = 0.15 * speed_norm
+        left_roll = roll_amp * lh
+        right_roll = -roll_amp * lh
 
-        # Arm swing (opposite to legs)
-        arm_amp = 1.5 * speed_norm
-        left_arm = -arm_amp * lh      # L_Shoulder_Pitch (idx 0)
-        right_arm = -arm_amp * rh     # R_Shoulder_Pitch (idx 1)
+        arm_amp = 0.4 * speed_norm
+        left_arm = -arm_amp * lh
+        right_arm = -arm_amp * rh
 
-        # Yaw
-        yaw_offset = wz * 0.5
+        yaw_offset = wz * 0.2
 
         actions[:, 0] = left_arm
         actions[:, 1] = right_arm

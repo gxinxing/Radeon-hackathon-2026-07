@@ -1,0 +1,21 @@
+{
+  "started_at": 1785926944.8193657,
+  "gpu": "AMD Radeon RX 7900 XT (gfx1100)",
+  "mode": "rule_walk_v4_task7",
+  "video": "match_task7.mp4",
+  "status": "passed",
+  "steps": 100,
+  "frames": 100,
+  "kicks": 1,
+  "score": {
+    "left": 0,
+    "right": 0
+  },
+  "ball_displacement": 2.87,
+  "robot_displacement": 0.77,
+  "num_robots": 6,
+  "final_fallen": 5,
+  "mean_frame_diff": 0.46,
+  "ended_at": 1785927110.8319156,
+  "duration_s": 166.01254987716675
+}

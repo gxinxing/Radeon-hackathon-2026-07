@@ -95,3 +95,4 @@ ops/**/known_hosts
 ops/**/backup.log
 !demos/match_3v3_booster_20260805.mp4
 !demos/match_3v3_rule_walk_20260805.mp4
+!demos/match_3v3_task7_20260805.mp4
