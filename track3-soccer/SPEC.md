@@ -341,23 +341,30 @@ ang_vel = transform_by_quat(self.robots[i].get_ang(), inv_quat(quat))
 - `action_scale: 0.16`、`clip_actions: 1.2`（低层强约束）
 - reward：`fall_penalty: -14.0`、`alive: 0.35`、`upright: 1.3`、`orientation: -1.0`、`action_rate: -2.0`、`energy_penalty: -0.02`、`approach_ball: 5.0`、`ball_progress: 6.0`、`ball_to_goal: 5.0`、`goal_scored: 30.0` 保持、`recovery_bonus: 3.0` 保持；directed_contact/ball_control/coop 系列保持
 - `episode_length_s: 20.0`（=200 HL 步）
-- `learning_rate: 3.0e-4`（防震荡；规则3：若 reward 剧烈震荡，降到 1.5e-4）
+- `learning_rate: 1.5e-4`（**最终值，用户硬性规定，禁止 Agent 自动调大**；任何情况下不允许升 lr）
 
 **代码同步（已落地，2026-08-06 02:45）**: `policy.py` L199-200 `clip_lin/clip_ang=0.6`；`src/match_3v3/policy.py` L199-200 `=0.6`；`scripts/soccer_env_3v3.py` L98-99 默认 `=0.6`（env 内 walk/rule_walk clamp 用 `self.hl_clip_lin/ang` 自动同步）。
 
 **A 阶段执行（0-4h，P1 无对手仅追球，task=hl，关闭多智能体）**:
 - 每 30 分钟看日志：`fallen_count` 目标快速 <15；若仍 >50 → 立即 `fall_penalty=-18`、`hl_clip_lin=0.5`，不等待
+- **检查点 1（第 2h，用户主控监控）**：① fallen 持续 >80 → 立刻 `fall_penalty=-18`、`hl_clip_lin=0.5`，不硬扛；② fallen<20 但 robot_disp<1.5m（站得住但发呆）→ `approach_ball 5.0→7.0`、`fall_penalty=-12`
 - `robot_disp` 目标 >2m；若倒地少但不动 → `approach_ball` 临时提到 7.0
+- **A 阶段结束必须保存 P1 checkpoint**（如 `/workspace/models/task9_p1.pt` + 说明 md），防止后续训练崩掉可回退
 - 4h 到点**无论是否完美，直接切 B 阶段**，禁止死磕 P1
+
+**B 阶段门禁（检查点 2，第 4h）**: 进入 1v1 的最低门槛 = `fallen_count < 60` 且 `robot_disp ≥ 1.8m`。达标 → 切 1v1；**不达标 → 继续跑 P1，压缩 B 段时间，把更多时间留给 P1**（底层行走不行进对抗只会毁掉前面所学）。**B 阶段结束必须保存 1v1 checkpoint**（`/workspace/models/task9_1v1.pt`）。
 
 **B 阶段（4-8h，1v1 对抗）**: 开启对手，不跑 coop；只看 `fallen_count` 不飙升；若倒地暴涨 → 回退 P1 再跑 30min 后重进。
 
-**C 阶段（8-10h，只评测）**: 冻结 B 阶段 checkpoint，批量跑 3v3 评测，导出日志/保存权重，**不再训练**。
+**C 阶段（8-10h，只评测 · 检查点 3 强制）**: 第 8h 强制冻结 checkpoint、**关闭训练只跑评测**，无论效果好坏不再迭代权重（末段 RL 极易震荡崩坏毁掉已学平衡）。批量跑 3v3 评测，导出日志/保存权重。
 
 **紧急止损**:
 1. 连续 1h `fallen_count>100` → `hl_clip_lin=0.5`、`fall_penalty=-18`
 2. 倒地少但发呆不动 → `approach_ball↑`、`fall_penalty=-10`
-3. reward 剧烈震荡 → 降低学习率（3e-4→1.5e-4）
+3. reward 剧烈震荡 → 降低学习率（但**不得高于 1.5e-4 基线**，只能更低）
+4. **结局 2 预案**：到第 4h P1 的 fallen 仍 >100 → 放弃对抗训练，保存 P1 权重，**直接用 P1 模型跑 3v3 评测**，不强行上 1v1 把模型学坏
+
+**硬性禁令（用户）**: ① 全程训练只用 P1 + 1v1，**禁止开启 3v3 训练、禁止 coop 多智能体配合**，3v3 仅用于最后评测；② lr 锁定 1.5e-4，禁止调大。
 
 **验收（C 阶段汇总）**: 回写每阶段日志关键数字 + 最终 3v3 评测 batch 统计（fallen/robot_disp/kicks/ball_disp/scored 命中率）；每轮只认数据。
 
