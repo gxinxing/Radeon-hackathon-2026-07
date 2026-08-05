@@ -61,8 +61,8 @@
 
 ### 2.3 实例状态
 
-- JupyterLab: `https://radeon-global.anruicloud.com/instances/<REDACTED>/lab`
-- Token: `<REDACTED>`
+- JupyterLab: `<redacted>（实例访问信息不公开）`
+- Token: `<redacted>`
 - GPU: AMD Radeon RX 7900 XT, 48GB VRAM, ROCm 7.2.1
 - Genesis 1.3.1 已安装, kernel 已缓存
 - Persistent: `/workspace/persistent/track3/`

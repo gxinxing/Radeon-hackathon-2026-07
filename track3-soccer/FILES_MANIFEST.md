@@ -22,7 +22,8 @@
 
 ## 已确认不存在（交接文档死路径，勿再引用）
 - `/workspace/radeon-repo/`（旧实例残留）
-- `/workspace/train_1v1.py`、`/workspace/run_curriculum.sh`（均不存在，B 阶段需新建 1v1 训练脚本）
+- `/workspace/run_task9_b.py`（B 扰动训练脚本，2N→15N 力课程 + B-STOPLOSS，已就位）
+- `/workspace/eval_3v3_hl.py`（C 阶段 3v3 验收评测脚本）
 - 旧隧道 `minimize-orders-excel-saving.trycloudflare.com`（DNS 已注销，不可恢复）
 - Vercel 部署（CLI 卡 npm dist-tags、token 403，已弃用）
 

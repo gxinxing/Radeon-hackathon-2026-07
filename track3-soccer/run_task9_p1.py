@@ -92,6 +92,7 @@ class HieraSoccerEnv(SoccerEnv):
         # HL buffers
         self.last_hl_actions = torch.zeros((num_envs, 3), dtype=gs.tc_float, device=self.device)
         self.hl_commands = torch.zeros((num_envs, 3), dtype=gs.tc_float, device=self.device)
+        self.guide_prob = 0.0  # guided-exploration: override HL action toward ball
 
         # Metrics
         self.fallen_count = 0
@@ -155,6 +156,20 @@ class HieraSoccerEnv(SoccerEnv):
 
     def step(self, hl_actions):
         hl_actions = torch.as_tensor(hl_actions, dtype=gs.tc_float, device=self.device)
+        # Guided exploration: with prob guide_prob, replace action with a chase
+        # heuristic (move forward + turn toward ball). Teaches the policy that
+        # commanding nonzero velocity yields rewards, breaking the stand-still trap.
+        if self.guide_prob > 1e-4:
+            _invq = inv_quat(self.base_quat)
+            _brel = transform_by_quat(self.ball_pos - self.base_pos, _invq)
+            _bearing = torch.atan2(_brel[:, 1], _brel[:, 0])
+            _guide = torch.stack([
+                torch.full_like(_bearing, 0.42),
+                torch.zeros_like(_bearing),
+                torch.clamp(1.5 * _bearing, -self.hl_clip_ang, self.hl_clip_ang),
+            ], dim=1)
+            _gm = torch.rand(self.num_envs, device=self.device) < self.guide_prob
+            hl_actions = torch.where(_gm.unsqueeze(1), _guide, hl_actions)
         vx = torch.clamp(hl_actions[:, 0], -self.hl_clip_lin, self.hl_clip_lin)
         vy = torch.clamp(hl_actions[:, 1], -self.hl_clip_lin, self.hl_clip_lin)
         wz = torch.clamp(hl_actions[:, 2], -self.hl_clip_ang, self.hl_clip_ang)
@@ -197,14 +212,17 @@ class HieraSoccerEnv(SoccerEnv):
         scored = (self.ball_pos[:, 0] > self.goal_x) & (torch.abs(self.ball_pos[:, 1]) < self.goal_half)
         fallen = (self.base_pos[:, 2] < self.fall_height) | (torch.abs(self.base_euler[:, 1]) > 45) | (torch.abs(self.base_euler[:, 0]) > 45)
 
+        dist_ball = torch.norm(self.base_pos[:, :2] - self.ball_pos[:, :2], dim=1)
         soccer = {
             "torso_up": torch.clamp(-grav[:, 2], min=-1.0, max=1.0),
             "fallen": fallen,
             "base_lin_vel_x": self.base_lin_vel[:, 0],
+            "base_lin_vel": self.base_lin_vel,
             "base_lin_vel_z": self.base_lin_vel[:, 2],
             "base_ang_vel_xy": self.base_ang_vel[:, :2],
             "ball_x": self.ball_pos[:, 0],
-            "dist_to_ball": torch.norm(self.base_pos[:, :2] - self.ball_pos[:, :2], dim=1),
+            "dist_to_ball": dist_ball,
+            "ball_dir_world": (self.ball_pos[:, :2] - self.base_pos[:, :2]) / (dist_ball.unsqueeze(1) + 1e-6),
             "prev_dist_to_ball": self.prev_dist_to_ball,
             "ball_vel_to_goal": torch.sum(self.ball_vel[:, :2] * goal_rel_body[:, :2] / (goal_dist_t.unsqueeze(1) + 1e-6), dim=1),
             "scored": scored,
@@ -283,6 +301,7 @@ def main():
     parser.add_argument("--num_envs", type=int, default=2048)
     parser.add_argument("--phase", type=str, default="A")
     parser.add_argument("--resume", action="store_true", help="resume from latest checkpoint in runs/task9_p1")
+    parser.add_argument("--guide", action="store_true", help="guided exploration toward ball (decays to 0 by iter 200)")
     args = parser.parse_args()
 
     with open(ROOT / "configs/hierarchical_agent.yaml") as f:
@@ -357,6 +376,10 @@ def main():
 
     for start_iter in range(0, args.max_iterations, checkpoint_interval):
         end_iter = min(start_iter + checkpoint_interval, args.max_iterations)
+        if args.guide:
+            env.guide_prob = max(0.0, 0.25 * (1.0 - end_iter / 250.0))
+            env.reward_cfg["fall_penalty"] = -4.0 if end_iter < 250 else -10.0
+            print(f"[guide] iter {end_iter}: guide_prob={env.guide_prob:.2f}", flush=True)
         runner.learn(num_learning_iterations=end_iter - start_iter, init_at_random_ep_len=(start_iter == 0))
 
         stats = env.get_stats()
@@ -367,14 +390,19 @@ def main():
               f"fallen={stats['fallen_count']} (per_ep={stats['fallen_count']/max(stats['episodes'],1):.1f}) "
               f"disp={stats['robot_disp']:.2f}m kicks={stats['kicks']} "
               f"ball_disp={stats['ball_disp']:.2f}m eps={stats['episodes']} mean_rew={mean_rew:.2f}", flush=True)
-        src_model = f"{log_dir}/model_{end_iter}.pt"
-        if os.path.exists(src_model):
+        import glob as _glob
+        src_models = sorted(_glob.glob(f"{log_dir}/model_*.pt"),
+                            key=lambda p: int(p.split('model_')[1].split('.')[0]))
+        if src_models:
+            src_model = src_models[-1]
             shutil.copy(src_model, str(ckpt_out / "task9_p1.pt"))
-            print(f"[ckpt] saved {ckpt_out / 'task9_p1.pt'} (iter {end_iter})", flush=True)
+            _it = src_model.split('model_')[1].split('.')[0]
+            print(f"[ckpt] saved {ckpt_out / 'task9_p1.pt'} (iter {_it})", flush=True)
 
-        # Emergency stop-loss checks
-        if stats['fallen_count'] > 100 and elapsed > 3600:
-            print(f"[STOPLOSS] fallen_count={stats['fallen_count']} > 100 after 1h. Applying hl_clip=0.5, fall_penalty=-18", flush=True)
+        # Emergency stop-loss checks (per-episode fall rate, not cumulative)
+        per_ep = stats['fallen_count'] / max(stats['episodes'], 1)
+        if per_ep > 0.5 and elapsed > 3600:
+            print(f"[STOPLOSS] per_ep fallen={per_ep:.2f} > 0.5 after 1h. Applying hl_clip=0.5, fall_penalty=-18", flush=True)
             # Can't modify running env; log for next phase
             break
 

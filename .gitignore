@@ -68,3 +68,19 @@ track2-agentic-ai/dify/dify-src/
 
 # Radeon Cloud SSH private key (recovered 2026-08-04 — never commit)
 radeon_ssh/
+
+# ── 内部运维文档/脚本：含实例访问信息，禁止提交 ──
+HANDOFF-20260805.md
+sync.log
+setup_codely_cloud.sh
+track3-soccer/MEMORY.md
+track3-soccer/PROJECT_STATUS.md
+track3-soccer/start_all.sh
+track3-soccer/setup_booster.sh
+track3-soccer/setup_codely_cloud.sh
+track3-soccer/orchestration/legacy-workbuddy/CODELY_HANDOFF.md
+track3-soccer/orchestration/legacy-workbuddy/CODELY_TASK_01.md
+track3-soccer/orchestration/legacy-workbuddy/RUN_P0_IN_BROWSER.md
+track3-soccer/orchestration/legacy-workbuddy/codely_mailbox/CODELYS_SETUP.md
+track3-soccer/remote_reports/HANDOFF_field_mesh_debug_20260806.md
+track3-soccer/archive/

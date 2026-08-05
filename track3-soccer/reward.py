@@ -50,6 +50,17 @@ def r_approach_ball(dist_to_ball, prev_dist):
     return torch.tanh(delta)
 
 
+def r_vel_to_ball(base_lin_vel, ball_dir_world):
+    """Reward actual linear velocity component toward the ball (world frame).
+
+    Unlike the tanh-scaled ``approach_ball`` delta, this scales directly with
+    real forward progress, so standing still yields zero regardless of distance.
+    Only progress toward the ball counts; moving away gives zero.
+    """
+    vel_toward = torch.sum(base_lin_vel[:, :2] * ball_dir_world, dim=-1)
+    return torch.clamp(vel_toward, min=0.0)
+
+
 def r_ball_progress(ball_goal_dist, prev_ball_goal_dist):
     """Potential-based shaping: reward ANY reduction in ball-to-goal distance,
     including kicks. This is the main 'play the ball forward' signal."""
@@ -201,7 +212,7 @@ TASK_TERMS = {
                 "fall", "recovery", "energy", "action_rate", "dof_acc"},
     # Hierarchical: frozen low-level handles gait; high-level outputs velocity commands.
     # Drops tracking/feet terms (low-level concern), keeps ball-focused + safety terms.
-    "chase_hl": {"upright", "alive", "approach_ball", "approach_angle", "ball_control", "ball_progress",
+    "chase_hl": {"upright", "alive", "approach_ball", "vel_to_ball", "approach_angle", "ball_control", "ball_progress",
                  "ball_contact", "directed_contact", "ball_to_goal", "goal_scored",
                  "lin_vel_z", "ang_vel_xy", "orientation",
                  "fall", "recovery", "action_rate"},
@@ -216,6 +227,10 @@ TASK_TERMS = {
                  "lin_vel_z", "ang_vel_xy", "orientation",
                  "fall", "recovery", "action_rate"},
 }
+
+
+"""Phase-B robustness training reuses the chase_hl reward contract."""
+TASK_TERMS["chase_hl_robust"] = TASK_TERMS["chase_hl"]
 
 
 ACCEPTANCE_REWARD_COMPONENTS = (
@@ -289,6 +304,10 @@ def compute_reward(obs: dict, action: torch.Tensor, w: dict, task: str) -> torch
         total += w.get("approach_angle", 2.0) * r_approach_angle(
             obs.get("ball_rel_body", torch.zeros_like(obs["torso_up"]).unsqueeze(1).expand(-1, 2)),
             obs.get("goal_dir_body", torch.zeros_like(obs["torso_up"]).unsqueeze(1).expand(-1, 2)))
+    if "vel_to_ball" in terms and "base_lin_vel" in obs:
+        total += w.get("vel_to_ball", 6.0) * r_vel_to_ball(
+            obs["base_lin_vel"], obs.get("ball_dir_world",
+            torch.zeros_like(obs["torso_up"]).unsqueeze(1).expand(-1, 2)))
     if "directed_contact" in terms:
         total += w.get("directed_contact", 5.0) * r_directed_contact(
             obs["min_foot_dist"], obs["ball_vel_to_goal"])

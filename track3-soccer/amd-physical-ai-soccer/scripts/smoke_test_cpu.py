@@ -79,7 +79,7 @@ def gae(rewards, values, dones, last_value, gamma, lam):
 def main():
     cfg = {
         "experiment": {"device": "cpu", "seed": 0},
-        "ppo": {"discount": 0.99, "lambda": 0.95, "lr": 3e-4,
+        "ppo": {"discount": 0.99, "lambda": 0.95, "lr": 1.5e-4,
                 "learning_epochs": 2, "mini_batches": 2, "value_loss_coef": 1.0,
                 "entropy_coef": 0.005, "grad_norm_clip": 1.0, "hidden": [64, 32]},
     }
