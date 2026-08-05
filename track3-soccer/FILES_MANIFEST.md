@@ -26,7 +26,7 @@
 - 旧隧道 `minimize-orders-excel-saving.trycloudflare.com`（DNS 已注销，不可恢复）
 - Vercel 部署（CLI 卡 npm dist-tags、token 403，已弃用）
 
-## 10h 窗口关键时间（t0=02:37 CST）
-- 2h 检查点 04:37 / 4h 门禁 06:37 / 8h 冻结 10:37 / 10h 终检 12:37
+## 时间基准（t0=02:52 CST；总窗 20h，训练克制 ≤12h）
+- P1 评估 03:35-04:00 / B 训练 04:00-12:00 / 训练冻结 12:00（硬线）/ C 评测+报告+提交 12:00-20:00
 - 止损: fallen per_ep>80 → fall_penalty=-18 + hl_clip=0.5；不动 → approach_ball=7
 - 禁 3v3/coop 训练、禁跑 run_12h_schedule.sh（含 coop 段）
