@@ -1,0 +1,17 @@
+{
+  "started_at": 1785919826.9339333,
+  "gpu": "AMD Radeon RX 7900 XT (gfx1100)",
+  "video": "match_booster.mp4",
+  "status": "passed",
+  "steps": 30,
+  "frames": 30,
+  "kicks": 0,
+  "score": {
+    "left": 0,
+    "right": 0
+  },
+  "ball_displacement": 0.0,
+  "num_robots": 6,
+  "ended_at": 1785919913.4014537,
+  "duration_s": 86.46752047538757
+}

@@ -420,7 +420,7 @@ class SoccerEnv3v3(SoccerEnv):
 
         inv_bq = inv_quat(quat)
         lin_vel = self.all_filtered_lin_vel[:, i, :]
-        ang_vel = self.all_filtered_ang_vel[:, i, :]
+        ang_vel = transform_by_quat(self.robots[i].get_ang(), inv_bq)
         grav = transform_by_quat(
             torch.tensor([0.0, 0.0, -1.0], device=self.device).expand(self.num_envs, -1), inv_bq)
 
