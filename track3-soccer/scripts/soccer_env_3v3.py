@@ -95,8 +95,8 @@ class SoccerEnv3v3(SoccerEnv):
 
         self._hl_initialized = True
         self.num_actions = 3  # vx, vy, wz per robot
-        self.hl_clip_lin = env_cfg.get("hl_clip_lin", 1.2)
-        self.hl_clip_ang = env_cfg.get("hl_clip_ang", 1.2)
+        self.hl_clip_lin = env_cfg.get("hl_clip_lin", 0.7)
+        self.hl_clip_ang = env_cfg.get("hl_clip_ang", 0.7)
         self.high_level_dt = self.dt * high_level_decimation
         self.use_rule_walk = env_cfg.get("use_rule_walk", False)
         self._rule_walk_phase = 0.0

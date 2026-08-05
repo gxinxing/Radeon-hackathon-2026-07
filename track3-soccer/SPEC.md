@@ -289,6 +289,40 @@ ang_vel = transform_by_quat(self.robots[i].get_ang(), inv_quat(quat))
 
 无论 Task-3 还是 Task-4，都要推送。
 
+### Task-9 (P0 · 第一性原理参数调优 · 主控登记 2026-08-06 02:25)
+
+**现状（观测数据，2026-08-06）**: 能踢球（kicks=14）但一跑就倒（fallen_count=300，不停 reset），本体净位移≈0；球能飞（ball_disp=21.22）但机器人站不住。
+
+**根因诊断**:
+1. HL 速度上限 1.2 m/s / 1.2 rad/s 偏大 → 输出高速指令，行走模型 hold 不住，高频倒地
+2. `fall_penalty=-5.0` 偏弱：单步倒地只扣 5，而球向球门相关单步奖励最高可达 10 → 模型"赌一把高速，宁可摔倒也要拿球"
+3. 低层 `action_scale=0.25` + `clip_actions=100`（≈无裁剪）→ 关节目标幅度无限制
+4. `alive: 0.0` → 无"活着站着"的正向动机
+
+**做法（改三处，必须同步：yaml + env clamp + policy clip，只改一处会被其他处覆盖）**:
+
+`configs/hierarchical_agent.yaml`:
+- `hl_clip_lin: 1.2 → 0.7`、`hl_clip_ang: 1.2 → 0.7`（vx/vy ≤ 0.7 m/s，wz ≤ 0.7 rad/s）
+- `command.vel_range: [-1.0,1.0] → [-0.7,0.7]`
+- `env.action_scale: 0.25 → 0.18`、`env.clip_actions: 100.0 → 1.2`（打开低层裁剪）
+- `env.episode_length_s: 24.0 → 20.0`（=200 个 HL 步，减少无效摔倒 reset 样本）
+- reward：`fall_penalty: -5 → -12`；`alive: 0 → 0.3`；`upright: 0.5 → 1.2`；`action_rate: -1 → -1.8`；`energy_penalty: -0.01 → -0.02`；`approach_ball: 10 → 6`；`ball_progress: 10 → 7`；`ball_to_goal: 8 → 6`；`goal_scored: 30` 保持；`recovery_bonus: 3.0`、`lin_vel_z: -0.5`、`ang_vel_xy: -0.1` 保持
+
+`scripts/soccer_env_3v3.py`（env 内默认值）: `hl_clip_lin/hl_clip_ang` 默认 `1.2 → 0.7`（L98-99）
+
+`policy.py`（策略侧默认）: `clip_lin/clip_ang` 默认 `1.2 → 0.7`（L199-200）
+
+**训练流程强制约束（禁止直接跑 3v3 评测）**:
+1. **P1：无对手，只追球** — 验收：`fallen_count < 10` 且 `robot_disp > 2.0m`；不达标继续调参，不升级
+2. P1 达标 → **P3：1v1 对抗训练**做鲁棒性
+3. 1v1 稳定后再跑 3v3 评测
+
+**回调速度条件**: P1 稳定（fallen ≤ 5 且 disp > 3m）后，`hl_clip_lin/ang` 逐步 0.7 → 0.8 → 0.9，禁止一次跳回 1.2。
+
+**验收**: 见 P1 指标；参数落地后回写本段状态与训练日志关键数字。
+
+**协调注记**: 与 `run_3v3_final.py`（演示脚本线：walk model 机器人 0 + 其余站桩 + 近球 + 进球 + 近景相机）并行，互不覆盖文件；演示脚本不受本次参数调整影响（如需可重新运行）。
+
 ---
 
 ## 4. 系统架构

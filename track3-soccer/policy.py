@@ -196,8 +196,8 @@ class SharedRLPolicy:
         field: Optional[FieldConstants] = None,
         action_scale: float = 0.25,
         obs_history_length: int = 10,
-        clip_lin: float = 1.2,
-        clip_ang: float = 1.2,
+        clip_lin: float = 0.7,
+        clip_ang: float = 0.7,
     ):
         self.field = field or DEFAULT_FIELD
         self.action_scale = action_scale
