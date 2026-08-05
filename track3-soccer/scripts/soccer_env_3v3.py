@@ -55,8 +55,8 @@ ROBOT_HEIGHT = 0.72
 # Raised from 0.3 -> 0.5: a humanoid's foot only reaches the ball at ~0.45-0.5m
 # center distance, so the old 0.3m threshold almost never triggered a real kick.
 KICK_DISTANCE = 0.5
-KICK_IMPULSE = 3.0    # m/s impulse applied to ball toward opponent goal
-KICK_COOLDOWN = 0.5   # seconds between kicks (was 1.0)
+KICK_IMPULSE = 1.5    # m/s — reduced from 3.0 to prevent kick-induced falls
+KICK_COOLDOWN = 1.0   # seconds between kicks (longer cooldown for stability)
 
 # 6 robot starting positions
 # Left team (attacks +x): [attacker, defender, keeper]
@@ -491,29 +491,29 @@ class SoccerEnv3v3(SoccerEnv):
         if not moving:
             return actions  # standing pose = all zeros
 
-        # ---- v6: stable gait with visible motion ----
-        # v5 (hip=0.5, knee=0.8): fallen=1 at step 53, but frame_diff=0.1 (too static)
-        # v6 (hip=0.7, knee=1.0, freq=1.5): increase amplitude slightly for motion visibility
+        # ---- v7: stable gait — lower hip amp, longer stance phase ----
+        # v6 (hip=0.7): 0 fallen until step 25, then 1 at step 26, 5 at step 44
+        # v7 (hip=0.5, knee=0.6, freq=1.2): target 0 fallen through 100 steps
         lh = math.sin(phase)
         rh = math.sin(phase + math.pi)
 
-        hip_amp = 0.7 * speed_norm    # action=0.7 → 0.175 rad ≈ 10°
+        hip_amp = 0.5 * speed_norm    # action=0.5 → 0.125 rad ≈ 7°
         left_hip = hip_amp * lh
         right_hip = hip_amp * rh
 
-        knee_amp = 1.0 * speed_norm   # action=1.0 → 0.25 rad ≈ 14°
+        knee_amp = 0.6 * speed_norm   # action=0.6 → 0.15 rad ≈ 9°
         left_knee = knee_amp * max(0.0, lh)
         right_knee = knee_amp * max(0.0, rh)
 
-        ankle_amp = 0.3 * speed_norm
+        ankle_amp = 0.2 * speed_norm  # action=0.2 → 0.05 rad ≈ 3°
         left_ankle = -ankle_amp * min(0.0, lh)
         right_ankle = -ankle_amp * min(0.0, rh)
 
-        roll_amp = 0.15 * speed_norm
+        roll_amp = 0.1 * speed_norm   # minimal lateral
         left_roll = roll_amp * lh
         right_roll = -roll_amp * lh
 
-        arm_amp = 0.4 * speed_norm
+        arm_amp = 0.3 * speed_norm
         left_arm = -arm_amp * lh
         right_arm = -arm_amp * rh
 
@@ -678,14 +678,18 @@ class SoccerEnv3v3(SoccerEnv):
                 self.all_filtered_lin_vel[:, i, :] = lin_vel * fw + self.all_filtered_lin_vel[:, i, :] * (1 - fw)
                 self.all_filtered_ang_vel[:, i, :] = ang_vel * fw + self.all_filtered_ang_vel[:, i, :] * (1 - fw)
 
-        # Kick logic for all robots.  ``last_kick_events`` is retained as an
-        # explicit event stream for the acceptance log; physics remains the
-        # sole authority for ball state.
+        # Kick logic — AFTER physics step, with reduced impulse to avoid falls.
+        # Also zero out velocity commands for any robot that kicks this step,
+        # so the gait doesn't fight the kick perturbation.
         self.last_kick_events = torch.zeros(
             (self.num_envs, self.num_robots), dtype=gs.tc_bool, device=self.device
         )
         for i in range(self.num_robots):
-            self.last_kick_events[:, i] = self._execute_kick(i)
+            kick_mask = self._execute_kick(i)
+            self.last_kick_events[:, i] = kick_mask
+            if kick_mask.any():
+                # Robot that kicked: zero its command next step for stability
+                self.all_commands[:, i, :] = 0.0
 
     def _compute_step_telemetry(self):
         """Compute reward, terminal flags, and pre-reset state telemetry."""
