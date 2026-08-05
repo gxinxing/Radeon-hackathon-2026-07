@@ -118,17 +118,13 @@ python3 -m pytest tests/ --ignore=tests/test_e2e.py -q
 
 | Parameter | Value |
 |-----------|-------|
-| Base model | Qwen2.5-7B → N/A (PPO on T1 humanoid) |
-| Method | FP16 LoRA → PPO (rsl_rl) |
-| LoRA rank (r) | 64 |
-| LoRA alpha | 128 |
-| Training samples | 400 CN market NL-to-DSL pairs |
-| Epochs | 3 (SFT) / 500 (PPO) |
-| Batch size | 2 (SFT) / 2048 envs (PPO) |
-| Final training loss | 0.2848 (SFT) |
+| Method | PPO (rsl_rl) on T1 humanoid |
+| Epochs | 500 (PPO) |
+| Batch size | 2048 envs (PPO) |
 | Final reward | +93.07 (PPO) |
-| Peak GPU memory | 16.21 GB (SFT) / 23.7 GB (PPO) |
-| Training time | 615s (SFT) / 5723s (PPO) |
+| Peak GPU memory | 23.7 GB (PPO) |
+| Training time | 5723s (PPO, 500 iterations) |
+| Training throughput | 4,618 steps/s peak |
 
 ## 3v3 Strategy (Booster-style)
 
@@ -174,9 +170,13 @@ python3 -m pytest tests/ --ignore=tests/test_e2e.py -q
 
 ## Known Limitations
 
-- **3v3 shared physics**: 6 robots load and scene builds successfully with CG solver,
-  but walk model does not produce sufficient joint motion in multi-robot mode (obs feedback
-  issue under investigation). Single-robot mode is fully functional.
+- **3v3 walk model stability**: The frozen `t1_walk.pt` walking model was trained in a
+  single-robot environment. In the 3v3 shared-physics scene (6 robots), multi-robot
+  contact perturbations cause instability after ~15 steps (1.5s). The `ang_vel` obs fix
+  (filtered→raw `get_ang()`) improved initial stability (0 falls in first 10 steps), but
+  long-term contact robustness requires fine-tuning with disturbance injection (T07,
+  beyond the hackathon timeline). A deterministic `rule_walk` fallback is being implemented
+  to enable 3v3 match demos without the neural walk model.
 - **Close-range ball control** (~2m): lacks fine motor adjustments for precise dribbling.
 - **Genesis ROCm multi-entity solver**: Newton solver exceeds gfx1100 local memory limit
   for 6 robots; CG solver used as fallback (slower but functional).
@@ -191,6 +191,8 @@ python3 -m pytest tests/ --ignore=tests/test_e2e.py -q
 | Single-agent eval | 100 steps, 0 falls, ball 1.04m, 5 reward components |
 | Extended chase | 200 steps, 0 falls, ball 12m |
 | 3v3 scene | 6 robots loaded, CG solver passed, camera working |
+| 3v3 ang_vel fix | Verified: obs non-zero after step 3, robots move 0.338m/30 steps |
+| 3v3 walk stability | Known limitation: robots fall after ~15 steps without reset |
 | Multi-robot lifecycle | 10s clean exit, no orphan processes |
 
 ## Key Files
@@ -213,14 +215,13 @@ python3 -m pytest tests/ --ignore=tests/test_e2e.py -q
 - [Technical report](./docs/technical_report.md)
 - [RoboCup + Booster reference guide](./docs/robocup_reference.md)
 - [Project status](./PROJECT_STATUS.md)
-- [SPEC (execution guide)](./SPEC.md)
+- [SPEC (execution guide)](./SPEC.md) — **读 SPEC 前先读 [MEMORY.md](./MEMORY.md)**
+- [Session memory (current state)](./MEMORY.md)
 - [Competition acceptance criteria](./COMPETITION_ACCEPTANCE.md)
 
 ## Disclaimers
 
-- All backtests use **deterministic synthetic historical data** for demonstration only.
-- **No real trading or live market operations** were performed.
-- All inference and training on **AMD GPU (gfx1100, ROCm 7.2.1)**.
+- All training and inference on **AMD GPU (gfx1100, ROCm 7.2.1)**.
 - Track 2 submission is in a [separate repository](https://github.com/gxinxing/Radeon-hackathon-2026-07).
 
 ## Team
