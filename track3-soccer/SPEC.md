@@ -335,7 +335,9 @@ strategy/
 |------|------|------------------|------|----------------|--------|------|
 | Lane-A | Track3 足球 3v3 主线 | codely 窗口 #1 | 主控代行（审核副会话离线时按 §12.1） | Task-7b：修"踢球即摔倒"→ 100步 fallen ≤ 2 / frame_diff > 2 / 每步打印 + 视频 | 远端 AMD GPU `/workspace`（track3-soccer） | 进行中（v5 已驳回，待重跑） |
 | Lane-B | GitHub 主提交仓库整理 | 主控直接执行（codely 窗口 #2 可协助） | 主控 + 用户确认 | 清理 `gxinxing/Radeon-hackathon-2026-07-track3`（白名单 218 文件已暂存）→ 克隆到另一 GitHub 账号提交 | 本地 `/tmp/track3-gh-work` + GitHub | 进行中（已同步未提交） |
-| Lane-C | 保底 Franka（track3-2）材料补齐 | codely 窗口 #3 | 主控代行 | 审计 `track3-2` 仓库 + 补 `TECHNICAL_REPORT.md` §8 + 3-5 分钟比赛视频 + 复现教程 | 本地 + GitHub track3-2 | 进行中（审计中） |
+| Lane-C | 保底 Franka（track3-2）收尾整理 | codely 窗口 #3 | 主控代行 | 审计 `track3-2` 仓库 → 整理文件（归档过时内容、收敛本地/GitHub 副本）→ 项目收尾；**不适用本足球 SPEC 的验收/评分维度** | 本地 + GitHub track3-2 | 进行中（审计中） |
+
+**Lane-C 独立声明**: `track3-2`（保底 Franka）**不遵循本足球 SPEC**（§3 任务、§9 验收、§15 评分均不适用）。该 Lane 只做两件事：① 整理文件（删/归档过时内容，收敛本地与 GitHub 的多个副本）；② 项目收尾（README/交接可读、无密钥泄漏、结构干净）。验收 = 目录结构清晰 + 无过时垃圾 + 收尾文档可读，与足球任务的 fallen/frame_diff 等数值无关。
 
 **角色职责（每个 Lane 内，同 §12.1）**
 1. **主控 Agent**（本窗口）：把任务写进本 SPEC（§3 或对应 Lane 小节，含现状/做法/验收/时间盒）→ 分派给该 Lane 的 codely → 审核结果 → Go/No-Go 决策；审核 Agent 离线时代行审核。
