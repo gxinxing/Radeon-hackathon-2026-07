@@ -1,4 +1,13 @@
-"""End-to-end pipeline tests."""
+"""End-to-end pipeline tests (offline part exercises the LEGACY crypto DSL path).
+
+NOTE: VALID_DSL below is the legacy crypto DSL shape (binance/BTC/USDT) used by
+the Freqtrade transpiler tests. The submitted/current main chain is the domestic
+market (CN) quant agent; its verification entry points are:
+
+    python3 -m pytest tests/ --ignore=tests/test_e2e.py   # 282 offline tests
+    bash scripts/verify_e2e.sh                            # CN chain E2E
+    scripts/eval_cn_market_v2.py                          # 24-case CN eval
+"""
 
 import json
 

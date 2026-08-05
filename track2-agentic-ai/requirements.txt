@@ -1,13 +1,14 @@
 # Core dependencies (installed via /opt/venv/bin/pip on AMD ROCm instance)
+# Domestic-market quant agent main chain: RAG -> LLM DSL -> CN backtest -> risk report.
+
 # Inference
 vllm>=0.14.0                    # ROCm-supported LLM serving
 transformers>=4.44.0            # HuggingFace model utilities
 torch>=2.9.0                    # ROCm PyTorch (already installed)
 
-# Fine-tuning
-peft>=0.12.0                    # LoRA/QLoRA
+# Fine-tuning (CN market FP16 LoRA)
+peft>=0.12.0                    # LoRA fine-tuning
 trl>=0.9.0                      # SFT trainer
-bitsandbytes>=0.43.0            # 4-bit quantization
 datasets>=2.20.0                # HuggingFace datasets
 accelerate>=0.34.0              # Distributed training utils
 
@@ -18,11 +19,6 @@ pydantic>=2.9.0                 # Data validation
 httpx>=0.27.0                   # Async HTTP client
 openai>=1.40.0                  # OpenAI-compatible client (for vLLM)
 
-# Trading
-freqtrade>=2024.10              # Crypto trading bot framework
-ccxt>=4.3.0                     # Crypto exchange API
-ta-lib>=0.4.32                  # Technical indicators (requires system lib)
-
 # Data processing
 pandas>=2.2.0
 numpy>=1.26.0
@@ -32,3 +28,14 @@ jsonschema>=4.23.0
 # Testing
 pytest>=8.3.0
 pytest-asyncio>=0.24.0
+
+# --- Legacy crypto pipeline (paper-trade / market-data / indicators) ---
+# Still imported by src/tools/paper_trade.py, src/backtest/data_fetcher.py,
+# src/tools/indicators.py (legacy chain; not required by the CN main path).
+ccxt>=4.3.0                     # Crypto exchange API (legacy paper-trade/data-fetcher)
+ta-lib>=0.4.32                  # Technical indicators (requires system lib; legacy)
+
+# --- Legacy / optional (NOT needed for the CN market main chain) ---
+# bitsandbytes>=0.43.0          # 4-bit QLoRA — unavailable on ROCm; CN path uses FP16 LoRA
+# freqtrade>=2024.10            # Freqtrade strategy framework — no longer imported; transpiler
+#                               # emits Freqtrade code only for the legacy crypto pipeline

@@ -181,7 +181,8 @@
 
 ```bash
 # SSH 到远端
-ssh -i ~/.ssh/id_ed25519 -p 31036 root@***REMOVED***
+ssh -i ~/.ssh/id_ed25519 -p 31151 root@***REMOVED***
+# 注：当前有效端口为 31151（见 radeon_ssh/SSH_CONNECTION.txt）；私有密钥为 radeon_ssh/id_ed25519
 
 # 确认 vLLM 运行
 curl http://127.0.0.1:8000/v1/models

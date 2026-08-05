@@ -30,17 +30,21 @@ from .risk_agent import run_risk_agent, RiskConfig
 BACKTEST_API_URL = os.environ.get("BACKTEST_API_URL", "http://localhost:8080")
 
 
-def _get_market_data(pair: str = "BTC/USDT") -> str:
-    """Fetch current market data for context."""
+def _get_market_data(instrument: str = "510300.SH") -> str:
+    """Fetch current market data for context (domestic instrument).
+
+    Falls back to a friendly message when the legacy market-data endpoint is
+    unavailable (CN demo chain uses deterministic synthetic data).
+    """
     try:
         with httpx.Client(timeout=15.0) as client:
-            resp = client.get(f"{BACKTEST_API_URL}/api/market/summary", params={"pair": pair})
+            resp = client.get(f"{BACKTEST_API_URL}/api/market/summary", params={"pair": instrument})
             if resp.status_code == 200:
                 d = resp.json()
                 return (
-                    f"{pair} = ${d.get('last_price', 0):,.2f}, "
-                    f"24h change: {d.get('change_pct', 0):+.1f}%, "
-                    f"volume: {d.get('volume_24h', 0):,.0f}"
+                    f"{instrument} = ¥{d.get('last_price', 0):,.2f}, "
+                    f"日涨跌: {d.get('change_pct', 0):+.1f}%, "
+                    f"成交量: {d.get('volume_24h', 0):,.0f}"
                 )
     except Exception:
         pass
@@ -57,8 +61,8 @@ def run_multi_agent(
     Yields status updates for the Gradio UI, then the final decision.
     """
     session_id = str(int(time.time()))
-    asset = "BTC-USDT"
-    timeframe = "1h"
+    asset = "510300.SH"
+    timeframe = "1d"
 
     # ── Step 0: Fetch market data ─────────────────────────────
     yield "🔄 [Orchestrator] 初始化多Agent管道，获取市场数据..."

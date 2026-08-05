@@ -144,7 +144,7 @@
 
 ```bash
 # 1. 上传实验文件到远端
-scp -i ~/.ssh/id_ed25519 -P 31036 \
+scp -i ~/.ssh/id_ed25519 -P 31151 \
   src/dsl/canonicalizer_cn_experiment.py \
   src/prompts/cn_market_dsl_prompt_v2.txt \
   scripts/eval_cn_market_improvement.py \
@@ -152,13 +152,13 @@ scp -i ~/.ssh/id_ed25519 -P 31036 \
   root@***REMOVED***:/persistent/track2/eval/improvement_exp/
 
 # 2. 在远端创建目录结构
-ssh -i ~/.ssh/id_ed25519 -p 31036 root@***REMOVED*** \
+ssh -i ~/.ssh/id_ed25519 -p 31151 root@***REMOVED*** \
   'mkdir -p /persistent/track2/eval/improvement_exp/{src/dsl,src/prompts,scripts} && \
    touch /persistent/track2/eval/improvement_exp/src/__init__.py \
          /persistent/track2/eval/improvement_exp/src/dsl/__init__.py'
 
 # 3. 运行三组对照实验
-ssh -i ~/.ssh/id_ed25519 -p 31036 root@***REMOVED*** \
+ssh -i ~/.ssh/id_ed25519 -p 31151 root@***REMOVED*** \
   'cd /persistent/track2/eval/improvement_exp && \
    python3 scripts/eval_cn_market_improvement.py \
      --vllm-url http://127.0.0.1:8000/v1 \

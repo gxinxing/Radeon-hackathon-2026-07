@@ -95,8 +95,7 @@ nav .container{display:flex;align-items:center;justify-content:space-between;max
 .dash-input{background:rgba(10,10,16,.6);border:1px solid rgba(123,57,252,.4);border-radius:10px;padding:14px 16px;font-size:13px;line-height:1.7;color:#E6E9F2;min-height:110px}
 .dash-input .cur{display:inline-block;width:8px;height:14px;background:var(--accent);vertical-align:-2px;margin-left:2px;animation:blink 1s steps(1) infinite}
 .dash-actions{display:flex;align-items:center;gap:14px;margin-top:12px;flex-wrap:wrap}
-.dash-run{background:var(--accent);border:none;color:#fff;font-family:'JetBrains Mono';font-size:12.5px;padding:9px 18px;border-radius:8px;cursor:pointer;transition:all .2s;white-space:nowrap}
-.dash-run:hover{background:var(--accent-2);box-shadow:0 0 18px rgba(123,57,252,.4)}
+.dash-run{background:var(--accent);color:#fff;font-family:'JetBrains Mono';font-size:12.5px;padding:9px 18px;border-radius:8px;white-space:nowrap}
 .dash-flow{font-size:11.5px;color:var(--muted)}
 .dash-code{background:#0d0d15;border:1px solid var(--border);border-radius:10px;padding:14px 16px;font-size:12.5px;line-height:1.75;color:#d4d4e0;min-height:150px;overflow-x:auto;white-space:pre}
 .dash-code .dk{color:var(--accent-2)}
@@ -279,7 +278,9 @@ footer{border-top:1px solid var(--border);padding:48px 0;font-size:14px;color:va
 @keyframes blink{50%{opacity:0}}
 @media(max-width:1100px){.hero-term{width:320px;right:3%}}
 @media(max-width:720px){.hero-term{display:none}}
+
 </style>
+
 <script src="https://beacon.cdn.qq.com/sdk/4.5.9/beacon_web.min.js"></script>
 <script>
 (function(){
@@ -331,7 +332,7 @@ footer{border-top:1px solid var(--border);padding:48px 0;font-size:14px;color:va
     <p class="sub reveal">The next-generation quantitative agent platform that turns Chinese natural language into risk-checked trading strategies — trained, served, and backtested entirely on AMD Radeon GPUs.</p>
     <div class="hero-ctas reveal">
       <a href="#proof" class="btn-purple">Get Started Free</a>
-      <a href="#how" class="btn-darkp">Watch 2-min Demo ▶</a>
+      <a href="https://github.com/gxinxing/Radeon-hackathon-2026-07/blob/main/docs/track2_demo_script_cn.md" class="btn-darkp">View 2-min Demo Script</a>
     </div>
     <div class="badges reveal">
       <span class="badge">AMD ROCm 7.2</span><span class="badge">vLLM</span><span class="badge">Qwen2.5-7B</span>
@@ -349,7 +350,7 @@ footer{border-top:1px solid var(--border);padding:48px 0;font-size:14px;color:va
           <div class="dash-label">① Natural-language strategy input</div>
           <div class="dash-input mono">写一个沪深300双均线策略，ema_fast 上穿 ema_slow 时买入，加止损与仓位限制<span class="cur"></span></div>
           <div class="dash-actions">
-            <button class="dash-run mono">▶ 生成策略</button>
+            <span class="dash-run mono">▶ 生成策略</span>
             <span class="dash-flow mono">RAG → Qwen2.5-7B · LoRA → canonicalizer</span>
           </div>
         </div>
@@ -579,10 +580,12 @@ footer{border-top:1px solid var(--border);padding:48px 0;font-size:14px;color:va
       </div>
     </div>
     <div class="card reveal" style="margin-top:24px;padding:20px;text-align:center">
-      <div class="arch-title">Live demo · Open WebUI on AMD ROCm</div>
-      <p style="color:var(--muted);font-size:15px;margin:12px 0 20px">Try the running agent: natural-language strategy → DSL → backtest → risk decision, served live from the AMD GPU instance.</p>
+      <div class="arch-title">Demo &amp; local run</div>
+      <p style="color:var(--muted);font-size:15px;margin:12px 0 20px">Try the live agent (vLLM :8000 → Router :8090 → Open WebUI, on AMD GPU instance), or run the full pipeline locally / follow the step-by-step demo script.</p>
       <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
-        <a href="https://minimize-orders-excel-saving.trycloudflare.com" target="_blank" class="btn btn-primary">Open Live Demo</a>
+        <a href="https://refresh-links-antiques-catch.trycloudflare.com/" target="_blank" class="btn btn-primary">Open Live Demo</a>
+        <a href="https://github.com/gxinxing/Radeon-hackathon-2026-07/blob/main/docs/track2_demo_script_cn.md" class="btn btn-secondary">View Demo Script</a>
+        <a href="https://github.com/gxinxing/Radeon-hackathon-2026-07" class="btn btn-outline">Run Locally</a>
       </div>
     </div>
   </div>
@@ -618,7 +621,8 @@ footer{border-top:1px solid var(--border);padding:48px 0;font-size:14px;color:va
     <h2 class="reveal">A full-chain trading agent.<br>One AMD GPU. <span class="red">Zero CUDA.</span></h2>
     <p class="sub reveal" style="margin:0 auto">From Chinese words to a risk-vetoed, backtested strategy — entirely on AMD Radeon.</p>
     <div class="ctas reveal">
-      <a href="https://minimize-orders-excel-saving.trycloudflare.com" target="_blank" class="btn btn-primary">Try the Live Demo</a>
+      <a href="https://refresh-links-antiques-catch.trycloudflare.com/" target="_blank" class="btn btn-primary">Try the Live Demo</a>
+      <a href="https://github.com/gxinxing/Radeon-hackathon-2026-07/blob/main/docs/track2_demo_script_cn.md" class="btn btn-secondary">View Demo Script</a>
       <a href="https://github.com/gxinxing/Radeon-hackathon-2026-07/blob/main/docs/technical_report.md" class="btn btn-secondary">Read the Technical Report</a>
     </div>
   </div>

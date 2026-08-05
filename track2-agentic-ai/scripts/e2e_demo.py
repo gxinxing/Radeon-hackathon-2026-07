@@ -1,17 +1,17 @@
-"""Full e2e demo: NL → DSL → backtest → paper trade → risk report.
+"""LEGACY crypto-chain demo: NL → DSL → backtest → paper trade → risk report.
 
-This script demonstrates the complete pipeline including paper trading.
-Safe for demo: defaults to DRY_RUN mode.
+NOTE: This script exercises the LEGACY crypto pipeline (Binance Testnet paper
+trade + Freqtrade transpile). The submitted/current chain is the DOMESTIC
+MARKET (CN) quant agent — the current verification entries are:
 
-Usage:
-    # DRY_RUN mode (no Testnet needed)
-    python scripts/e2e_demo.py
+    bash scripts/verify_e2e.sh          # CN chain E2E (validator/API/RAG/LLM)
+    bash scripts/run_demo.sh            # one-shot demo (tests + pipeline)
+    scripts/eval_cn_market_v2.py        # 24-case CN market evaluation
 
-    # Real Testnet mode (requires API keys)
-    DRY_RUN=false python scripts/e2e_demo.py
+This file is kept for the legacy paper-trade demo (DRY_RUN default).
 """
 import sys, time, re, copy, ast, os, json
-sys.path.insert(0, '/workspace/persistent/radeon-repo/track2-agentic-ai')
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import yaml, httpx
 from src.dsl.canonicalizer import canonicalize_dsl
 from src.dsl.validator import validate_dsl

@@ -173,7 +173,7 @@ python3 -m pytest tests/ --ignore=tests/test_e2e.py -q
 
 # E2E tests (require running vLLM and API)
 python3 -m pytest tests/test_e2e.py -q
-# Result: 2 passed (if servers running) or 2 skipped
+# Result: 3 passed offline + 2 skipped (no servers); all 5 pass when vLLM and API are running
 ```
 
 ---
