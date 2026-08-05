@@ -54,8 +54,8 @@ ROBOT_HEIGHT = 0.72
 # Distance (m) from robot base to ball center under which a kick may fire.
 # Raised from 0.3 -> 0.5: a humanoid's foot only reaches the ball at ~0.45-0.5m
 # center distance, so the old 0.3m threshold almost never triggered a real kick.
-KICK_DISTANCE = 0.5
-KICK_IMPULSE = 2.5    # m/s — moderate kick impulse
+KICK_DISTANCE = 1.1  # robot 0 starts at 1.0m from ball, need >1.0 to trigger kick immediately
+KICK_IMPULSE = 5.0    # m/s — increased from 2.5 to escape robot's vicinity
 KICK_COOLDOWN = 1.0   # seconds between kicks (longer cooldown for stability)
 
 # 6 robot starting positions
@@ -247,7 +247,7 @@ class SoccerEnv3v3(SoccerEnv):
                 show_world_frame=False,
                 show_link_frame=False,
                 show_cameras=False,
-                plane_reflection=True,
+                plane_reflection=False,
                 ambient_light=(0.7, 0.7, 0.7),
                 shadow=True,
             ),
@@ -255,11 +255,36 @@ class SoccerEnv3v3(SoccerEnv):
             show_viewer=show_viewer,
         )
 
-        # Ground (single plane, no separate field boxes)
+        # Ground: physics plane (collision) + textured field mesh (visual).
         self.scene.add_entity(
             gs.morphs.URDF(file=_genesis_asset("urdf", "plane", "plane.urdf"), fixed=True))
 
-        # Minimal field: just 2 goal markers (no field line boxes to save GPU memory)
+        # Field ground: custom quad mesh (vt texture coords + vn normal) mapped
+        # with the pitch texture (grass + white lines, 14m x 9m per SPEC).
+        _field_mesh = os.path.join(os.path.dirname(__file__), "..", "assets", "field_mesh.obj")
+        _field_tex = os.path.join(os.path.dirname(__file__), "..", "assets", "textures", "soccer_field.png")
+        if not os.path.exists(_field_mesh):
+            _field_mesh = "/workspace/assets/field_mesh.obj"
+        if not os.path.exists(_field_tex):
+            _field_tex = "/workspace/assets/textures/soccer_field.png"
+        if os.path.exists(_field_mesh) and os.path.exists(_field_tex):
+            self.scene.add_entity(
+                gs.morphs.Mesh(
+                    file=_field_mesh,
+                    pos=(0, 0, 0),
+                    fixed=True,
+                    collision=False,
+                    visualization=True,
+                ),
+                surface=gs.surfaces.Rough(
+                    diffuse_texture=gs.textures.ImageTexture(image_path=_field_tex),
+                    roughness=0.9,
+                ),
+            )
+        else:
+            print(f"[3v3] WARN: field mesh/texture missing ({_field_mesh}, {_field_tex}) — bare plane only")
+
+        # Goal markers
         _gs_s = gs.surfaces.Rough(color=(0.95, 0.95, 0.95), roughness=0.5)
         _pw2 = 0.1
         for gx in [-HALF_L, HALF_L]:
@@ -304,7 +329,7 @@ class SoccerEnv3v3(SoccerEnv):
 
         # Camera (close-up for visible motion)
         self.cam = self.scene.add_camera(
-            res=(1280, 720), pos=(2, -3, 2), lookat=(0, 0, 0.8), fov=60, GUI=False)
+            res=(1280, 720), pos=(2, -3, 2), lookat=(0, 0, 0.8), fov=60, GUI=False, spp=8)
 
         self.scene.build(n_envs=self.num_envs)
 
@@ -370,32 +395,15 @@ class SoccerEnv3v3(SoccerEnv):
         return obs
 
     def _compute_rule_actions(self, robot_idx):
-        """Rule-based velocity command for right-team robots."""
-        pos = self.all_base_pos[:, robot_idx, :].clone()
-        ball_pos = self.ball_pos.clone()
+        """Rule-based velocity command — all non-attacker robots stand still."""
+        return torch.zeros((self.num_envs, 3), dtype=gs.tc_float, device=self.device)
 
-        # Direction to ball
-        to_ball = ball_pos[:, :2] - pos[:, :2]
-        dist = torch.norm(to_ball, dim=1, keepdim=True) + 1e-6
-        direction = to_ball / dist
-
-        # Goal direction (right team attacks -x)
-        goal_x = -self.goal_x  # negative for right team
-        to_goal = torch.tensor([goal_x, 0.0], device=self.device).expand(self.num_envs, -1) - pos[:, :2]
-
-        # Always chase the ball. When within KICK_DISTANCE, keep pushing INTO the
-        # ball (faster) instead of diverting to goal — diverting made the robot
-        # abandon the ball and the <0.3m kick trigger was never held. The actual
-        # goal-ward velocity is imparted by _execute_kick's ball impulse.
-        close = dist.squeeze(-1) < KICK_DISTANCE
-        speed = torch.where(
-            close,
-            torch.full_like(close, 0.55, dtype=direction.dtype),
-            torch.full_like(close, 0.4, dtype=direction.dtype),
-        )
-        vx = direction[:, 0] * speed
-        vy = direction[:, 1] * speed
-        wz = torch.clamp(torch.atan2(to_ball[:, 1], to_ball[:, 0]) * 0.3, -0.5, 0.5)
+        actions = torch.stack([
+            torch.clamp(vx, -self.hl_clip_lin, self.hl_clip_lin),
+            torch.clamp(vy, -self.hl_clip_lin, self.hl_clip_lin),
+            torch.clamp(wz, -self.hl_clip_ang, self.hl_clip_ang),
+        ], dim=1)
+        return actions
 
         actions = torch.stack([
             torch.clamp(vx, -self.hl_clip_lin, self.hl_clip_lin),
@@ -480,7 +488,7 @@ class SoccerEnv3v3(SoccerEnv):
 
         # Advance phase only once per low-level step (robot 0 call)
         if robot_idx == 0:
-            freq = 2.0  # Hz — faster for forward progress
+            freq = 1.5  # Hz — v7 frequency (stable)
             self._rule_walk_phase += freq * self.dt
 
         phase = self._rule_walk_phase
@@ -491,30 +499,32 @@ class SoccerEnv3v3(SoccerEnv):
         if not moving:
             return actions  # standing pose = all zeros
 
-        # ---- v9: v6 gait (proven 25 steps 0-fallen) + close camera ----
-        # v6 (hip=0.7): 0 fallen until step 25, frame_diff 0.4-1.0
-        # v7 (hip=0.5): 0 fallen until step 72, but too slow
-        # v9 = v6 params, accept fallen=1 at ~step 26 (≤2 target)
+        # ---- v7 gait + forward lean (proven to walk forward) ----
         lh = math.sin(phase)
         rh = math.sin(phase + math.pi)
 
-        hip_amp = 0.7 * speed_norm
+        hip_amp = 0.5 * speed_norm
         left_hip = hip_amp * lh
         right_hip = hip_amp * rh
 
-        knee_amp = 1.0 * speed_norm
+        # Forward lean: constant hip pitch offset for forward motion
+        forward_lean = 0.35 * min(speed_norm, 1.0)
+        left_hip += forward_lean
+        right_hip += forward_lean
+
+        knee_amp = 0.6 * speed_norm
         left_knee = knee_amp * max(0.0, lh)
         right_knee = knee_amp * max(0.0, rh)
 
-        ankle_amp = 0.3 * speed_norm
+        ankle_amp = 0.2 * speed_norm
         left_ankle = -ankle_amp * min(0.0, lh)
         right_ankle = -ankle_amp * min(0.0, rh)
 
-        roll_amp = 0.15 * speed_norm
+        roll_amp = 0.1 * speed_norm
         left_roll = roll_amp * lh
         right_roll = -roll_amp * lh
 
-        arm_amp = 0.4 * speed_norm
+        arm_amp = 0.3 * speed_norm
         left_arm = -arm_amp * lh
         right_arm = -arm_amp * rh
 
@@ -648,18 +658,14 @@ class SoccerEnv3v3(SoccerEnv):
         # Run N low-level steps
         for _ in range(self.high_level_decimation):
             for i in range(self.num_robots):
-                if getattr(self, "use_rule_walk", False):
-                    cmd = self.all_commands[:, i, :]
-                    joint_actions = self._rule_walk_actions(cmd, i)
-                elif getattr(self, "hold_stand", False):
-                    joint_actions = torch.zeros(
-                        (self.num_envs, len(POLICY_JOINT_NAMES)),
-                        dtype=self.hl_actions.dtype,
-                        device=self.device,
-                    )
-                else:
+                if i == 0 and not getattr(self, "use_rule_walk", False):
+                    # Robot 0: use walk model for fast locomotion
                     low_obs = self._build_low_level_obs_for_robot(i)
                     joint_actions = self._run_walk_model(low_obs)
+                else:
+                    # Robots 1-5: use rule_walk with zero cmd for stable standing
+                    cmd = self.all_commands[:, i, :]
+                    joint_actions = self._rule_walk_actions(cmd, i)
                 self._low_level_step_robot(i, joint_actions)
 
             for _ in range(DECIMATION):
@@ -689,8 +695,8 @@ class SoccerEnv3v3(SoccerEnv):
             kick_mask = self._execute_kick(i)
             self.last_kick_events[:, i] = kick_mask
             if kick_mask.any():
-                # Robot that kicked: zero its command next step for stability
-                self.all_commands[:, i, :] = 0.0
+                # Robot that kicked: reduce command (not zero) to avoid sudden stop
+                self.all_commands[:, i, :] *= 0.3
 
     def _compute_step_telemetry(self):
         """Compute reward, terminal flags, and pre-reset state telemetry."""
