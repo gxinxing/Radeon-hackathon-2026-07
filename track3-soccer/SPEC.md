@@ -323,6 +323,46 @@ ang_vel = transform_by_quat(self.robots[i].get_ang(), inv_quat(quat))
 
 **协调注记**: 与 `run_3v3_final.py`（演示脚本线：walk model 机器人 0 + 其余站桩 + 近球 + 进球 + 近景相机）并行，互不覆盖文件；演示脚本不受本次参数调整影响（如需可重新运行）。
 
+### Task-9-v2 (P0 · 10h 极限压缩训练 · 主控登记 2026-08-06 02:45 · 用户直接下发方案)
+
+**背景**: 剩余窗口约 10h。不追求完美 3v3，目标 = 让评测指标从全红拿到尽可能多 ✅：减少倒地、跑出有效位移。模型已会踢球；最大浪费是疯狂倒地 + reset 刷屏 → 有效样本占比低、不收敛。
+
+**核心策略**: 锁保守参数（不试探）、跳过阶段合并为 A→B→C、优先抑制摔倒。
+
+**时间预算**:
+| 阶段 | 耗时 | 目标 |
+|---|---|---|
+| A 参数固化 + P1 无对手训练 | 0-4h | fallen 压下来、学会跑+追球；**严禁直接开 3v3 训练** |
+| B 1v1 对抗训练 | 4-8h | 适应冲撞扰动、抗干扰；**不跑 3v3/coop 训练** |
+| C 最终 3v3 评测 | 8-10h | 冻结权重，批量跑评测拿最终结果 |
+
+**最终参数（Task-9-v2，直接使用，勿试探）**:
+- `hl_clip_lin/ang: 0.6`、`command.vel_range: [-0.6, 0.6]`
+- `action_scale: 0.16`、`clip_actions: 1.2`（低层强约束）
+- reward：`fall_penalty: -14.0`、`alive: 0.35`、`upright: 1.3`、`orientation: -1.0`、`action_rate: -2.0`、`energy_penalty: -0.02`、`approach_ball: 5.0`、`ball_progress: 6.0`、`ball_to_goal: 5.0`、`goal_scored: 30.0` 保持、`recovery_bonus: 3.0` 保持；directed_contact/ball_control/coop 系列保持
+- `episode_length_s: 20.0`（=200 HL 步）
+- `learning_rate: 3.0e-4`（防震荡；规则3：若 reward 剧烈震荡，降到 1.5e-4）
+
+**代码同步（已落地，2026-08-06 02:45）**: `policy.py` L199-200 `clip_lin/clip_ang=0.6`；`src/match_3v3/policy.py` L199-200 `=0.6`；`scripts/soccer_env_3v3.py` L98-99 默认 `=0.6`（env 内 walk/rule_walk clamp 用 `self.hl_clip_lin/ang` 自动同步）。
+
+**A 阶段执行（0-4h，P1 无对手仅追球，task=hl，关闭多智能体）**:
+- 每 30 分钟看日志：`fallen_count` 目标快速 <15；若仍 >50 → 立即 `fall_penalty=-18`、`hl_clip_lin=0.5`，不等待
+- `robot_disp` 目标 >2m；若倒地少但不动 → `approach_ball` 临时提到 7.0
+- 4h 到点**无论是否完美，直接切 B 阶段**，禁止死磕 P1
+
+**B 阶段（4-8h，1v1 对抗）**: 开启对手，不跑 coop；只看 `fallen_count` 不飙升；若倒地暴涨 → 回退 P1 再跑 30min 后重进。
+
+**C 阶段（8-10h，只评测）**: 冻结 B 阶段 checkpoint，批量跑 3v3 评测，导出日志/保存权重，**不再训练**。
+
+**紧急止损**:
+1. 连续 1h `fallen_count>100` → `hl_clip_lin=0.5`、`fall_penalty=-18`
+2. 倒地少但发呆不动 → `approach_ball↑`、`fall_penalty=-10`
+3. reward 剧烈震荡 → 降低学习率（3e-4→1.5e-4）
+
+**验收（C 阶段汇总）**: 回写每阶段日志关键数字 + 最终 3v3 评测 batch 统计（fallen/robot_disp/kicks/ball_disp/scored 命中率）；每轮只认数据。
+
+**协调注记**: 与 `run_3v3_final.py` 演示脚本线并行，互不覆盖；Task-9-v2 参数已覆盖 Task-9 首版（0.7→0.6 等），以 v2 为准。
+
 ---
 
 ## 4. 系统架构
